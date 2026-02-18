@@ -29,11 +29,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. The pricing engine correctly handles platform-specific deliverable types (Instagram post/story/reel, TikTok video/story, YouTube dedicated/integration/short) with appropriate rate calculations
   3. A negotiation thread can transition through all defined states (initial_offer, awaiting_reply, counter_received, counter_sent, agreed, rejected, escalated, stale) with invalid transitions rejected
   4. When a proposed rate exceeds the $30 CPM threshold, the system flags it for escalation rather than accepting
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 01-01: TBD
-- [ ] 01-02: TBD
+- [ ] 01-01-PLAN.md — Project setup, domain types, enums, and Pydantic models
+- [ ] 01-02-PLAN.md — Pricing engine, rate cards, and boundary enforcement (TDD)
+- [ ] 01-03-PLAN.md — Negotiation state machine with transition validation (TDD)
 
 ### Phase 2: Email and Data Integration
 **Goal**: The agent can send and receive emails via Gmail API with proper threading, and read influencer data from Google Sheets to inform pricing decisions
@@ -101,7 +102,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Core Domain and Pricing Engine | 0/0 | Not started | - |
+| 1. Core Domain and Pricing Engine | 0/3 | Planning complete | - |
 | 2. Email and Data Integration | 0/0 | Not started | - |
 | 3. LLM Negotiation Pipeline | 0/0 | Not started | - |
 | 4. Slack and Human-in-the-Loop | 0/0 | Not started | - |
