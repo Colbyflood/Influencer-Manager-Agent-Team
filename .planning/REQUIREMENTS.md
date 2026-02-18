@@ -89,34 +89,34 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| EMAIL-01 | — | Pending |
-| EMAIL-02 | — | Pending |
-| EMAIL-03 | — | Pending |
-| EMAIL-04 | — | Pending |
-| NEG-01 | — | Pending |
-| NEG-02 | — | Pending |
-| NEG-03 | — | Pending |
-| NEG-04 | — | Pending |
-| NEG-05 | — | Pending |
-| NEG-06 | — | Pending |
-| NEG-07 | — | Pending |
-| HUMAN-01 | — | Pending |
-| HUMAN-02 | — | Pending |
-| HUMAN-03 | — | Pending |
-| HUMAN-04 | — | Pending |
-| DATA-01 | — | Pending |
-| DATA-02 | — | Pending |
-| DATA-03 | — | Pending |
-| DATA-04 | — | Pending |
-| KB-01 | — | Pending |
-| KB-02 | — | Pending |
-| KB-03 | — | Pending |
+| EMAIL-01 | Phase 2 | Pending |
+| EMAIL-02 | Phase 2 | Pending |
+| EMAIL-03 | Phase 2 | Pending |
+| EMAIL-04 | Phase 2 | Pending |
+| NEG-01 | Phase 2 | Pending |
+| NEG-02 | Phase 1 | Pending |
+| NEG-03 | Phase 1 | Pending |
+| NEG-04 | Phase 1 | Pending |
+| NEG-05 | Phase 3 | Pending |
+| NEG-06 | Phase 3 | Pending |
+| NEG-07 | Phase 1 | Pending |
+| HUMAN-01 | Phase 4 | Pending |
+| HUMAN-02 | Phase 4 | Pending |
+| HUMAN-03 | Phase 4 | Pending |
+| HUMAN-04 | Phase 4 | Pending |
+| DATA-01 | Phase 5 | Pending |
+| DATA-02 | Phase 2 | Pending |
+| DATA-03 | Phase 5 | Pending |
+| DATA-04 | Phase 5 | Pending |
+| KB-01 | Phase 3 | Pending |
+| KB-02 | Phase 3 | Pending |
+| KB-03 | Phase 3 | Pending |
 
 **Coverage:**
 - v1 requirements: 22 total
-- Mapped to phases: 0
-- Unmapped: 22 ⚠️
+- Mapped to phases: 22
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-18*
-*Last updated: 2026-02-18 after initial definition*
+*Last updated: 2026-02-18 after roadmap creation*
