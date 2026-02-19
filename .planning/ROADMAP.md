@@ -94,11 +94,13 @@ Plans:
   1. When a ClickUp form is submitted with campaign details (client info, budget, target deliverables, influencer metrics, CPM range), the agent ingests the data and uses it to guide negotiations
   2. Every sent and received email is logged with timestamps, the current negotiation state, and the rates used in that exchange
   3. The team can query the conversation audit trail by influencer name, campaign, or date range and get a complete history of negotiations
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
-- [ ] 05-01: TBD
-- [ ] 05-02: TBD
+- [ ] 05-01-PLAN.md — Dependencies, campaign models, CPM tracker, audit models, SQLite store, resilience retry
+- [ ] 05-02-PLAN.md — ClickUp webhook endpoint, campaign ingestion pipeline
+- [ ] 05-03-PLAN.md — Audit logger, CLI query interface, Slack /audit command
+- [ ] 05-04-PLAN.md — Application entry point, audit wiring, production hardening (FastAPI + Slack Bolt + structlog)
 
 ## Progress
 
@@ -111,4 +113,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 2. Email and Data Integration | 0/3 | Complete    | 2026-02-19 |
 | 3. LLM Negotiation Pipeline | 1/4 | In Progress | - |
 | 4. Slack and Human-in-the-Loop | 0/4 | Complete    | 2026-02-19 |
-| 5. Campaign Ingestion and Operational Readiness | 0/0 | Not started | - |
+| 5. Campaign Ingestion and Operational Readiness | 0/4 | Not started | - |
