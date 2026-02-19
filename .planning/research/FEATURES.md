@@ -1,219 +1,324 @@
-# Feature Research: AI Influencer Negotiation Agent
+# Feature Research: Production Readiness for Influencer Negotiation Agent
 
-**Domain:** AI-powered influencer rate negotiation via email (hybrid autonomous/human mode)
-**Researched:** 2026-02-18
-**Confidence:** MEDIUM -- based on training data knowledge of influencer marketing platforms (GRIN, AspireIQ, CreatorIQ, Upfluence, Klear, Traackr), AI email agents (Lavender, Instantly, Smartlead, Regie.ai), and negotiation automation patterns. Web search and live docs were unavailable for verification.
+**Domain:** Production readiness for a FastAPI negotiation agent (persistent state, deployment, CI/CD, monitoring, live integration testing)
+**Researched:** 2026-02-19
+**Confidence:** HIGH for infrastructure patterns (well-established, verified via web search 2025/2026 sources); MEDIUM for SQLite-specific state persistence trade-offs (fewer canonical sources)
+
+---
+
+## Context: What Is Already Built
+
+The v1.0 negotiation agent is feature-complete for negotiation logic. What it lacks is production-grade infrastructure:
+
+- **In-memory negotiation state** (`negotiation_states: dict`) — lost on every restart or deploy
+- **No Docker packaging** — runs only locally via `uvicorn` directly
+- **No CI/CD pipeline** — no automated test or deploy on push
+- **No health check endpoints** — Docker/load balancer cannot verify liveness or readiness
+- **No monitoring/alerting** — structured logging (structlog) is wired, but no external observability
+- **Retry logic exists** (`tenacity` decorator in `resilience/retry.py`) but is not applied consistently
+- **No live integration tests** — 691 unit tests all use mocks; no real Gmail/Sheets/Slack calls verified
 
 ---
 
 ## Feature Landscape
 
-### Table Stakes (Users Expect These)
+### Table Stakes (Operators Expect These)
 
-Features users assume exist. Missing these = product feels incomplete or untrustworthy.
+Features any production-deployed service must have. Missing = service is not deployable or not trustworthy.
 
-| Feature | Why Expected | Complexity | Notes |
-|---------|--------------|------------|-------|
-| **Gmail API email send/receive with threading** | Core communication channel; must maintain thread context so influencers see coherent conversation | MEDIUM | Must handle reply-to threading, MIME parsing, attachment detection. Gmail API watch/push for real-time inbox monitoring. |
-| **CPM-based rate calculation engine** | The entire negotiation logic depends on computing fair rates from influencer metrics | MEDIUM | Input: avg views (9 recent, exclude outliers), deliverable type, platform. Output: target rate in $20-$30 CPM range. Must handle per-deliverable math (post vs story vs long-form vs usage rights). |
-| **Multi-turn negotiation state machine** | Negotiations are multi-email conversations with defined states (initial offer, counter, acceptance, rejection, stall) | HIGH | Must track conversation state, detect influencer intent from email text, decide next action. This is the hardest table-stakes feature. |
-| **Influencer counter-offer parsing** | Agent must understand when an influencer proposes a different rate or changes deliverable terms | HIGH | NLP/LLM task: extract dollar amounts, deliverable changes, timeline changes from free-text email. Handle varied formats ("I usually charge $X", "my rate is...", "how about $X for Y"). |
-| **Human escalation via Slack** | Hybrid mode requires reliable escalation when situations exceed agent authority | LOW | Slack webhook or Slack API post to designated channel. Must include full context: conversation history, influencer metrics, proposed vs target rate, reason for escalation. |
-| **Escalation trigger rules** | Agent must know when NOT to act autonomously | LOW | Rules engine: escalate when CPM > $30, unusual deliverable requests, ambiguous intent, hostile tone, legal/contract language, requests for exclusivity terms. |
-| **Agreement detection and Slack alert** | Team needs to know immediately when a deal closes | MEDIUM | Detect agreement language in influencer reply. Send structured Slack message: influencer name, agreed rate, platform, deliverables, CPM achieved, next steps. |
-| **Campaign data input (ClickUp integration)** | Agent needs structured input: which influencers, what deliverables, budget parameters | MEDIUM | ClickUp webhook or API to receive form submissions. Parse into campaign object: client name, budget, target CPM range, influencer list with metrics, deliverable types. |
-| **Conversation history/audit trail** | Every negotiation email must be logged and reviewable for compliance, disputes, and learning | MEDIUM | Store all sent/received emails with timestamps, negotiation state at each step, rate calculations used. Query by influencer, campaign, or date range. |
-| **Multi-platform deliverable support** | Instagram, TikTok, YouTube each have different content types with different market rates | MEDIUM | Platform-aware pricing: Instagram (post, story, reel, carousel), TikTok (video, story), YouTube (dedicated video, integration, short). Each deliverable type has different CPM benchmarks. |
-| **Email template system with personalization** | Negotiation emails must feel human, not robotic | LOW | Template library for: initial rate proposal, counter-offer, acceptance confirmation, rejection/walk-away, follow-up/nudge. Variables: influencer name, rate, deliverables, platform, brand name. |
-| **Rate boundary enforcement** | Agent must never agree to rates outside authorized range without human approval | LOW | Hard floor and ceiling on CPM. If influencer demands > $30 CPM, agent must escalate, not agree. If influencer accepts < $20 CPM, flag as unusually low (possible misunderstanding). |
+| Feature | Why Expected | Complexity | Depends On |
+|---------|--------------|------------|------------|
+| **Persistent negotiation state** | In-memory dict is lost on restart; active negotiations mid-thread would be silently dropped with no recovery | MEDIUM | SQLite already present (audit trail); extend same DB or add table |
+| **Docker container packaging** | Cloud VM deployment requires a container image; also enforces reproducible environment parity | MEDIUM | None — greenfield addition |
+| **Docker Compose for local + production** | Defines the full runtime stack (app + volume mounts) in one file; enables one-command startup | LOW | Docker container |
+| **`/health` liveness endpoint** | Docker `HEALTHCHECK`, cloud VM health probes, and load balancers require a fast liveness signal | LOW | FastAPI already running |
+| **`/ready` readiness endpoint** | Checks that all critical dependencies (Gmail token valid, audit DB writable) are actually functional before routing live traffic | MEDIUM | Health infrastructure pattern |
+| **GitHub Actions CI workflow** | On every push: run 691 tests, lint with ruff, type-check with mypy — catches regressions before they reach production | LOW | None; project already has ruff + mypy configured |
+| **GitHub Actions CD workflow** | On merge to main: build Docker image, push to registry, SSH deploy to cloud VM | MEDIUM | CI passing, Docker image |
+| **Structured JSON logging in production** | `structlog` is configured for JSON in production mode already (`PRODUCTION=1`); just needs the env var set correctly in container | LOW | Already coded; just env config |
+| **Secret management via env vars** | API keys (Anthropic, Gmail token, Slack) must not be in Docker images; must come from environment or secrets manager | LOW | Already uses `os.environ`; needs `.env` file excluded from image |
+| **Graceful shutdown** | SIGTERM from Docker/process manager must complete in-flight email processing before dying; uvicorn handles this but must be configured | LOW | Already using uvicorn; configure timeout |
+| **State recovery after crash** | If process dies with an active negotiation, the negotiation_states dict is gone; need to identify orphaned threads on startup | HIGH | Persistent state must exist first |
 
-### Differentiators (Competitive Advantage)
+### Differentiators (Production Quality Upgrades)
 
-Features that set this product apart from manual negotiation or basic email tools. Not required for launch, but create real value.
+Features that lift the agent from "works on my machine" to genuinely robust. Not blockers but matter for reliability.
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| **Intelligent counter-offer strategy** | Goes beyond simple "split the difference" -- uses anchoring, concession patterns, and BATNA-aware logic to negotiate optimally | HIGH | Different strategies: start low and concede slowly, bundle deliverables to hit budget, offer longer partnerships for lower per-post rate. This is where AI adds real value over rule-based automation. |
-| **Viral outlier detection in metrics** | Automatically identifies and excludes viral posts that would skew average view counts, giving more accurate CPM basis | MEDIUM | Statistical outlier detection (>2 standard deviations from mean, or >3x median). Prevents overpaying based on one-hit-wonder content. Already in project requirements -- make it robust. |
-| **Negotiation style adaptation** | Detects influencer communication style (formal vs casual, aggressive vs cooperative) and mirrors it | HIGH | Tone analysis of influencer emails. Adjust agent's language register, emoji usage, response length. Cooperative influencers get direct offers; aggressive ones get anchored lower with more justification. |
-| **Deliverable bundling and unbundling** | Propose package deals or break apart bundles when negotiation stalls on a single deliverable price | MEDIUM | If influencer's TikTok rate is too high, offer to add an Instagram story at combined discount. Or unbundle to negotiate each deliverable separately. Requires understanding deliverable economics. |
-| **Stale negotiation detection and follow-up** | Automatically detects when a negotiation thread has gone cold and sends contextual follow-up | LOW | Track time since last influencer reply. After configurable threshold (48h, 72h), send polite follow-up. After second threshold, send final "still interested?" message. After third, mark as dead and notify team. |
-| **Negotiation analytics dashboard (Slack-based)** | Weekly/on-demand Slack summary: deals closed, average CPM achieved, negotiation duration, win/loss rates | MEDIUM | Aggregate negotiation outcomes. Report: avg CPM by platform, acceptance rate, avg number of back-and-forth exchanges, time to close. Enables data-driven CPM range adjustments. |
-| **Multi-deliverable CPM optimization** | When negotiating a package (e.g., 3 TikToks + 2 IG posts), optimize which deliverables to concede on to hit overall campaign CPM target | HIGH | Package-level math: even if one deliverable is above $30 CPM, the blended package CPM might be within range. Requires campaign-level budget awareness. |
-| **Confidence scoring for agreement detection** | Rate how confident the agent is that the influencer has truly agreed (vs "maybe" or conditional agreement) | MEDIUM | "Sounds good" vs "I'm interested but..." vs "Let me think about it" -- each requires different next steps. High confidence = send Slack alert. Low confidence = ask clarifying question. |
-| **Negotiation playbook configuration** | Let team define negotiation strategies per brand/client (some clients want lowest price, others want fastest close, others want premium creators) | MEDIUM | Config-driven: max_rounds, concession_percentage_per_round, opening_offer_anchor (e.g., start at $15 CPM even if range is $20-$30), walk_away_threshold, priority (speed vs price). |
-| **Rate memory across negotiations** | Remember what rates each influencer previously accepted or requested, so future negotiations start from a better position | LOW | Influencer profile enrichment: last negotiated rate, preferred deliverables, typical response time, negotiation difficulty score. Builds institutional knowledge. |
-| **Usage rights pricing calculator** | Separate pricing logic for content usage rights (whitelisting, paid amplification rights, exclusivity), which follow different economics than organic posting rates | MEDIUM | Usage rights pricing varies: 30-day whitelisting might be 25% of content fee, perpetual rights 100%+. Different from CPM-based pricing. Needs its own calculation model. |
+| **SQLite state persistence (not PostgreSQL)** | Persists negotiation state to SQLite alongside the existing audit trail — zero new infrastructure; survives restarts without a separate database service | LOW | SQLite is already present and working; add a `negotiation_states` table; acceptable at this scale since SQLite is single-writer and negotiations are not concurrent-write heavy |
+| **Multi-stage Docker build with uv** | Smaller image (200MB vs 1GB+), faster deploys, non-root runtime user — security and operational improvement | MEDIUM | Uses `uv` already in dev; extend to Docker image |
+| **Retry decorator applied consistently** | `resilient_api_call` decorator exists but is not applied to GmailClient, SheetsClient, and Anthropic calls systematically | LOW | Extend existing pattern; no new libraries |
+| **Circuit breaker for Anthropic API** | If LLM is down, negotiations should queue (not fail silently or lose work); circuit breaker prevents cascade | MEDIUM | `tenacity` already present; add circuit open/closed state |
+| **Gmail watch auto-renewal on startup** | Already coded (`renew_gmail_watch_periodically`) but needs to be verified and tested end-to-end after deploy | LOW | Already implemented; needs live test |
+| **`@pytest.mark.live` integration tests** | Pytest marker that skips real Gmail/Sheets/Slack calls in CI (no credentials) but runs locally when credentials are present | MEDIUM | Requires real test account credentials |
+| **Startup validation checks** | On app boot, verify each configured service is reachable: Gmail token valid, Slack token valid, Sheets key set — fail fast with clear errors | LOW | Add to lifespan context manager |
+| **Audit DB as health signal** | `/ready` endpoint checks audit DB is writable (not just open) — catches disk-full or permission errors before serving traffic | LOW | Already have `init_audit_db` and `close_audit_db` |
+| **Docker volume for SQLite persistence** | SQLite files inside the container are destroyed on redeploy; mount a persistent volume for `data/` directory | LOW | Docker Compose volume mount |
+| **Env-based feature flags** | Allow disabling individual integrations (e.g., `GMAIL_ENABLED=false`) without code changes for development or partial deploys | LOW | Pattern already used for service initialization |
 
 ### Anti-Features (Commonly Requested, Often Problematic)
 
-Features that seem good but create problems. Deliberately NOT building these in v1.
+Features that seem like natural next steps but create real problems for this milestone.
 
 | Feature | Why Requested | Why Problematic | Alternative |
 |---------|---------------|-----------------|-------------|
-| **Fully autonomous mode (no human escalation)** | "Just let the AI handle everything" | One bad negotiation can damage brand reputation, overspend budget, or create legal liability. Trust must be earned through track record. | Hybrid mode with configurable autonomy threshold. Start conservative, widen autonomy as agent proves reliability. Graduate to autonomous for routine negotiations only. |
-| **Live influencer metrics pulling** | "Always use the freshest data" | API rate limits, authentication complexity, inconsistent data formats across platforms, and metrics don't change fast enough to justify real-time pulls. Adds massive integration surface area. | Pre-loaded metrics from existing workflow (already the plan). Batch refresh weekly or per-campaign. |
-| **AI-generated cold outreach** | "Have the agent do initial outreach too" | Different skill set (persuasion vs negotiation), different compliance rules (CAN-SPAM), and the team already uses Instantly for this. Splitting focus dilutes v1 quality. | Keep as future agent in the multi-agent pipeline. Let Instantly handle outreach. This agent starts when influencer replies. |
-| **Contract generation** | "Agent should send the contract when deal closes" | Legal liability, contract terms vary by client/brand, requires legal review workflow. Contract errors are expensive. | Agent sends Slack alert with deal terms. Human sends contract. Future scope: template-based contract generation with human approval gate. |
-| **Real-time negotiation (chat/DM)** | "Influencers prefer DMs over email" | DMs require platform API access (Instagram DM API is restricted), real-time response expectations are harder to manage, and DM threading is less structured than email. | Email-first for v1. DM support as future channel once email negotiation is proven. Platform DM APIs are also increasingly available -- revisit when ready. |
-| **Multi-language negotiation** | "We work with international creators" | Translation quality in negotiation context is critical -- wrong nuance can offend or create misunderstandings. Negotiation idioms don't translate well. | English-only for v1. Flag non-English emails for human handling. Add language support as a deliberate v2 feature with proper prompt engineering per language. |
-| **Automatic budget allocation across influencers** | "Agent should decide how to split campaign budget" | This is a strategic decision that requires understanding brand goals, audience overlap, content calendar, and campaign ROI targets. Wrong allocation wastes budget. | Budget per influencer comes from campaign data input (ClickUp). A future "strategist" agent handles budget allocation. This agent negotiates within the given budget. |
-| **Sentiment analysis dashboard** | "Show me how influencers feel about our brand" | Scope creep into brand monitoring. The negotiation agent processes deal-specific emails, not brand sentiment data. Building sentiment analysis distracts from core negotiation logic. | Pass: not in this agent's domain. If needed, it is a separate analytics tool entirely. |
+| **PostgreSQL for state persistence** | "SQLite doesn't scale" | This agent runs on a single VM, has at most dozens of concurrent negotiations, and already uses SQLite for the audit trail successfully. Adding PostgreSQL means a new service, connection pooling, `asyncpg`, Alembic migrations — weeks of work for zero real benefit at this scale. | Stay on SQLite. The audit trail proves it works. Add a `negotiation_states` table. Revisit if the agent ever runs on multiple hosts. |
+| **Redis for in-memory caching** | "Cache Gmail tokens / rate limit tracking" | Redis is another service to run, configure, and monitor. Gmail tokens are refreshed infrequently and OAuth handles expiry. Rate limiting is not a current bottleneck. | Tenacity retry with backoff handles transient failures. Token refresh is built into the Google auth library. Skip Redis entirely for v1.1. |
+| **Kubernetes / ECS deployment** | "Containers should run in an orchestrator" | This agent runs on one cloud VM. Kubernetes adds enormous operational overhead (ingress, node groups, pod scheduling, service mesh) that far exceeds the needs of a single-process agent. | Docker with Docker Compose on a VM is correct for this scale. If the agent ever needs horizontal scaling or zero-downtime rolling deploys, revisit. |
+| **Prometheus + Grafana monitoring stack** | "We need metrics dashboards" | A two-service monitoring stack (Prometheus scraper + Grafana dashboard) is significant infrastructure for a single-VM single-process agent. Also requires persistent storage for metrics. | Structured JSON logs from structlog can be queried with simple tools. If a dashboard is ever needed, use a hosted service (Datadog, Betterstack) that ingests structured logs without running new infrastructure. |
+| **Full observability traces (OpenTelemetry)** | "We should trace every request" | Distributed tracing is for distributed systems. This is a single-process agent. Adding OpenTelemetry instrumentation without a trace backend is noise; adding a trace backend is more infrastructure. | Structured contextual logging with `negotiation_id`, `thread_id`, `campaign_id` bound to every log line already provides tracing within a single process. |
+| **Parallel pytest-asyncio for integration tests** | "Run all live tests at once" | Real Gmail/Sheets/Slack calls need rate limits, ordered setup/teardown, and real API quotas. Parallel live tests will hit rate limits and interfere with each other. | Sequential pytest with `@pytest.mark.live` marker. One live test per integration point, run one at a time. |
+| **Auto-deploy on every commit to main** | "Full CD means deploy on every merge" | The agent sends real emails and manages real negotiations. A bad deploy that breaks email sending could drop mid-negotiation threads. | CI on every push; CD on explicit tag or manual approval step. Or deploy only when all live integration tests pass. |
+| **Hot reload in production (watchfiles)** | "Faster iteration with live reload" | Hot reload in production means unreliable state — the in-memory `negotiation_states` dict is cleared on every reload. In development it's fine; in production it causes silent negotiation drops. | Production uses a fixed container image. Development uses `--reload` locally only. |
 
 ---
 
 ## Feature Dependencies
 
 ```
-[Gmail API Integration]
-    |-- requires --> [Email Threading & MIME Parsing]
-    |                    |-- requires --> [Inbound Email Processing]
-    |                    |                    |-- enables --> [Counter-Offer Parsing]
-    |                    |                    |-- enables --> [Agreement Detection]
-    |                    |                    |-- enables --> [Stale Negotiation Detection]
-    |                    |-- enables --> [Outbound Email Composition]
-    |                                        |-- requires --> [Email Template System]
-    |                                        |-- requires --> [Rate Calculation Engine]
-    |
-[Campaign Data Input (ClickUp)]
-    |-- provides data to --> [Rate Calculation Engine]
-    |                            |-- requires --> [Viral Outlier Detection]
-    |                            |-- requires --> [Multi-Platform Deliverable Pricing]
-    |                            |-- enables --> [Rate Boundary Enforcement]
-    |                            |-- enables --> [Counter-Offer Strategy]
-    |
-[Negotiation State Machine]
-    |-- requires --> [Counter-Offer Parsing]
-    |-- requires --> [Rate Calculation Engine]
-    |-- requires --> [Rate Boundary Enforcement]
-    |-- enables --> [Escalation Trigger Rules]
-    |                   |-- enables --> [Slack Escalation]
-    |-- enables --> [Agreement Detection]
-    |                   |-- enables --> [Slack Agreement Alert]
-    |-- enables --> [Follow-Up Logic]
-    |
-[Conversation Audit Trail]
-    |-- requires --> [Email Threading]
-    |-- requires --> [Negotiation State Machine]
-    |-- enables --> [Rate Memory] (differentiator)
-    |-- enables --> [Negotiation Analytics] (differentiator)
+[Persistent Negotiation State]
+    |-- requires --> [SQLite state table schema]
+    |-- requires --> [State serialization / deserialization]
+    |-- enables  --> [State recovery after crash]
+    |-- enables  --> [/ready endpoint: state DB writable check]
+
+[Docker Container]
+    |-- requires --> [Multi-stage Dockerfile with uv]
+    |-- requires --> [Secret env var management (no secrets in image)]
+    |-- requires --> [Docker volume for SQLite data/]
+    |-- enables  --> [/health liveness endpoint (Docker HEALTHCHECK)]
+    |-- enables  --> [/ready readiness endpoint]
+
+[GitHub Actions CI]
+    |-- requires --> [Docker container (build step)]
+    |-- requires --> [pyproject.toml dev deps: pytest, ruff, mypy]
+    |-- enables  --> [GitHub Actions CD (only deploy after CI passes)]
+
+[GitHub Actions CD]
+    |-- requires --> [GitHub Actions CI passing]
+    |-- requires --> [Docker image pushed to registry]
+    |-- enables  --> [SSH-based VM deploy]
+
+[/health endpoint]
+    |-- requires --> [FastAPI app running]
+    |-- enables  --> [Docker HEALTHCHECK directive]
+
+[/ready endpoint]
+    |-- requires --> [/health endpoint (separate concern)]
+    |-- requires --> [Persistent state (audit DB writable check)]
+    |-- enables  --> [Pre-traffic validation in CI]
+
+[@pytest.mark.live integration tests]
+    |-- requires --> [Real credential files available (not in CI)]
+    |-- requires --> [/ready endpoint (confirm system is actually live)]
+    |-- enables  --> [Post-deploy smoke test: real email round trip]
+
+[Retry decorator applied consistently]
+    |-- requires --> [resilient_api_call already exists]
+    |-- enables  --> [Graceful degradation: Gmail down -> queue, not crash]
+
+[Startup validation checks]
+    |-- requires --> [Lifespan context manager already exists]
+    |-- enables  --> [Fast failure: bad credential caught at boot, not mid-negotiation]
 ```
 
 ### Dependency Notes
 
-- **Gmail API Integration is the foundation:** Nothing works without the ability to send and receive emails. Build and validate this first.
-- **Rate Calculation Engine is the brain:** CPM math, outlier detection, and multi-platform pricing power every negotiation decision. Must be correct before agent sends any emails.
-- **Negotiation State Machine orchestrates everything:** It decides whether to counter, escalate, accept, or follow up. This is the most complex component and depends on both email parsing and rate calculation being solid.
-- **Slack integration is independent but essential:** Can be built in parallel with email integration. Two separate Slack features: escalation (sends context for human review) and agreement alerts (sends deal summary).
-- **ClickUp integration feeds the pipeline:** Campaign data must flow in before negotiations can start. But the agent can be tested with hardcoded campaign data while ClickUp integration is built.
-- **Audit trail is cross-cutting:** Every email and state transition should be logged from day one. Retrofitting audit logging is painful.
+- **Persistent state is the highest-risk item:** Everything else (Docker, CI, health checks) is standard plumbing. State migration from in-memory dict to SQLite requires careful design of the serialization layer — what does a `NegotiationStateMachine` look like as a table row?
+- **Health endpoints are a prerequisite for Docker deployment:** Docker `HEALTHCHECK` will not work without them. Build these before the Dockerfile.
+- **CI must pass before CD is wired:** Never wire auto-deploy to a broken CI. Build CI first, validate it runs clean, then add the deploy step.
+- **Live integration tests are independent of CI:** They run locally with real credentials. They should NOT run in GitHub Actions (no credentials there). The marker pattern (`@pytest.mark.live`) enforces this cleanly.
 
 ---
 
 ## MVP Definition
 
-### Launch With (v1)
+### Launch With (v1.1 — Production Readiness)
 
-Minimum viable product -- what is needed to validate that an AI agent can reliably negotiate influencer rates via email.
+Minimum needed to deploy the agent to a cloud VM and trust that negotiations survive restarts.
 
-- [ ] **Gmail API send/receive with threading** -- without email, nothing works
-- [ ] **CPM-based rate calculation engine** -- core negotiation logic with outlier detection
-- [ ] **Multi-platform deliverable pricing** -- must handle Instagram, TikTok, YouTube from day one (team negotiates across all three)
-- [ ] **Negotiation state machine (basic)** -- states: awaiting_reply, counter_received, counter_sent, agreed, rejected, escalated, stale
-- [ ] **Counter-offer parsing (LLM-based)** -- extract rate and deliverable info from influencer replies
-- [ ] **Email template system** -- templates for initial offer, counter, acceptance, follow-up
-- [ ] **Rate boundary enforcement** -- hard $30 CPM ceiling before escalation
-- [ ] **Escalation to Slack** -- when CPM exceeds threshold or edge case detected
-- [ ] **Agreement detection and Slack alert** -- structured notification when deal closes
-- [ ] **Conversation audit trail** -- log every email and state transition
-- [ ] **Campaign data input (manual/JSON)** -- can be hardcoded or JSON file for v1; ClickUp integration can follow
+- [ ] **Persistent negotiation state in SQLite** — without this, any deploy or crash drops active negotiations; it is the entire point of this milestone
+- [ ] **State recovery on startup** — on boot, load all non-terminal negotiations from DB back into `negotiation_states` dict
+- [ ] **`/health` liveness endpoint** — returns 200 if process is alive; Docker HEALTHCHECK uses this
+- [ ] **`/ready` readiness endpoint** — checks audit DB writable, Gmail token present, returns 503 if not ready
+- [ ] **Multi-stage Dockerfile** — `uv`-based build, non-root user, copies only runtime artifacts
+- [ ] **Docker Compose file** — defines app service + named volume for `data/` persistence
+- [ ] **GitHub Actions CI** — on push: `pytest`, `ruff check`, `mypy`; blocks merge on failure
+- [ ] **GitHub Actions CD** — on tag or manual trigger: build image, push to registry, SSH deploy
+- [ ] **Secret management** — `.env.example` template; secrets passed as env vars, never baked into image
+- [ ] **Graceful shutdown** — uvicorn configured with appropriate signal handling; in-flight requests complete
 
-### Add After Validation (v1.x)
+### Add After Initial Deploy (v1.1.x)
 
-Features to add once the core negotiation loop is proven reliable.
+Features to add once the agent is running live and processing real negotiations.
 
-- [ ] **ClickUp integration for campaign data input** -- trigger: team wants to stop manually creating campaign JSON files
-- [ ] **Stale negotiation detection and follow-up** -- trigger: team notices they are manually following up on quiet threads
-- [ ] **Negotiation playbook configuration** -- trigger: different clients need different negotiation strategies
-- [ ] **Intelligent counter-offer strategy** -- trigger: basic "split the difference" countering is leaving money on the table
-- [ ] **Confidence scoring for agreement detection** -- trigger: false positives in agreement detection are causing problems
-- [ ] **Viral outlier detection improvements** -- trigger: edge cases in outlier math are causing bad rate calculations
+- [ ] **`@pytest.mark.live` integration tests** — trigger: agent is deployed and real credentials are available for a test run
+- [ ] **Retry decorator applied to GmailClient and SheetsClient** — trigger: first time a Gmail API transient error drops a negotiation
+- [ ] **Startup validation checks** — trigger: a bad credential causes a confusing mid-runtime failure instead of a clear boot error
+- [ ] **Circuit breaker for Anthropic API** — trigger: LLM API outage causes negotiation processing failures
 
 ### Future Consideration (v2+)
 
-Features to defer until product-market fit is established and multi-agent architecture is underway.
+Features to defer until there is evidence they are needed.
 
-- [ ] **Rate memory across negotiations** -- why defer: needs enough negotiation history to be useful; insufficient data at launch
-- [ ] **Negotiation analytics (Slack-based reports)** -- why defer: requires accumulated deal data; not useful until 50+ negotiations completed
-- [ ] **Multi-deliverable CPM optimization** -- why defer: requires campaign-level budget awareness which is "strategist" agent territory
-- [ ] **Usage rights pricing calculator** -- why defer: different pricing model; most v1 negotiations will be organic content
-- [ ] **Negotiation style adaptation** -- why defer: advanced NLP that requires significant prompt engineering and testing
-- [ ] **Deliverable bundling/unbundling** -- why defer: requires sophisticated negotiation logic built on top of proven basic negotiation
+- [ ] **PostgreSQL migration** — defer: only if agent runs on multiple hosts; SQLite is sufficient for one VM
+- [ ] **Redis task queue** — defer: only if email processing volume exceeds what asyncio background tasks handle
+- [ ] **Hosted log aggregation (Datadog/Betterstack)** — defer: only when structured logs need cross-session search
+- [ ] **OpenTelemetry traces** — defer: only when the agent expands to multi-service architecture
 
 ---
 
 ## Feature Prioritization Matrix
 
-| Feature | User Value | Implementation Cost | Priority |
-|---------|------------|---------------------|----------|
-| Gmail API email send/receive | HIGH | MEDIUM | P1 |
-| CPM rate calculation engine | HIGH | MEDIUM | P1 |
-| Negotiation state machine | HIGH | HIGH | P1 |
-| Counter-offer parsing (LLM) | HIGH | HIGH | P1 |
-| Email template system | HIGH | LOW | P1 |
-| Rate boundary enforcement | HIGH | LOW | P1 |
-| Slack escalation | HIGH | LOW | P1 |
-| Slack agreement alert | HIGH | LOW | P1 |
-| Conversation audit trail | MEDIUM | MEDIUM | P1 |
-| Multi-platform deliverable pricing | HIGH | MEDIUM | P1 |
-| Campaign data input (manual) | HIGH | LOW | P1 |
-| ClickUp integration | MEDIUM | MEDIUM | P2 |
-| Stale negotiation follow-up | MEDIUM | LOW | P2 |
-| Negotiation playbook config | MEDIUM | MEDIUM | P2 |
-| Intelligent counter strategy | HIGH | HIGH | P2 |
-| Confidence scoring | MEDIUM | MEDIUM | P2 |
-| Rate memory | MEDIUM | LOW | P3 |
-| Negotiation analytics | MEDIUM | MEDIUM | P3 |
-| Multi-deliverable CPM optimization | HIGH | HIGH | P3 |
-| Usage rights calculator | MEDIUM | MEDIUM | P3 |
-| Style adaptation | LOW | HIGH | P3 |
-| Deliverable bundling | MEDIUM | HIGH | P3 |
+| Feature | Operator Value | Implementation Cost | Priority |
+|---------|---------------|---------------------|----------|
+| Persistent negotiation state in SQLite | HIGH | MEDIUM | P1 |
+| State recovery on startup | HIGH | MEDIUM | P1 |
+| `/health` liveness endpoint | HIGH | LOW | P1 |
+| `/ready` readiness endpoint | HIGH | LOW | P1 |
+| Multi-stage Dockerfile | HIGH | MEDIUM | P1 |
+| Docker Compose file | HIGH | LOW | P1 |
+| GitHub Actions CI | HIGH | LOW | P1 |
+| GitHub Actions CD | HIGH | MEDIUM | P1 |
+| Secret management pattern | HIGH | LOW | P1 |
+| Graceful shutdown | MEDIUM | LOW | P1 |
+| `@pytest.mark.live` integration tests | HIGH | MEDIUM | P2 |
+| Retry decorator applied consistently | MEDIUM | LOW | P2 |
+| Startup validation checks | MEDIUM | LOW | P2 |
+| Circuit breaker for Anthropic | LOW | MEDIUM | P3 |
+| PostgreSQL migration | LOW | HIGH | P3 |
+| Redis task queue | LOW | HIGH | P3 |
 
 **Priority key:**
-- P1: Must have for launch -- agent cannot negotiate without these
-- P2: Should have, add when core negotiation loop is proven reliable
-- P3: Nice to have, build when multi-agent architecture is underway
+- P1: Required to deploy and trust the agent in production
+- P2: Adds reliability; add after first live deploy
+- P3: Premature optimization; defer until evidence of need
 
 ---
 
-## Competitor Feature Analysis
+## Detailed Feature Notes
 
-**Confidence: MEDIUM** -- based on training data knowledge of these platforms. Could not verify current feature sets via live web.
+### Persistent Negotiation State
 
-| Feature Area | GRIN / AspireIQ / CreatorIQ (Influencer Platforms) | Instantly / Smartlead (Email Automation) | Our Approach |
-|---------|--------------|--------------|--------------|
-| Influencer communication | Built-in messaging, email templates, CRM-style tracking. Manual negotiation -- no AI. | AI email sequences, A/B testing, send scheduling. No negotiation logic. | AI-driven negotiation with CPM-based decision logic. Neither category does this. |
-| Rate management | Creator rate cards, historical rate data, manual rate comparison. | N/A -- email tools don't handle pricing. | Automated CPM calculation with outlier-excluded metrics. Dynamic counter-offers based on math, not gut feel. |
-| Negotiation automation | None -- all platforms require human-driven negotiation. Some have template-based outreach but not negotiation. | Sequence automation (if no reply, send follow-up). No understanding of negotiation context. | Full negotiation state machine: detect intent, calculate counter, enforce boundaries, escalate when needed. This is the gap no one fills. |
-| Campaign workflow | Full campaign management with briefs, content review, payment. Overkill for negotiation-only use case. | Basic campaign tagging and filtering. | Focused scope: negotiation only. Campaign data comes from ClickUp. No scope creep into content review or payment. |
-| Escalation / human-in-loop | Manual review is the default (all human). | Pause sequences on reply for human takeover. | Intelligent escalation: agent handles routine cases, escalates edge cases with full context and recommended response. |
-| Analytics | Comprehensive influencer analytics, campaign ROI, engagement metrics. | Email open rates, reply rates, sequence performance. | Negotiation-specific: CPM achieved vs target, acceptance rate, negotiation duration, escalation frequency. |
+**The core challenge:** `negotiation_states: dict[str, dict[str, Any]]` in `app.py` (line 236) holds all active negotiation context in process memory. Any restart, crash, or deploy clears it. Threads that receive a reply after a restart will be silently ignored (`No active negotiation for thread, ignoring`).
 
-### Key Competitive Insight
+**What needs to be serialized per negotiation:**
+- `NegotiationStateMachine` state + history (state enum + list of `(from, event, to)` tuples)
+- `context` dict: influencer name/email, thread_id, platform, average_views, deliverables, CPM range, campaign_id
+- `round_count` integer
+- `campaign` model reference (by campaign_id, not object)
+- `cpm_tracker` state (target_min, target_max, current achieved CPM per influencer)
 
-No existing tool automates the actual negotiation conversation. Influencer platforms (GRIN, AspireIQ, CreatorIQ) manage relationships and campaigns but leave negotiation to humans. Email automation tools (Instantly, Smartlead) handle sequences but have zero understanding of rates, deliverables, or negotiation strategy. The gap this agent fills -- **autonomous rate negotiation with CPM-based decision logic and human escalation** -- is genuinely novel in this space.
+**Recommended approach:** Add a `negotiation_states` table to the existing SQLite audit DB. Serialize context as JSON. State machine state stored as the enum value string. On startup, `initialize_services` queries all non-terminal rows and repopulates the dict. This requires minimal new infrastructure since the audit DB connection already exists.
+
+**Confidence:** HIGH — SQLite with JSON columns for semi-structured context is a proven pattern. The audit DB already opens a connection at startup and closes it at shutdown.
+
+### Health Check Endpoints
+
+**`/health` (liveness):** Returns `{"status": "ok"}` with HTTP 200. Must be fast (< 100ms). No external calls. Just confirms the process is alive. Used by Docker `HEALTHCHECK`.
+
+**`/ready` (readiness):** Checks:
+1. Audit DB is writable (attempt a lightweight write, roll back)
+2. Gmail token file exists at `GMAIL_TOKEN_PATH` (if Gmail is configured)
+3. Anthropic API key is set (does not make an API call)
+Returns `{"status": "ok", "checks": {...}}` with HTTP 200, or `{"status": "degraded", "checks": {...}}` with HTTP 503.
+
+**Confidence:** HIGH — pattern verified in multiple 2025 FastAPI production guides; the distinction between liveness and readiness is universally recommended.
+
+### Docker Build Strategy
+
+**Multi-stage with uv:**
+```
+Stage 1 (builder): python:3.12-slim + uv install + uv sync (install all deps)
+Stage 2 (runtime): python:3.12-slim + copy .venv from builder + run as non-root user
+```
+
+**Key decisions:**
+- Non-root user (`USER app`) — prevents container escape escalation
+- `.dockerignore` excludes `.venv/`, `tests/`, `.git/`, credential files
+- `data/` directory is a Docker named volume — survives container replacement
+- `HEALTHCHECK` in Dockerfile calls `/health` every 30s with 3 retries
+
+**Confidence:** HIGH — multi-stage uv-based Docker builds are documented in official uv docs and multiple 2025 guides.
+
+### GitHub Actions CI
+
+**Trigger:** Push to any branch, PR to main.
+
+**Steps:**
+1. Checkout + set up Python 3.12
+2. Install uv, run `uv sync --group dev`
+3. `ruff check src/ tests/`
+4. `mypy src/`
+5. `pytest tests/ -x --tb=short` (fail fast on first failure)
+
+**No live credentials in CI.** Tests with `@pytest.mark.live` are skipped automatically because credential env vars are not set.
+
+**Confidence:** HIGH — standard GitHub Actions pattern; project already has ruff, mypy, pytest configured in `pyproject.toml`.
+
+### GitHub Actions CD
+
+**Trigger:** Manual workflow dispatch OR push of a version tag (`v*.*.*`).
+
+**Steps:**
+1. CI must pass (dependency on CI workflow)
+2. Build Docker image with tag matching the version/SHA
+3. Push to container registry (GitHub Container Registry / GHCR is free with GitHub repos)
+4. SSH to cloud VM, pull new image, restart container
+
+**Rationale for manual/tag trigger:** The agent sends real emails. An automatic deploy on every merge is too aggressive for a system managing live negotiations. A human should consciously trigger production deploys.
+
+**Confidence:** HIGH — SSH-based VM deploy via GitHub Actions is well-documented; GHCR integration is native to GitHub.
+
+### Live Integration Tests
+
+**Pattern:** `@pytest.mark.live` custom marker. Any test marked as live is skipped unless `LIVE_TEST_MODE=1` env var is set.
+
+```python
+# tests/conftest.py
+import pytest
+import os
+
+def pytest_configure(config):
+    config.addinivalue_line("markers", "live: mark test as requiring real API credentials")
+
+def pytest_collection_modifyitems(config, items):
+    if not os.environ.get("LIVE_TEST_MODE"):
+        skip_live = pytest.mark.skip(reason="Set LIVE_TEST_MODE=1 to run live tests")
+        for item in items:
+            if "live" in item.keywords:
+                item.add_marker(skip_live)
+```
+
+**What live tests cover:**
+1. Gmail: send a test email to a test inbox, confirm it appears in Gmail Sent
+2. Gmail: trigger a Pub/Sub notification, confirm the webhook handler receives it
+3. Sheets: read a known row from the test spreadsheet, confirm data structure
+4. Slack: post a test message to the dev channel, confirm message ID returned
+5. End-to-end: trigger a ClickUp webhook with a test campaign, verify negotiation state is persisted
+
+**Run frequency:** Not in CI. Run locally by a developer before a production release, or after a deploy to verify the live system is working.
+
+**Confidence:** MEDIUM — the pytest marker skip pattern is standard (verified in pytest docs); the specific test content for Gmail/Slack is derived from training data patterns.
 
 ---
 
 ## Sources
 
-- Training data knowledge of influencer marketing platforms: GRIN, AspireIQ (now Aspire), CreatorIQ, Upfluence, Klear, Traackr -- MEDIUM confidence (platform features as of mid-2024)
-- Training data knowledge of AI email tools: Instantly, Smartlead, Regie.ai, Lavender -- MEDIUM confidence
-- Training data knowledge of negotiation theory and automation patterns -- MEDIUM confidence
-- Project context from `/Users/colbyflood/Influencer Manager Agent Team/.planning/PROJECT.md` -- HIGH confidence (read directly)
-- CPM pricing benchmarks from influencer marketing industry -- LOW confidence (market rates shift; $20-$30 range is per project requirements, not independently verified)
-- **Note:** WebSearch, WebFetch, and Bash tools were unavailable during this research session. All competitor analysis is based on training data and could not be verified against current product pages. Recommend verifying competitor feature sets if live web access becomes available.
+- FastAPI health check patterns: [FastAPI Health Checks and Timeouts](https://medium.com/@bhagyarana80/fastapi-health-checks-and-timeouts-avoiding-zombie-containers-in-production-411a27c2a019) — MEDIUM confidence (2025)
+- Docker multi-stage builds with uv: [Build Multistage Python Docker Images Using UV](https://digon.io/en/blog/2025_07_28_python_docker_images_with_uv) — MEDIUM confidence (2025)
+- FastAPI Docker best practices: [FastAPI Docker Best Practices](https://betterstack.com/community/guides/scaling-python/fastapi-docker-best-practices/) — MEDIUM confidence (2025)
+- GitHub Actions CI/CD for FastAPI: [PyImageSearch FastAPI CI/CD](https://pyimagesearch.com/2024/11/04/enhancing-github-actions-ci-for-fastapi-build-test-and-publish/) — MEDIUM confidence (2024)
+- FastAPI in-memory state persistence: [Persisting memory state between requests in FastAPI](https://github.com/fastapi/fastapi/issues/5045) — MEDIUM confidence
+- SQLite with FastAPI: [FastAPI tutorial: SQL Databases](https://fastapi.tiangolo.com/tutorial/sql-databases/) — HIGH confidence (official docs)
+- Graceful degradation patterns: [Building Resilient REST API Integrations](https://medium.com/@oshiryaeva/building-resilient-rest-api-integrations-graceful-degradation-and-combining-patterns-e8352d8e29c0) — MEDIUM confidence (Jan 2026)
+- Circuit breaker patterns for FastAPI: [FastAPI Circuit Breakers](https://medium.com/@kaushalsinh73/fastapi-circuit-breakers-with-resilience-patterns-surviving-downstream-failures-4af0920799d3) — MEDIUM confidence (Dec 2025)
+- pytest markers and skipping: [pytest docs: custom markers](https://docs.pytest.org/en/stable/example/markers.html) — HIGH confidence (official docs)
+- FastAPI production deployment guide: [FastAPI Deployment Guide 2026](https://www.zestminds.com/blog/fastapi-deployment-guide/) — LOW confidence (marketing site, 2026)
+- Current codebase analysis: `src/negotiation/app.py`, `src/negotiation/resilience/retry.py`, `pyproject.toml` — HIGH confidence (read directly)
 
 ---
-*Feature research for: AI Influencer Negotiation Agent*
-*Researched: 2026-02-18*
+*Feature research for: Production readiness — Influencer Negotiation Agent v1.1*
+*Researched: 2026-02-19*
+*Scope: NEW features only — v1.0 negotiation features already built and shipped*

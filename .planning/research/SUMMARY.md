@@ -1,213 +1,231 @@
 # Project Research Summary
 
-**Project:** Influencer Manager Agent Team
-**Domain:** AI-powered email negotiation agent for influencer marketing
-**Researched:** 2026-02-18
-**Confidence:** MEDIUM
+**Project:** Influencer Negotiation Agent -- v1.1 Production Readiness
+**Domain:** Production hardening for existing Python/FastAPI AI agent (Docker, persistent state, CI/CD, monitoring, health checks, live verification)
+**Researched:** 2026-02-19
+**Confidence:** HIGH
 
 ## Executive Summary
 
-This project is an AI-powered agent that automates influencer rate negotiation via email, operating in a hybrid autonomous/human mode. The product fills a genuine gap: influencer marketing platforms (GRIN, AspireIQ, CreatorIQ) manage relationships but leave negotiation to humans, while email automation tools (Instantly, Smartlead) handle sequences but have zero understanding of rates or negotiation strategy. No existing tool automates the actual negotiation conversation with CPM-based decision logic. The recommended approach is a Python-based LangGraph agent backed by PostgreSQL, with Gmail API for email, Slack for human-in-the-loop escalation, and ClickUp for campaign data ingestion. Claude Sonnet serves as the primary LLM for intent classification and email composition, but critically, the LLM must never be the source of truth for pricing -- deterministic code handles all rate calculations and boundary enforcement.
+The Influencer Negotiation Agent is a working 6,799 LOC FastAPI application that automates influencer rate negotiation via email. The v1.0 agent is feature-complete for negotiation logic (691 tests passing), but runs only locally with all state held in a Python dict that is lost on every restart. The v1.1 milestone makes this agent production-deployable: persistent negotiation state, Docker packaging, CI/CD pipeline, health checks, monitoring, and live verification. The research across all four areas converges on a clear conclusion: this is standard production hardening for a single-VM single-process service, with one high-risk element (state persistence migration) and otherwise well-established patterns.
 
-The architecture follows an event-driven, stateful agent pattern. Incoming emails trigger events routed to a negotiation agent built on a finite state machine. The agent uses a pricing engine (deterministic CPM math), an LLM pipeline (structured output for intent analysis and email drafting), and an escalation router (allowlist-based, not blocklist). Every external service sits behind a gateway abstraction (ports and adapters), making the system testable and extensible to future agents. The most important architectural decision is that negotiation state lives in the database as a state machine, not in the LLM's context window -- this prevents the most common class of agent failures (state corruption, hallucinated commitments, lost context in long threads).
+The recommended approach is conservative: stay on SQLite for persistent state (extending the existing audit database rather than adding new infrastructure), package in Docker with a multi-stage uv-based build, deploy to a single VM via GitHub Actions CI/CD with SSH, add Prometheus metrics and Sentry error tracking for observability, and implement liveness/readiness health endpoints. The research explicitly rejects PostgreSQL, Redis, Kubernetes, and self-hosted monitoring stacks as over-engineering for the current scale (single VM, dozens of concurrent negotiations, one asyncio event loop). Every recommendation preserves the existing architecture and adds the minimum new infrastructure to make it production-viable.
 
-The primary risks are: (1) LLM hallucinating rates or commitments in sent emails -- mitigated by a hard validation gate that blocks any email containing out-of-range monetary values, (2) email threading corruption causing the agent to lose track of negotiation state -- mitigated by an explicit database-backed state machine, (3) Gmail deliverability collapse from automated sending patterns -- mitigated by dedicated sending accounts, SPF/DKIM/DMARC, rate limiting, and gradual warm-up, and (4) the agent acting autonomously when it should escalate -- mitigated by an inverted escalation model where the agent needs an allowlist of things it CAN do, and everything else escalates to humans.
+The key risks are: (1) OAuth credential files not surviving container restarts -- solved by Docker volume mounts and startup validation, (2) the in-memory `negotiation_states` dict being lost on deploy or crash -- solved by SQLite persistence with write-on-every-transition, (3) Gmail Pub/Sub watch expiration after container restarts -- solved by persisting the watch expiration timestamp, and (4) the Slack Bolt synchronous Socket Mode handler deadlocking or crashing the container -- which requires monitoring and eventual migration to async Bolt. All four pitfalls have clear prevention strategies that are addressed in the recommended phase structure below.
 
 ## Key Findings
 
 ### Recommended Stack
 
-Python 3.12+ with LangGraph for agent orchestration, FastAPI for webhooks, PostgreSQL for persistence, and Redis + Celery for background task processing. The stack is Python-first because the AI/ML agent ecosystem (LangGraph, LangChain, Anthropic SDK) has Python as its primary target -- TypeScript alternatives lag in maturity and community support. LangGraph was chosen over CrewAI (overkill for single-agent v1), AutoGen (wrong paradigm for email-based negotiation), and raw SDK (would require reimplementing state management, persistence, and human-in-the-loop patterns).
+The stack research verified all package versions against PyPI on 2026-02-19. No new infrastructure services are introduced -- only Python libraries and Docker tooling. The additions break down into six areas: persistent state (SQLAlchemy async + aiosqlite + Alembic), Docker deployment (multi-stage Dockerfile + Docker Compose), CI/CD (GitHub Actions with astral-sh/setup-uv), monitoring (prometheus-fastapi-instrumentator + Sentry), settings management (pydantic-settings), and test tooling (pytest-asyncio 1.3.0 + pytest-httpx).
 
-**Core technologies:**
-- **LangGraph (~0.2.x):** Agent orchestration -- purpose-built for stateful, multi-step AI workflows with human-in-the-loop interrupt/resume patterns. Supports future multi-agent expansion via subgraphs.
-- **Claude Sonnet (3.5/4):** Primary LLM -- best instruction-following for structured negotiation tasks at a cost-effective tier. LangGraph makes model swapping trivial if needed.
-- **FastAPI (~0.115.x):** HTTP layer -- async-native, auto-generated OpenAPI docs, handles Gmail push notifications, ClickUp webhooks, and Slack interactivity endpoints.
-- **PostgreSQL 16+:** Primary data store + LangGraph state persistence (via langgraph-checkpoint-postgres). JSONB handles semi-structured deliverable data. Relational model fits the campaign/influencer/negotiation domain.
-- **Gmail API (google-api-python-client):** Email integration -- thread-level operations, push notifications, and label management. SMTP/IMAP cannot reliably track threads. Non-negotiable.
-- **Slack Bolt (~1.20.x):** Escalation and alerts -- interactive messages with approve/reject buttons. The team already lives in Slack.
-- **Celery (~5.4.x) + Redis 7.x:** Background task queue -- email sending, Slack notifications, and ClickUp syncing must be async to prevent blocking the agent loop.
+**Core technologies (new additions only):**
+- **SQLAlchemy 2.0.46 (async) + aiosqlite 0.22.1:** Persistent negotiation state in the existing SQLite audit DB -- zero new infrastructure, same database file, async query API
+- **Alembic 1.18.4:** Schema migrations for the new negotiation_states table -- required for SQLAlchemy ORM; must use `batch_alter_table` for SQLite
+- **prometheus-fastapi-instrumentator 7.1.0:** HTTP metrics at `/metrics` with two lines of code -- immediate Prometheus compatibility
+- **Sentry SDK 2.53.0 + structlog-sentry 2.2.1:** Error tracking with full request context; bridges existing structlog pipeline to Sentry
+- **pydantic-settings 2.13.1:** Typed, validated settings from env vars and `.env` files -- replaces raw `os.environ.get()` calls
+- **Docker 27+ with python:3.12-slim:** Multi-stage build using uv; non-root runtime user; HEALTHCHECK directive
+- **GitHub Actions:** astral-sh/setup-uv v6 for CI, docker/build-push-action v6 for GHCR image push, appleboy/ssh-action for VM deploy
 
-**Critical version note:** All version numbers are from training data (cutoff May 2025). Verify against current releases before locking in, especially LangGraph (fast-moving) and langchain-anthropic compatibility.
+**Explicitly rejected (with rationale):**
+- PostgreSQL (adds a second service for no benefit at this scale)
+- Redis (volatile by default, over-engineered for dozens of concurrent negotiations)
+- Kubernetes/ECS (massive operational overhead for a single-VM target)
+- OpenTelemetry (requires a collector sidecar; Prometheus metrics + Sentry covers the need)
+- gunicorn (forking model breaks Slack Bolt Socket Mode's `asyncio.to_thread` pattern)
 
 ### Expected Features
 
-**Must have (table stakes):**
-- Gmail API email send/receive with threading -- the entire system depends on this
-- CPM-based rate calculation engine with viral outlier exclusion -- the brain of negotiation logic
-- Multi-turn negotiation state machine (initial offer, counter, acceptance, rejection, escalation, stale)
-- LLM-based counter-offer parsing (extract rates, deliverables, intent from free-text email)
-- Multi-platform deliverable support (Instagram, TikTok, YouTube with different pricing norms)
-- Email template system with personalization (initial offer, counter, acceptance, follow-up)
-- Rate boundary enforcement (hard $30 CPM ceiling, auto-escalate above threshold)
-- Human escalation via Slack with full context and one-click approve
-- Agreement detection and structured Slack notification
-- Conversation audit trail (every email, every state transition, every LLM analysis)
-- Campaign data input (JSON/manual for v1; ClickUp integration follows)
+**Must have (v1.1 launch):**
+- Persistent negotiation state in SQLite (the entire point of the milestone)
+- State recovery on startup (load non-terminal negotiations from DB)
+- `/health` liveness endpoint (Docker HEALTHCHECK depends on it)
+- `/ready` readiness endpoint (checks audit DB writable, Gmail token present)
+- Multi-stage Dockerfile with non-root user
+- Docker Compose with named volume for `data/` persistence
+- GitHub Actions CI (pytest + ruff + mypy on every push)
+- GitHub Actions CD (build image, push to GHCR, SSH deploy on tag/manual trigger)
+- Secret management pattern (env vars, never baked into image)
+- Graceful shutdown (uvicorn signal handling for in-flight requests)
 
-**Should have (add after core loop is validated):**
-- ClickUp integration for automated campaign data ingestion
-- Stale negotiation detection and automated follow-up sequences
-- Negotiation playbook configuration (per-client strategies: speed vs. price)
-- Intelligent counter-offer strategy (beyond split-the-difference)
-- Confidence scoring for agreement detection (reduce false positives)
+**Should have (add after first live deploy):**
+- `@pytest.mark.live` integration tests with real credentials
+- Retry decorator applied consistently to GmailClient and SheetsClient
+- Startup validation checks (fail fast on bad credentials)
+- Prometheus `/metrics` endpoint with custom business metrics
+- Request ID middleware for log traceability
 
 **Defer (v2+):**
-- Rate memory across negotiations, negotiation analytics, multi-deliverable CPM optimization, usage rights pricing calculator, negotiation style adaptation, deliverable bundling/unbundling
-- Anti-features to never build in v1: fully autonomous mode (no human escalation), live metric pulling, AI cold outreach, contract generation, real-time DM negotiation, multi-language, automatic budget allocation
+- PostgreSQL migration (only if multi-host deployment is needed)
+- Redis task queue (only if asyncio background tasks prove insufficient)
+- Hosted log aggregation (only when cross-session log search is needed)
+- OpenTelemetry traces (only when the system becomes multi-service)
+- Circuit breaker for Anthropic API (existing tenacity + Slack alerting suffices)
 
 ### Architecture Approach
 
-The system follows an event-driven architecture with a finite state machine per negotiation thread, gateway abstractions for all external services (hexagonal/ports-and-adapters), and an LLM prompt pipeline with structured output and hard validation gates. The architecture is designed for single-agent v1 but is explicitly extensible to multi-agent via LangGraph subgraphs and the agent registry pattern.
+The architecture research confirms the existing FastAPI + services dict + SQLite pattern is sound and should not be redesigned. Production readiness is achieved by hardening what exists: adding a `negotiation_states` table to the existing SQLite audit DB, wrapping the in-memory dict with a persistence layer that writes on every state transition, adding health endpoints to the existing FastAPI app, and packaging the whole thing in a Docker container with a named volume for the `data/` directory. The `services` dict in `app.py` remains the central dependency container. Modified components are `initialize_services()`, `lifespan()`, and `create_app()` in `app.py`. New components are a health endpoints module, a state persistence layer, Dockerfile, docker-compose.yml, and GitHub Actions workflows.
 
-**Major components:**
-1. **Email Gateway** -- Gmail API abstraction for send/receive/threading; future-proofed behind an interface for provider swapping
-2. **Pricing Engine** -- Pure deterministic module for CPM calculations, outlier exclusion, threshold checks; LLM never touches pricing math
-3. **Negotiation State Machine** -- Database-persisted FSM tracking the lifecycle of each thread (9 states, guarded transitions)
-4. **Response Composer** -- LLM prompt pipeline: builds context from structured negotiation state (not raw emails), calls LLM for intent classification and email drafting, validates output against schemas and business rules
-5. **Escalation Router** -- Allowlist-based: defines what the agent CAN do, escalates everything else. Packages full context for Slack with draft response and approve/reject buttons
-6. **Event Router** -- Dispatches incoming events (new email, campaign created, human response, timeout) to appropriate handlers; decouples triggers from logic
+**Major components (new or modified):**
+1. **State persistence layer** -- SQLAlchemy async models + repository wrapping the existing `negotiation_states` dict with write-through to SQLite on every transition
+2. **Health endpoints module** -- `/health` (liveness, always 200 if alive) and `/ready` (readiness, checks DB writable + Gmail token present)
+3. **Dockerfile + docker-compose.yml** -- Multi-stage build, named volume for `data/`, HEALTHCHECK directive, non-root user
+4. **GitHub Actions CI/CD** -- Lint/typecheck/test on push; build/push/deploy on tag or manual trigger
+5. **Prometheus instrumentation** -- `Instrumentator().instrument(app).expose(app)` in `create_app()`
+6. **Sentry integration** -- `sentry_sdk.init()` before app creation + `SentryProcessor` in structlog chain
 
 ### Critical Pitfalls
 
-1. **LLM hallucinating rates and commitments** -- The LLM must never compute or choose rates. All pricing comes from the deterministic Pricing Engine. A post-generation validation gate must extract every monetary value from draft emails and block sending if any value falls outside the authorized range. Zero tolerance.
+1. **OAuth2 `token.json` lost on container restart** -- Gmail and Sheets credential files must be on a Docker named volume or injected as environment variables. A container that starts without these files silently disables GmailClient and SheetsClient. Prevention: mount credentials from volume, validate at startup, fail fast if missing.
 
-2. **Email thread state corruption** -- Maintain an explicit state machine in the database, not derived from email content. Parse and classify each incoming email before the LLM sees it. Pass structured negotiation state to the LLM, not raw messy email threads. Set a maximum thread depth (6 exchanges) before auto-escalation.
+2. **`negotiation_states` dict wiped on any restart** -- The highest-impact pitfall. Active negotiations are silently dropped; influencers who reply after a restart get no response. Prevention: persist to SQLite on every state transition (not just shutdown), load non-terminal negotiations on startup, test by killing the container mid-negotiation and verifying recovery.
 
-3. **Gmail deliverability collapse** -- Use a dedicated Workspace sending account, configure SPF/DKIM/DMARC before sending any emails, implement application-level rate limiting (1 email/minute max), track delivery success, warm up the account gradually, and implement a circuit breaker that pauses sending after 3+ failures.
+3. **Gmail Pub/Sub watch expires after container restarts** -- The 7-day watch expiration and the 6-day renewal timer become misaligned after restarts. Prevention: persist the watch expiration timestamp, schedule renewal relative to the actual expiration, not process uptime.
 
-4. **Agent acts when it should escalate** -- Invert the escalation model: define a narrow allowlist of what the agent IS authorized to do (propose rates in CPM range, accept within range, decline and counter, ask clarifying questions about deliverables/timeline). Everything else escalates by default. Require LLM confidence score above 0.8 to act; below that, auto-escalate.
+4. **SQLite WAL mode data loss on networked filesystems** -- WAL creates three files; network filesystems break file locking. Prevention: use local block storage for the Docker volume, validate WAL mode at startup, back up all three files.
 
-5. **Platform/format pricing equivalence** -- Do not use a single CPM range for all deliverables. Build a rate card system with per-platform, per-format ranges (Instagram Story $8-$15 CPM vs. YouTube long-form $30-$50 CPM). Usage rights need a separate pricing multiplier. Without this, the agent systematically overpays on cheap formats and loses deals on premium ones.
+5. **Slack Bolt Socket Mode deadlock or process death** -- The synchronous Bolt handler in `asyncio.to_thread` can deadlock on slash commands or crash the entire container on WebSocket disconnect. Prevention: add reconnection logic, monitor for crashes, plan eventual migration to async Bolt.
+
+## Researcher Disagreement: SQLite vs. Redis for State Persistence
+
+The STACK and FEATURES researchers recommend **SQLite-only** for persistent state (extending the existing audit DB with a new table via SQLAlchemy async). The ARCHITECTURE researcher recommends **Redis** for negotiation state, thread state, and Gmail history_id, adding a Redis container to docker-compose.yml.
+
+**Resolution: SQLite wins for v1.1.** The rationale:
+- SQLite is already in production for the audit trail, working with WAL mode. Adding a table is zero new infrastructure.
+- Redis adds a second container, AOF persistence configuration, connection management, and a new failure mode (Redis down = all state reads fail).
+- The agent runs on a single VM with a single asyncio event loop. There is no multi-instance coordination that would justify Redis.
+- The ARCHITECTURE researcher's Redis recommendation appears oriented toward a future multi-VM deployment that is explicitly out of scope for v1.1.
+- If multi-host deployment becomes necessary in the future, migrating from SQLite to PostgreSQL (or adding Redis) is a natural evolution -- but it should not be premature.
+
+The ARCHITECTURE researcher's component design (health endpoints, Prometheus instrumentation, Docker layout, CI/CD workflow, request ID middleware) is adopted. Only the Redis-specific components are replaced with SQLite equivalents.
 
 ## Implications for Roadmap
 
-Based on the combined research, the project has clear dependency layers that dictate a natural build order. The architecture research identifies 5 build phases, the features research defines P1/P2/P3 priority tiers, and the pitfalls research maps prevention to specific phases. Here is the synthesized recommendation:
+Based on combined research, the v1.1 milestone naturally decomposes into 5 phases ordered by dependency.
 
-### Phase 1: Foundation and Core Domain
+### Phase 1: Settings and Health Infrastructure
 
-**Rationale:** Everything depends on domain types, the state machine, the pricing engine, and configuration. These are pure logic modules with zero external dependencies and can be fully unit-tested. The architecture research identifies this as the zero-dependency layer. The pitfalls research demands that rate validation and state management be architecturally enforced from day one -- not bolted on later.
+**Rationale:** Health endpoints are a prerequisite for Docker HEALTHCHECK, and pydantic-settings is needed to cleanly manage environment variables across dev/CI/production. These are low-risk, low-complexity changes that establish the foundation for everything else.
 
-**Delivers:** Core domain types (Campaign, Influencer, Negotiation, Deliverable), finite state machine for negotiation lifecycle, CPM-based pricing engine with outlier detection and per-platform rate cards, rate boundary enforcement, event router, configuration schema, error types, project skeleton with uv, ruff, mypy, and pre-commit.
+**Delivers:** `pydantic-settings` BaseSettings class replacing `os.environ.get()` calls, `/health` liveness endpoint, `/ready` readiness endpoint (checks audit DB writable, Gmail token present), `.env.example` template.
 
-**Features addressed:** CPM rate calculation engine, multi-platform deliverable pricing, rate boundary enforcement, negotiation state machine (core logic), conversation audit trail (data models).
+**Features addressed:** `/health` liveness endpoint, `/ready` readiness endpoint, secret management pattern, startup validation checks.
 
-**Pitfalls avoided:** LLM hallucinating rates (pricing engine is deterministic from day one), email thread state corruption (state machine is database-backed), platform/format pricing equivalence (rate cards are per-platform from the start).
+**Avoids:** Pitfall: health check that always returns 200 (readiness endpoint checks real dependencies). Pitfall: confusing mid-runtime credential failures (startup validation).
 
-### Phase 2: Email Integration and Data Layer
+### Phase 2: Persistent Negotiation State
 
-**Rationale:** Email is the foundational I/O channel -- nothing works without the ability to send and receive. The architecture demands gateway abstractions for all external services, so this phase builds the email gateway interface and Gmail implementation, plus the full database access layer. Gmail deliverability pitfalls must be addressed here before any automated sending begins.
+**Rationale:** This is the highest-risk and highest-value item. Everything else (Docker, CI/CD) is standard plumbing; this is the one item that requires careful design of the serialization layer. It must be built and tested before the Dockerfile is finalized, because the Docker deployment depends on state surviving container restarts.
 
-**Delivers:** Email gateway interface and Gmail API implementation (send, receive, threading, MIME parsing), database schema and repository layer (PostgreSQL + SQLAlchemy + Alembic), OAuth token management with refresh handling, email delivery tracking, SPF/DKIM/DMARC verification, sending rate limiter, circuit breaker.
+**Delivers:** SQLAlchemy async models for `negotiation_states` table in existing audit DB, Alembic migration, write-through persistence on every state transition, startup recovery (load non-terminal negotiations), `NegotiationStateMachine` serialization (state string + history list, not pickle).
 
-**Features addressed:** Gmail API email send/receive with threading, email template system, conversation audit trail (persistence).
+**Features addressed:** Persistent negotiation state in SQLite, state recovery on startup.
 
-**Pitfalls avoided:** Gmail deliverability collapse (dedicated account, authentication records, rate limiting, delivery tracking), OAuth token expiry (refresh handling with alerting).
+**Uses:** SQLAlchemy 2.0.46 async + aiosqlite 0.22.1 + Alembic 1.18.4.
 
-### Phase 3: LLM Pipeline and Negotiation Agent
+**Avoids:** Pitfall: `negotiation_states` dict lost on restart. Pitfall: pickle serialization (use JSON). Pitfall: relying on shutdown hooks (write on every transition, not on shutdown).
 
-**Rationale:** With the pricing engine and email gateway in place, the agent can now be assembled. This phase wires the LLM pipeline (intent classification, response composition) to the state machine and pricing engine. The escalation router is built here with the inverted allowlist model. This is where the core negotiation loop becomes functional end-to-end.
+### Phase 3: Docker Packaging and Deployment
 
-**Delivers:** LLM client wrapper (Anthropic SDK with structured output, retries, token limits), intent classifier (counter, accept, reject, question, unclear), response composer (stage-specific prompts for initial offer, counter, acceptance, follow-up), post-generation validation gate (extract and verify all monetary values), escalation router with allowlist model, end-to-end negotiation loop (email in -> classify -> price -> compose -> validate -> send or escalate).
+**Rationale:** With health endpoints and persistent state in place, the app is ready to be containerized. The Dockerfile depends on health endpoints for HEALTHCHECK and on state persistence for the named volume strategy to be meaningful.
 
-**Features addressed:** Counter-offer parsing (LLM-based), negotiation state machine (full integration), escalation trigger rules, agreement detection.
+**Delivers:** Multi-stage Dockerfile (uv-based build, non-root user, HEALTHCHECK), docker-compose.yml (app service + named volume for `data/`), `.dockerignore`, credential file mounting strategy (OAuth token + Sheets service account on named volume).
 
-**Pitfalls avoided:** Agent acts when it should escalate (allowlist model), prompt injection (two-LLM classifier/responder pattern + output validation gate), LLM hallucinating commitments (validation gate blocks out-of-range values).
+**Features addressed:** Multi-stage Dockerfile, Docker Compose file, graceful shutdown, Docker volume for SQLite persistence.
 
-### Phase 4: Slack Integration and Human-in-the-Loop
+**Avoids:** Pitfall: OAuth2 `token.json` baked into image or lost on restart (volume mount). Pitfall: Sheets service account permission errors with non-root user (validate at startup). Pitfall: SQLite WAL on networked filesystem (verify local block storage).
 
-**Rationale:** The agent can now negotiate autonomously within bounds. This phase adds the critical human escalation circuit: Slack notifications with full context and actionable buttons, human approval/modification/takeover flow, and the feedback loop from human decisions back to the agent.
+### Phase 4: CI/CD Pipeline
 
-**Delivers:** Slack gateway (Bolt framework), rich escalation messages with Block Kit (influencer context, draft response, approve/reject/takeover buttons), agreement notification messages, human response routing back through the event system, escalation timeout handling, agent status reporting via Slack.
+**Rationale:** CI must be established and validated before CD is wired. The Docker image must build and pass all tests before automated deployment is possible. This phase depends on the Dockerfile from Phase 3.
 
-**Features addressed:** Human escalation via Slack, agreement detection and Slack alert, human takeover capability.
+**Delivers:** GitHub Actions CI workflow (lint with ruff, typecheck with mypy, test with pytest on every push), GitHub Actions CD workflow (build Docker image, push to GHCR, SSH deploy to VM on tag/manual trigger), test isolation (AUDIT_DB_PATH set to temp directory in CI).
 
-**Pitfalls avoided:** No escalation boundary (allowlist enforced from Phase 3, Slack UI enables human override), escalation messages without context (Block Kit with full negotiation summary and draft).
+**Features addressed:** GitHub Actions CI, GitHub Actions CD.
 
-### Phase 5: Campaign Ingestion, Operational Hardening, and Launch
+**Uses:** astral-sh/setup-uv v6, docker/build-push-action v6, appleboy/ssh-action.
 
-**Rationale:** The core negotiation loop is functional with human-in-the-loop. Now connect the campaign data pipeline (ClickUp integration), add background task processing (Celery), implement stale negotiation follow-up, and harden the system for production. This phase transitions from "it works" to "it works reliably at scale."
+**Avoids:** Pitfall: CI tests hitting real SQLite files or leaking state (temp path per test). Pitfall: auto-deploy on every commit (manual trigger or tag-based deploy).
 
-**Delivers:** Campaign data input (ClickUp webhook integration, manual JSON fallback), Celery task queue for async email processing, stale negotiation detection and follow-up sequences, error recovery and queue management, end-to-end integration tests, prompt injection red-teaming, full-flow testing with real email threads.
+### Phase 5: Monitoring, Observability, and Live Verification
 
-**Features addressed:** Campaign data input, ClickUp integration, stale negotiation follow-up.
+**Rationale:** With the agent deployed and running, add the observability layer. This phase is intentionally last because monitoring is only useful once the system is live. It includes Prometheus metrics, Sentry error tracking, and the `@pytest.mark.live` integration test pattern.
 
-**Pitfalls avoided:** Synchronous LLM calls blocking webhooks (Celery async processing), escalation flood (rate-limited Slack messages), "looks done but isn't" (comprehensive end-to-end testing checklist).
+**Delivers:** Prometheus `/metrics` endpoint via prometheus-fastapi-instrumentator, Sentry SDK integration with structlog bridge, request ID middleware for log traceability, `@pytest.mark.live` integration test marker and conftest pattern, post-deploy smoke test suite, Gmail watch expiration persistence and renewal fix.
 
-### Phase 6: Advanced Negotiation and Multi-Agent Foundation
+**Features addressed:** Prometheus metrics, Sentry error tracking, live integration tests, Gmail watch auto-renewal fix.
 
-**Rationale:** With a proven, reliable core loop, add advanced features that optimize negotiation outcomes and lay the foundation for future agents (outreach agent, strategist agent).
+**Uses:** prometheus-fastapi-instrumentator 7.1.0, prometheus-client 0.24.1, sentry-sdk 2.53.0, structlog-sentry 2.2.1, pytest-asyncio 1.3.0, pytest-httpx 0.36.0.
 
-**Delivers:** Configurable negotiation playbooks (per-client strategies), intelligent counter-offer strategy (anchoring, concession patterns), confidence scoring for agreement detection, rate memory across negotiations, agent registry for multi-agent extensibility, negotiation analytics (Slack-based reports).
-
-**Features addressed:** Intelligent counter-offer strategy, negotiation playbook configuration, confidence scoring, rate memory, negotiation analytics.
+**Avoids:** Pitfall: Gmail watch expiry after restarts (persist expiration timestamp). Pitfall: Anthropic 529 vs 429 retry (enhance retry logic). Pitfall: Slack Bolt deadlock (add monitoring for WebSocket disconnects).
 
 ### Phase Ordering Rationale
 
-- **Phase 1 before everything:** The pricing engine and state machine are dependencies for every subsequent phase. Building them first with zero external dependencies means they can be fully unit-tested and hardened before any integration complexity enters the picture. This directly prevents the top two pitfalls (hallucinated rates, state corruption).
-- **Phase 2 before Phase 3:** The LLM pipeline (Phase 3) needs to send emails. Building the email gateway first means Phase 3 can focus purely on agent logic, not email plumbing. Gmail deliverability issues take weeks to surface -- starting email infrastructure early gives time to detect problems.
-- **Phase 3 is the integration crux:** This is where all components wire together. It is the highest-risk phase and benefits from solid, tested foundations in Phases 1 and 2. The escalation router and validation gate must be correct here -- they are the safety rails for the entire system.
-- **Phase 4 after the agent works:** Slack integration depends on having a working agent that produces escalation events and agreement events. Building Slack first would mean testing with fake data; building the agent first means Slack integration tests against real agent output.
-- **Phase 5 is operational readiness:** ClickUp integration and Celery async processing are not needed until the core loop is validated. The agent can be tested with hardcoded campaign data while this is built.
-- **Phase 6 last:** Advanced negotiation features require a proven baseline. Intelligent counter-offer strategy, style adaptation, and bundling are optimizations on top of a working system.
+- **Phase 1 before Phase 2:** Settings management and health endpoints are low-risk and create the foundation that state persistence and Docker both depend on.
+- **Phase 2 before Phase 3:** State persistence must work before Docker packaging, because the entire point of Docker deployment is surviving restarts. If state persistence has bugs, they must be caught before the Dockerfile is finalized.
+- **Phase 3 before Phase 4:** CI/CD depends on a working Dockerfile. The Docker image must build and the health check must pass before automated deployment is wired.
+- **Phase 4 before Phase 5:** Monitoring is only useful after the system is deployed. Live verification tests need a running deployment target.
+- **Within each phase:** Features are ordered by dependency (e.g., health endpoints before Docker HEALTHCHECK, CI before CD, Prometheus before custom business metrics).
 
 ### Research Flags
 
 Phases likely needing deeper research during planning:
-- **Phase 2 (Email Integration):** Gmail API push notifications via Google Cloud Pub/Sub require specific GCP setup. OAuth2 token management and scope requirements need verification against current Google documentation. MIME parsing edge cases (mobile HTML-only replies, inline images, forwarded threads) need real-world test data.
-- **Phase 3 (LLM Pipeline):** LangGraph's human-in-the-loop interrupt/resume patterns and langgraph-checkpoint-postgres configuration need verification against current LangGraph docs (fast-moving API). Structured output schemas for intent classification and response composition need prompt engineering iteration. The two-LLM classifier/responder architecture for prompt injection defense needs validation.
-- **Phase 6 (Advanced Negotiation):** Intelligent counter-offer strategy requires research into negotiation theory (anchoring, concession curves, BATNA). Market-rate CPM data per platform/format needs current validation -- training data rates may be outdated.
+- **Phase 2 (Persistent State):** The serialization design for `NegotiationStateMachine` and `CampaignCPMTracker` objects requires inspecting the actual class fields. Alembic with SQLite requires `batch_alter_table` for all migrations -- verify this pattern works with the async engine. The startup recovery logic (loading non-terminal negotiations into the dict) needs careful testing for edge cases (corrupted JSON, schema changes between versions).
+- **Phase 3 (Docker Packaging):** OAuth credential mounting strategy needs validation on the actual target VM. The interaction between non-root container user and file permissions for credential files is a known failure point. Test on the real deployment target, not just Docker Desktop.
 
 Phases with standard patterns (skip deep research):
-- **Phase 1 (Foundation):** State machines, pricing engines, and domain modeling are well-documented patterns. No novel technical challenges.
-- **Phase 4 (Slack Integration):** Standard Slack Bolt patterns, well-documented Block Kit components. Unlikely to need additional research.
-- **Phase 5 (Campaign Ingestion):** ClickUp webhook integration, Celery task queues, and operational tooling follow established patterns.
+- **Phase 1 (Settings and Health):** pydantic-settings and health endpoints are thoroughly documented, trivial patterns.
+- **Phase 4 (CI/CD):** GitHub Actions + GHCR + SSH deploy is a well-trodden path with official action documentation.
+- **Phase 5 (Monitoring):** prometheus-fastapi-instrumentator and Sentry SDK integration are two-line additions with extensive documentation.
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | MEDIUM | Architectural patterns (LangGraph, FastAPI, PostgreSQL) are HIGH confidence. Exact version numbers and API compatibility are MEDIUM -- all based on training data cutoff May 2025. LangGraph is fast-moving; verify versions before implementation. |
-| Features | MEDIUM | Feature landscape and priorities are well-grounded in project requirements and competitive analysis. Competitor feature sets could not be verified against live product pages. CPM market rates ($20-$30 range) are per project spec, not independently validated. |
-| Architecture | MEDIUM-HIGH | Core patterns (event-driven, state machine, ports/adapters, structured LLM output) are fundamental, well-established patterns with HIGH confidence. Integration-specific details (Gmail push notifications, Slack Bolt interactive messages, LangGraph checkpoint persistence) are MEDIUM. |
-| Pitfalls | MEDIUM-HIGH | Pitfall categories (LLM hallucination, email deliverability, state corruption, prompt injection) are well-documented in the AI agent and email automation communities. Specific Gmail API quotas and LLM pricing should be verified. |
+| Stack | HIGH | All package versions verified against PyPI on 2026-02-19. Compatibility matrix confirmed. No version uncertainty. |
+| Features | HIGH | Feature landscape is straightforward production hardening. All features have clear implementation patterns and well-defined scope. |
+| Architecture | HIGH (with caveat) | Patterns are well-established. The Redis vs. SQLite disagreement is resolved in favor of SQLite. The caveat is that the `NegotiationStateMachine` serialization design needs validation against the actual class during implementation. |
+| Pitfalls | HIGH | All pitfalls are grounded in direct code observation of `src/negotiation/`. Prevention strategies are specific and actionable. The OAuth and WAL mode pitfalls are documented SQLite/Docker limitations. |
 
-**Overall confidence:** MEDIUM
+**Overall confidence:** HIGH
 
-The research provides a strong architectural foundation and clear build order. The primary uncertainty is in version-specific details (LangGraph API, Gmail quotas, Anthropic SDK structured output) that need verification against current documentation during implementation. The domain-level recommendations (event-driven architecture, deterministic pricing engine, allowlist escalation model, database-backed state machine) are high confidence and should be treated as non-negotiable architectural decisions.
+This is a well-researched production hardening milestone for a working application. The technology choices are conservative (SQLite, not PostgreSQL; Docker Compose, not Kubernetes; Prometheus metrics, not OpenTelemetry), the patterns are well-established, and the pitfalls are well-documented with clear prevention strategies. The only area requiring careful implementation attention is the state persistence migration (Phase 2), which involves serialization design that depends on the actual class internals.
 
 ### Gaps to Address
 
-- **Current LangGraph version and API surface:** Verify LangGraph ~0.2.x API, human-in-the-loop patterns, and langgraph-checkpoint-postgres compatibility against current docs before Phase 3 planning.
-- **Gmail API quotas and push notification setup:** Verify current sending limits, quota units, and Pub/Sub push notification configuration before Phase 2 implementation. GCP project setup may be required.
-- **Platform-specific CPM market rates:** The $20-$30 CPM range comes from project requirements. Real market data is needed to determine if this range is appropriate for all platforms and deliverable types. Instagram Stories and YouTube long-form have very different market norms.
-- **Anthropic SDK structured output patterns:** Verify current tool_use / structured output API for Claude Sonnet before Phase 3. The exact pattern for enforcing JSON schema output may have changed.
-- **Slack interactive message limitations:** Verify current Block Kit capabilities, message action payload format, and rate limits for interactive messages before Phase 4.
-- **Email MIME parsing edge cases:** Need real-world email samples from actual influencer negotiations to build robust parsing. Mobile HTML-only replies, forwarded threads, inline images, and CC'd party messages are common edge cases that cannot be anticipated from documentation alone.
+- **NegotiationStateMachine serialization:** The exact fields of `NegotiationStateMachine` and `CampaignCPMTracker` need to be inspected during Phase 2 planning. The research assumes they are simple (state string + history list + scalar fields), but the actual classes may have additional state that needs persisting.
+- **Target VM filesystem type:** The SQLite WAL pitfall depends on whether the deployment VM uses local block storage or networked storage. This must be confirmed before Phase 3 implementation.
+- **Gmail Pub/Sub endpoint reachability:** The deployed VM must be reachable from Google's Pub/Sub servers. If the VM is behind NAT, a reverse proxy (Cloudflare Tunnel, nginx) is needed. This is not covered in the research and must be confirmed during Phase 3.
+- **Slack Bolt async migration timeline:** The Slack Bolt Socket Mode deadlock risk is documented but the prevention strategy for v1.1 is "monitor and add reconnection logic," not a full async migration. If the deadlock proves to be a frequent issue in production, an emergency migration to `AsyncSocketModeHandler` may be needed. The scope of that migration is not estimated.
+- **pytest-asyncio 1.3.0 breaking changes:** The upgrade from 0.21.0 to 1.3.0 is a breaking change that requires `asyncio_mode = "auto"` in config and may require updating existing test fixtures. The scope of test updates is not estimated.
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- Hexagonal architecture / ports and adapters pattern -- well-established, not version-dependent
-- Finite state machine patterns for multi-turn conversation agents -- fundamental CS pattern
-- Event-driven architecture for async email processing -- established pattern
-- Email deliverability standards (SPF/DKIM/DMARC) -- long-standing infrastructure standards
-- OWASP LLM Top 10 for prompt injection risks -- industry standard reference
+- SQLAlchemy 2.0 async documentation (AsyncAdaptedQueuePool for file SQLite)
+- PyPI version verification for all packages (2026-02-19)
+- SQLite WAL mode documentation (sqlite.org/wal.html)
+- Redis persistence documentation (AOF mode)
+- FastAPI official Docker deployment guide
+- GitHub Actions official documentation (setup-uv, docker/build-push-action, docker/login-action)
+- Anthropic API error codes documentation
+- Slack Bolt GitHub issues (#445, #994) for Socket Mode threading issues
+- Google OAuth2 documentation (token invalidation, consent screen modes)
+- Direct codebase analysis: `src/negotiation/app.py`, `resilience/retry.py`, `audit/store.py`, `auth/credentials.py`, `slack/takeover.py`
 
 ### Secondary (MEDIUM confidence)
-- LangGraph documentation and architecture patterns (training data, cutoff May 2025)
-- Gmail API documentation (thread management, OAuth, push notifications)
-- Slack API documentation (Block Kit, interactive messages, Bolt framework)
-- Anthropic Claude API documentation (tool use, structured output)
-- FastAPI + SQLAlchemy + PostgreSQL patterns (mature, stable technologies)
-- Influencer marketing platform feature analysis (GRIN, AspireIQ, CreatorIQ, Instantly, Smartlead)
+- Docker multi-stage builds with uv (multiple 2025 blog posts, consistent patterns)
+- FastAPI health check patterns (2025 community guides)
+- prometheus-fastapi-instrumentator integration pattern (GitHub README)
+- structlog-sentry bridge configuration (kiwicom/structlog-sentry GitHub)
+- pytest marker skip pattern for live integration tests (pytest official docs)
 
 ### Tertiary (LOW confidence)
-- Exact library version numbers throughout (training data only -- must verify all before locking in)
-- Influencer marketing CPM benchmarks by platform/format (market rates shift; $20-$30 range per project spec, not independently validated)
-- ClickUp API v2 current capabilities (verify at https://clickup.com/api)
-- uv package manager maturity and production-readiness (relatively new tool in training data)
+- Exact Grafana Cloud free tier capabilities for Prometheus remote write (may have changed)
+- `appleboy/ssh-action` version stability (community action, not officially maintained by GitHub)
+- Sentry free tier limits for the agent's expected event volume
 
 ---
-*Research completed: 2026-02-18*
+*Research completed: 2026-02-19*
 *Ready for roadmap: yes*
