@@ -20,11 +20,11 @@ from collections.abc import Callable
 from typing import Any
 
 import structlog
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request
 
 logger = structlog.get_logger()
 
-app = FastAPI(title="Negotiation Agent Webhooks")
+router = APIRouter()
 
 # Module-level callback for campaign processing. Set via set_campaign_processor().
 _campaign_processor: Callable[[str], Any] | None = None
@@ -61,7 +61,7 @@ def verify_signature(body: bytes, signature: str, secret: str) -> bool:
     return hmac.compare_digest(computed, signature)
 
 
-@app.post("/webhooks/clickup")
+@router.post("/webhooks/clickup")
 async def clickup_webhook(request: Request) -> dict[str, str]:
     """Receive and process ClickUp webhook events.
 
@@ -121,7 +121,7 @@ async def clickup_webhook(request: Request) -> dict[str, str]:
     return {"status": "ok"}
 
 
-@app.get("/health")
+@router.get("/health")
 async def health_check() -> dict[str, str]:
     """Health check endpoint.
 

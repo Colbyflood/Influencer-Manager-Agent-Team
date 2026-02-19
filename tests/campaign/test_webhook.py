@@ -15,7 +15,13 @@ from unittest.mock import MagicMock, patch
 import pytest
 from fastapi.testclient import TestClient
 
-from negotiation.campaign.webhook import app, set_campaign_processor, verify_signature
+from fastapi import FastAPI
+
+from negotiation.campaign.webhook import router, set_campaign_processor, verify_signature
+
+# Create a minimal FastAPI app wrapping the router for TestClient usage
+app = FastAPI()
+app.include_router(router)
 
 # Test webhook secret
 TEST_SECRET = "test-webhook-secret-12345"
