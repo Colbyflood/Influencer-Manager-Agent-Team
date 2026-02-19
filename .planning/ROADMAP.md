@@ -18,6 +18,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 4: Slack and Human-in-the-Loop** - Escalation routing, agreement alerts, human takeover, and configurable trigger rules (completed 2026-02-19)
 - [x] **Phase 5: Campaign Ingestion and Operational Readiness** - ClickUp campaign data input, conversation logging, audit trail, and production hardening (completed 2026-02-19)
 - [x] **Phase 6: Runtime Orchestration Wiring** - Connect all Phase 1-5 components in app.py: Gmail inbound handler, negotiation loop activation, SlackDispatcher wiring, campaign-to-negotiation handoff, and integration tests (completed 2026-02-19)
+- [ ] **Phase 7: Integration Hardening** - Fix graceful degradation bugs, wire inbound email audit logging, activate engagement-quality pricing, and clean up orphaned code paths
 
 ## Phase Details
 
@@ -121,10 +122,22 @@ Plans:
 - [ ] 06-02-PLAN.md — Campaign-to-negotiation handoff, CampaignCPMTracker wiring, initial outreach emails
 - [ ] 06-03-PLAN.md — Integration tests verifying all 4 MISSING gaps and 2 broken flows are closed
 
+### Phase 7: Integration Hardening
+**Goal**: Fix graceful degradation bugs, wire missing audit logging, activate engagement-quality pricing, and clean up orphaned code paths discovered by the v1.0 milestone re-audit
+**Depends on**: Phase 6
+**Gap Closure**: Closes 3 integration issues and 3 tech debt items from v1.0 re-audit
+**Success Criteria** (what must be TRUE):
+  1. Campaign ingestion works correctly when `SLACK_BOT_TOKEN` is absent — `ingest_campaign` skips Slack notifications gracefully instead of crashing
+  2. Inbound emails are logged to the audit trail with timestamps, negotiation state, and rates — completing DATA-03's "every sent/received email" requirement
+  3. `InfluencerRow` includes `engagement_rate` field and `CampaignCPMTracker.get_flexibility()` receives real engagement data for premium calculations
+  4. Orphaned wiring functions (`create_audited_email_receive`, `get_pay_range` in pipeline) are either connected or explicitly removed
+  5. All 681+ tests pass with no regressions
+**Plans**: TBD
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -134,3 +147,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 4. Slack and Human-in-the-Loop | 4/4 | Complete    | 2026-02-19 |
 | 5. Campaign Ingestion and Operational Readiness | 4/4 | Complete    | 2026-02-19 |
 | 6. Runtime Orchestration Wiring | 3/3 | Complete    | 2026-02-19 |
+| 7. Integration Hardening | 0/? | Not started | - |
