@@ -31,3 +31,8 @@ htmlcov/
 
 # OS
 .DS_Store
+
+# Google API credentials (never commit)
+credentials.json
+token.json
+service_account.json
