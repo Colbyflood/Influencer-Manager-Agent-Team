@@ -34,6 +34,7 @@ from negotiation.campaign.ingestion import ingest_campaign
 from negotiation.campaign.webhook import router as webhook_router
 from negotiation.campaign.webhook import set_campaign_processor
 from negotiation.config import Settings, get_settings, validate_credentials
+from negotiation.health import register_health_routes
 from negotiation.resilience.retry import configure_error_notifier
 from negotiation.slack.app import create_slack_app, start_slack_app
 from negotiation.slack.commands import register_commands
@@ -561,6 +562,7 @@ def create_app(services: dict[str, Any]) -> FastAPI:
     fastapi_app.state.services = services
     fastapi_app.state.settings = services.get("_settings", get_settings())
     fastapi_app.include_router(webhook_router)
+    register_health_routes(fastapi_app)
 
     @fastapi_app.post("/webhooks/gmail")
     async def gmail_notification(request: Request) -> dict[str, str]:

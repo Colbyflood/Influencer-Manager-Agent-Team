@@ -120,11 +120,3 @@ async def clickup_webhook(request: Request) -> dict[str, str]:
     return {"status": "ok"}
 
 
-@router.get("/health")
-async def health_check() -> dict[str, str]:
-    """Health check endpoint.
-
-    Returns:
-        A status dict indicating the service is healthy.
-    """
-    return {"status": "healthy"}

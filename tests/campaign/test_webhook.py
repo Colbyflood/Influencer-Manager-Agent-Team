@@ -213,10 +213,3 @@ class TestClickUpWebhookEndpoint:
         assert response.status_code == 500
 
 
-class TestHealthCheck:
-    """Tests for the /health endpoint."""
-
-    def test_health_check_returns_200(self, client: TestClient) -> None:
-        response = client.get("/health")
-        assert response.status_code == 200
-        assert response.json() == {"status": "healthy"}
