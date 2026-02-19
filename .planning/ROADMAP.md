@@ -114,13 +114,12 @@ Plans:
   4. All email sends, receives, escalations, and agreements are logged to the audit trail via the wiring functions
   5. CampaignCPMTracker is instantiated per campaign and provides per-influencer flexibility guidance to the negotiation loop
   6. Deprecated FastAPI on_event pattern is replaced with lifespan handlers
-**Plans**: TBD (created during plan-phase)
+**Plans**: 3 plans
 
 Plans:
-- [ ] 06-01-PLAN.md — Gmail inbound handler and negotiation orchestrator
-- [ ] 06-02-PLAN.md — Campaign-to-negotiation handoff and CPMTracker wiring
-- [ ] 06-03-PLAN.md — SlackDispatcher and audit wiring activation in app.py
-- [ ] 06-04-PLAN.md — Tech debt cleanup (lifespan, unused exports, integration tests)
+- [ ] 06-01-PLAN.md — Lifespan migration, service initialization (GmailClient, SlackDispatcher, Anthropic), Gmail Pub/Sub webhook, inbound email pipeline
+- [ ] 06-02-PLAN.md — Campaign-to-negotiation handoff, CampaignCPMTracker wiring, initial outreach emails
+- [ ] 06-03-PLAN.md — Integration tests verifying all 4 MISSING gaps and 2 broken flows are closed
 
 ## Progress
 
@@ -134,4 +133,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 3. LLM Negotiation Pipeline | 4/4 | Complete    | 2026-02-19 |
 | 4. Slack and Human-in-the-Loop | 4/4 | Complete    | 2026-02-19 |
 | 5. Campaign Ingestion and Operational Readiness | 4/4 | Complete    | 2026-02-19 |
-| 6. Runtime Orchestration Wiring | 0/4 | Not Started | - |
+| 6. Runtime Orchestration Wiring | 0/3 | Not Started | - |
