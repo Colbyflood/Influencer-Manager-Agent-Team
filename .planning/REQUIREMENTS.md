@@ -27,7 +27,7 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Human Integration
 
 - [x] **HUMAN-01**: Agent escalates edge cases to designated Slack channel with full context (conversation history, influencer metrics, proposed vs target rate, reason for escalation)
-- [ ] **HUMAN-02**: Agent escalates based on configurable trigger rules (CPM over threshold, ambiguous intent, hostile tone, legal/contract language, unusual deliverable requests)
+- [x] **HUMAN-02**: Agent escalates based on configurable trigger rules (CPM over threshold, ambiguous intent, hostile tone, legal/contract language, unusual deliverable requests)
 - [x] **HUMAN-03**: Agent detects agreement in influencer replies and sends actionable Slack alert (influencer name, agreed rate, platform, deliverables, CPM achieved, next steps)
 - [x] **HUMAN-04**: Agent supports human takeover — when a human responds in a thread, agent stops autonomous handling of that thread
 
@@ -101,7 +101,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | NEG-06 | Phase 3 | Complete |
 | NEG-07 | Phase 1 | Complete |
 | HUMAN-01 | Phase 4 | Complete |
-| HUMAN-02 | Phase 4 | Pending |
+| HUMAN-02 | Phase 4 | Complete |
 | HUMAN-03 | Phase 4 | Complete |
 | HUMAN-04 | Phase 4 | Complete |
 | DATA-01 | Phase 5 | Pending |
