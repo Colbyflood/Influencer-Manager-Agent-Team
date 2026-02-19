@@ -646,13 +646,25 @@ async def process_inbound_email(message_id: str, services: dict[str, Any]) -> No
         context = thread_state["context"]
         round_count = thread_state["round_count"]
 
+        # Log inbound email to audit trail (DATA-03: every received email)
+        audit_logger = services.get("audit_logger")
+        if audit_logger is not None:
+            audit_logger.log_email_received(
+                campaign_id=context.get("campaign_id"),
+                influencer_name=str(context.get("influencer_name", "")),
+                thread_id=inbound.thread_id,
+                email_body=inbound.body_text,
+                negotiation_state=str(context.get("negotiation_state", "")),
+                intent_classification=None,  # Not yet classified at receipt time
+            )
+
         # Step 3: Run pre-check gates (if SlackDispatcher available)
         if dispatcher is not None:
             pre_check_result = dispatcher.pre_check(
                 email_body=inbound.body_text,
                 thread_id=inbound.thread_id,
                 influencer_email=inbound.from_email,
-                proposed_cpm=0.0,
+                proposed_cpm=float(context.get("next_cpm", 0)),
                 intent_confidence=1.0,
                 gmail_service=gmail_client._service,
                 anthropic_client=anthropic_client,

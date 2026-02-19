@@ -320,6 +320,165 @@ class TestProcessInboundEmail:
         mock_process.assert_not_called()
         mock_gmail.send_reply.assert_not_called()
 
+    def test_process_inbound_email_passes_real_cpm_to_pre_check(self) -> None:
+        """pre_check receives proposed_cpm from context.next_cpm, not hardcoded 0.0."""
+        inbound = _make_inbound_email()
+
+        mock_gmail = MagicMock()
+        mock_gmail.get_message.return_value = inbound
+        mock_gmail._service = MagicMock()
+
+        mock_dispatcher = MagicMock()
+        mock_dispatcher.pre_check.return_value = None  # proceed
+        mock_dispatcher.handle_negotiation_result.side_effect = lambda r, c: r
+
+        mock_process = MagicMock(return_value={
+            "action": "send",
+            "email_body": "Counter offer.",
+        })
+
+        mock_anthropic = MagicMock()
+
+        state_machine = MagicMock()
+        negotiation_states = {
+            "thread_abc": {
+                "state_machine": state_machine,
+                "context": {
+                    "influencer_name": "Jane",
+                    "next_cpm": Decimal("25.50"),
+                    "campaign_id": "CAMP-001",
+                },
+                "round_count": 0,
+            }
+        }
+
+        services = _base_services(
+            gmail_client=mock_gmail,
+            slack_dispatcher=mock_dispatcher,
+            anthropic_client=mock_anthropic,
+            audited_process_reply=mock_process,
+            negotiation_states=negotiation_states,
+        )
+
+        async def mock_to_thread(fn, *args, **kwargs):
+            return fn(*args, **kwargs)
+
+        with patch("negotiation.app.asyncio.to_thread", side_effect=mock_to_thread):
+            asyncio.run(process_inbound_email("msg_123", services))
+
+        mock_dispatcher.pre_check.assert_called_once()
+        call_kwargs = mock_dispatcher.pre_check.call_args[1]
+        assert call_kwargs["proposed_cpm"] == 25.5
+        assert isinstance(call_kwargs["proposed_cpm"], float)
+
+    def test_process_inbound_email_logs_received_email_to_audit(self) -> None:
+        """Inbound emails are logged via audit_logger.log_email_received."""
+        inbound = _make_inbound_email()
+
+        mock_gmail = MagicMock()
+        mock_gmail.get_message.return_value = inbound
+        mock_gmail._service = MagicMock()
+
+        mock_dispatcher = MagicMock()
+        mock_dispatcher.pre_check.return_value = None
+        mock_dispatcher.handle_negotiation_result.side_effect = lambda r, c: r
+
+        mock_process = MagicMock(return_value={
+            "action": "send",
+            "email_body": "Counter offer.",
+        })
+
+        mock_anthropic = MagicMock()
+        mock_audit = MagicMock()
+
+        state_machine = MagicMock()
+        negotiation_states = {
+            "thread_abc": {
+                "state_machine": state_machine,
+                "context": {
+                    "influencer_name": "Jane",
+                    "campaign_id": "CAMP-001",
+                    "negotiation_state": "counter_received",
+                    "next_cpm": Decimal("20"),
+                },
+                "round_count": 1,
+            }
+        }
+
+        services = _base_services(
+            gmail_client=mock_gmail,
+            slack_dispatcher=mock_dispatcher,
+            anthropic_client=mock_anthropic,
+            audited_process_reply=mock_process,
+            negotiation_states=negotiation_states,
+            audit_logger=mock_audit,
+        )
+
+        async def mock_to_thread(fn, *args, **kwargs):
+            return fn(*args, **kwargs)
+
+        with patch("negotiation.app.asyncio.to_thread", side_effect=mock_to_thread):
+            asyncio.run(process_inbound_email("msg_123", services))
+
+        mock_audit.log_email_received.assert_called_once_with(
+            campaign_id="CAMP-001",
+            influencer_name="Jane",
+            thread_id="thread_abc",
+            email_body="I can do it for $500.",
+            negotiation_state="counter_received",
+            intent_classification=None,
+        )
+
+    def test_process_inbound_email_no_audit_logger_no_crash(self) -> None:
+        """When audit_logger is not in services, processing continues without error."""
+        inbound = _make_inbound_email()
+
+        mock_gmail = MagicMock()
+        mock_gmail.get_message.return_value = inbound
+        mock_gmail._service = MagicMock()
+
+        mock_dispatcher = MagicMock()
+        mock_dispatcher.pre_check.return_value = None
+        mock_dispatcher.handle_negotiation_result.side_effect = lambda r, c: r
+
+        mock_process = MagicMock(return_value={
+            "action": "send",
+            "email_body": "Counter offer.",
+        })
+
+        mock_anthropic = MagicMock()
+
+        state_machine = MagicMock()
+        negotiation_states = {
+            "thread_abc": {
+                "state_machine": state_machine,
+                "context": {
+                    "influencer_name": "Jane",
+                    "next_cpm": Decimal("20"),
+                },
+                "round_count": 0,
+            }
+        }
+
+        services = _base_services(
+            gmail_client=mock_gmail,
+            slack_dispatcher=mock_dispatcher,
+            anthropic_client=mock_anthropic,
+            audited_process_reply=mock_process,
+            negotiation_states=negotiation_states,
+        )
+        # Remove audit_logger from services entirely
+        services.pop("audit_logger", None)
+
+        async def mock_to_thread(fn, *args, **kwargs):
+            return fn(*args, **kwargs)
+
+        with patch("negotiation.app.asyncio.to_thread", side_effect=mock_to_thread):
+            asyncio.run(process_inbound_email("msg_123", services))
+
+        # No crash -- function completed normally and sent the reply
+        mock_gmail.send_reply.assert_called_once()
+
     def test_handles_escalation(self) -> None:
         """Escalation result: send_reply NOT called, handle_result IS called."""
         inbound = _make_inbound_email()
