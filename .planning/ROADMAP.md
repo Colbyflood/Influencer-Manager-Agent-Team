@@ -105,8 +105,8 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 12-01-PLAN.md — Prometheus metrics, Sentry error reporting, and request ID tracing middleware
-- [ ] 12-02-PLAN.md — Opt-in @pytest.mark.live integration tests for Gmail, Sheets, and Slack
+- [x] 12-01-PLAN.md — Prometheus metrics, Sentry error reporting, and request ID tracing middleware
+- [x] 12-02-PLAN.md — Opt-in @pytest.mark.live integration tests for Gmail, Sheets, and Slack
 - [ ] 12-03-PLAN.md — Gmail watch expiration persistence and expiry-aware renewal
 
 ## Progress
@@ -127,4 +127,4 @@ Phases execute in numeric order: 8 -> 9 -> 10 -> 11 -> 12
 | 9. Persistent Negotiation State | v1.1 | Complete    | 2026-02-19 | 2026-02-19 |
 | 10. Docker Packaging and Deployment | 2/2 | Complete    | 2026-02-19 | - |
 | 11. CI/CD Pipeline | 1/1 | Complete    | 2026-02-19 | - |
-| 12. Monitoring, Observability, and Live Verification | v1.1 | 0/3 | Not started | - |
+| 12. Monitoring, Observability, and Live Verification | 2/3 | In Progress|  | - |

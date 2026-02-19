@@ -17,9 +17,9 @@ Requirements for production readiness. Each maps to roadmap phases.
 
 - [x] **OBS-01**: Agent exposes /health liveness endpoint that returns 200 when the process is alive
 - [x] **OBS-02**: Agent exposes /ready readiness endpoint that checks DB writable and Gmail token present
-- [ ] **OBS-03**: Agent exposes /metrics Prometheus endpoint with HTTP request metrics and custom business metrics (active negotiations, deals closed)
-- [ ] **OBS-04**: Agent reports errors to Sentry with full request context via structlog bridge
-- [ ] **OBS-05**: Agent attaches a unique request ID to every inbound request for end-to-end log traceability
+- [x] **OBS-03**: Agent exposes /metrics Prometheus endpoint with HTTP request metrics and custom business metrics (active negotiations, deals closed)
+- [x] **OBS-04**: Agent reports errors to Sentry with full request context via structlog bridge
+- [x] **OBS-05**: Agent attaches a unique request ID to every inbound request for end-to-end log traceability
 
 ### Deployment
 
@@ -30,7 +30,7 @@ Requirements for production readiness. Each maps to roadmap phases.
 ### Configuration & Testing
 
 - [x] **CONFIG-01**: Agent loads all configuration from environment variables via pydantic-settings with .env file support
-- [ ] **CONFIG-02**: Agent includes @pytest.mark.live integration tests that verify real Gmail, Sheets, and Slack connections
+- [x] **CONFIG-02**: Agent includes @pytest.mark.live integration tests that verify real Gmail, Sheets, and Slack connections
 - [ ] **CONFIG-03**: Agent persists Gmail watch expiration timestamp and renews relative to actual expiry, not process uptime
 
 ## v2 Requirements
@@ -73,10 +73,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DEPLOY-01 | Phase 10 | Complete |
 | DEPLOY-02 | Phase 10 | Complete |
 | DEPLOY-03 | Phase 11 | Complete |
-| OBS-03 | Phase 12 | Pending |
-| OBS-04 | Phase 12 | Pending |
-| OBS-05 | Phase 12 | Pending |
-| CONFIG-02 | Phase 12 | Pending |
+| OBS-03 | Phase 12 | Complete |
+| OBS-04 | Phase 12 | Complete |
+| OBS-05 | Phase 12 | Complete |
+| CONFIG-02 | Phase 12 | Complete |
 | CONFIG-03 | Phase 12 | Pending |
 
 **Coverage:**

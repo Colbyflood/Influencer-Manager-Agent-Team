@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 ## Current Position
 
 Phase: 12 of 12 (Monitoring, Observability, and Live Verification)
-Plan: 0 of 3 in current phase
+Plan: 2 of 3 in current phase
 Status: In Progress
-Last activity: 2026-02-19 -- Completed 11-01 (GitHub Actions CI workflow and branch protection)
+Last activity: 2026-02-19 -- Completed 12-01 (Observability foundations: Prometheus, Sentry, Request ID)
 
-Progress: [============================..] 91% (30/33 plans across all milestones)
+Progress: [=============================.] 97% (32/33 plans across all milestones)
 
 ## Performance Metrics
 
@@ -31,7 +31,7 @@ Progress: [============================..] 91% (30/33 plans across all milestone
 | Phase 9 | 2/2 | 8min | 4min |
 | Phase 10 | 2/2 | 3min | 1.5min |
 | Phase 11 | 1/1 | 20min | 20min |
-| Phase 12 | 0/3 | -- | -- |
+| Phase 12 | 2/3 | 6min | 3min |
 
 *Updated after each plan completion*
 
@@ -68,6 +68,12 @@ Recent decisions affecting current work:
 - [11-01]: No hardcoded Python version in CI -- astral-sh/setup-uv reads .python-version automatically
 - [11-01]: ruff format applied to entire codebase (30 files) to pass CI format check from day one
 - [11-01]: Branch protection configured via GitHub Settings UI (most reliable for admin-level operations)
+- [12-01]: SentryProcessor placed after add_log_level and before TimeStamper in structlog chain
+- [12-01]: Business metrics updated at state transitions (not by DB polling) for real-time accuracy
+- [12-01]: RequestIdMiddleware added before instrumentator so request_id is in all instrumented logs
+- [12-02]: Native pytest marker via pyproject.toml addopts (no custom CLI options or collection hooks)
+- [12-02]: Session-scoped live fixtures to avoid re-creating API clients per test
+- [12-02]: Credential-skip pattern: each fixture pytest.skip() if creds unavailable
 
 ### Pending Todos
 
@@ -81,5 +87,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 11-01-PLAN.md (GitHub Actions CI workflow and branch protection)
+Stopped at: Completed 12-01-PLAN.md (Observability foundations: Prometheus, Sentry, Request ID)
 Resume file: None
