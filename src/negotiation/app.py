@@ -267,29 +267,45 @@ def initialize_services() -> dict[str, Any]:
     services["background_tasks"] = background_tasks
 
     def campaign_processor(task_id: str) -> None:
-        """Process a campaign task from webhook, running the async ingest."""
+        """Process a campaign task from webhook.
+
+        Runs the async ingest and starts negotiations for found influencers.
+        """
+
+        async def _process() -> None:
+            result = await audited_ingest(
+                task_id,
+                clickup_token,
+                sheets_client,
+                slack_notifier,
+            )
+            # After ingestion, start negotiations for found influencers
+            found_influencers = result.get("found_influencers", [])
+            campaign = result.get("campaign")
+            if found_influencers and campaign and services.get("gmail_client"):
+                await start_negotiations_for_campaign(
+                    found_influencers=found_influencers,
+                    campaign=campaign,
+                    services=services,
+                )
+                logger.info(
+                    "Negotiations started for campaign",
+                    campaign=campaign.client_name,
+                    influencer_count=len(found_influencers),
+                )
+            elif not found_influencers:
+                logger.info(
+                    "No influencers found for campaign, no negotiations to start"
+                )
+
         try:
             loop = asyncio.get_event_loop()
             if loop.is_running():
-                task = asyncio.ensure_future(
-                    audited_ingest(
-                        task_id,
-                        clickup_token,
-                        sheets_client,
-                        slack_notifier,
-                    )
-                )
+                task = asyncio.ensure_future(_process())
                 background_tasks.add(task)
                 task.add_done_callback(background_tasks.discard)
             else:
-                loop.run_until_complete(
-                    audited_ingest(
-                        task_id,
-                        clickup_token,
-                        sheets_client,
-                        slack_notifier,
-                    )
-                )
+                loop.run_until_complete(_process())
         except Exception:
             logger.exception("Campaign processing failed", task_id=task_id)
 
