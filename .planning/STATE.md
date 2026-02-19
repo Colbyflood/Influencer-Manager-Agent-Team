@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core value:** The agent must negotiate influencer rates accurately using CPM-based logic and reliably communicate the outcome -- every agreed deal must result in a clear, actionable Slack notification to the team.
-**Current focus:** Phase 6: Runtime Orchestration Wiring -- Complete
+**Current focus:** Phase 7: Integration Hardening -- Complete
 
 ## Current Position
 
-Phase: 6 of 6 (Runtime Orchestration Wiring)
-Plan: 3 of 3 in current phase (06-03 complete)
+Phase: 7 of 7 (Integration Hardening)
+Plan: 2 of 2 in current phase (07-02 complete)
 Status: Complete
-Last activity: 2026-02-19 -- Completed 06-03-PLAN.md (Orchestration Integration Tests)
+Last activity: 2026-02-19 -- Completed 07-02-PLAN.md (Real CPM in pre_check + inbound email audit logging)
 
 Progress: [##########] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 21
+- Total plans completed: 23
 - Average duration: 4min
-- Total execution time: 1.40 hours
+- Total execution time: 1.47 hours
 
 **By Phase:**
 
@@ -33,9 +33,10 @@ Progress: [##########] 100%
 | 4 - Slack & HITL | 4/4 | 17min | 4min |
 | 5 - Campaign Ingestion | 4/4 | 21min | 5min |
 | 6 - Runtime Wiring | 3/3 | 12min | 4min |
+| 7 - Integration Hardening | 2/2 | 4min | 2min |
 
 **Recent Trend:**
-- Last 5 plans: 05-03 (5min), 05-04 (6min), 06-01 (4min), 06-02 (2min), 06-03 (6min)
+- Last 5 plans: 06-01 (4min), 06-02 (2min), 06-03 (6min), 07-01 (2min), 07-02 (2min)
 - Trend: Consistent
 
 *Updated after each plan completion*
@@ -121,6 +122,11 @@ Recent decisions affecting current work:
 - [06-02]: CampaignCPMTracker instantiated once per campaign, shared across all influencer negotiations.
 - [06-03]: Used asyncio.run() pattern for async tests (matches existing test_wiring.py convention, avoids pytest-asyncio config).
 - [06-03]: Patch targets use original module paths for locally-imported functions in start_negotiations_for_campaign.
+- [07-01]: engagement_rate is float | None (not Decimal) since it is a percentage metric, not a monetary value.
+- [07-01]: Orphan functions (get_pay_range, create_audited_email_receive) kept as-is -- valid utilities, no removal.
+- [07-02]: intent_confidence=1.0 intentionally preserved at pre_check -- no classification data at pre_check time.
+- [07-02]: audit_logger guarded with `is not None` to avoid crash when audit_logger absent from services.
+- [07-02]: intent_classification=None in log_email_received -- classification happens later in process_influencer_reply.
 
 ### Pending Todos
 
@@ -135,5 +141,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 06-03-PLAN.md (Orchestration Integration Tests) -- Phase 6 complete, all phases done
-Resume file: .planning/phases/06-runtime-orchestration-wiring/06-03-SUMMARY.md
+Stopped at: Completed 07-01-PLAN.md (Slack null-guard + engagement_rate wiring)
+Resume file: .planning/phases/07-integration-hardening/07-01-SUMMARY.md
