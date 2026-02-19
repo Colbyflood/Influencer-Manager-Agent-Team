@@ -1,0 +1,23 @@
+services:
+  agent:
+    build: .
+    container_name: negotiation-agent
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "${WEBHOOK_PORT:-8000}:8000"
+    volumes:
+      - agent_data:/app/data
+    environment:
+      # Production mode
+      - PRODUCTION=true
+      # Database path (inside the named volume)
+      - AUDIT_DB_PATH=/app/data/audit.db
+      # Credential paths (inside the named volume)
+      - GMAIL_TOKEN_PATH=/app/data/credentials/token.json
+      - GMAIL_CREDENTIALS_PATH=/app/data/credentials/credentials.json
+      - SHEETS_SERVICE_ACCOUNT_PATH=/app/data/credentials/service_account.json
+
+volumes:
+  agent_data:
+    name: negotiation-agent-data
