@@ -72,11 +72,11 @@ Plans:
   2. The Docker container runs as a non-root user and uses a multi-stage build (build stage separate from runtime stage)
   3. SQLite database and credential files persist across docker compose down and docker compose up cycles via a named volume
   4. Docker HEALTHCHECK directive automatically restarts the container if the health endpoint stops responding
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 10-01: TBD
-- [ ] 10-02: TBD
+- [ ] 10-01-PLAN.md — Multi-stage Dockerfile, .dockerignore, and entrypoint.sh (non-root user, HEALTHCHECK)
+- [ ] 10-02-PLAN.md — docker-compose.yml with named volume and end-to-end verification
 
 ### Phase 11: CI/CD Pipeline
 **Goal**: Every push to GitHub is automatically linted, typechecked, and tested so regressions are caught before merge
