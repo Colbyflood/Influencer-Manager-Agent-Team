@@ -90,11 +90,13 @@ def configure_logging(production: bool = False, sentry_dsn: str = "") -> None:
 
         shared_processors.append(get_sentry_processor())
 
-    shared_processors.extend([
-        structlog.processors.TimeStamper(fmt="iso"),
-        structlog.processors.StackInfoRenderer(),
-        structlog.processors.UnicodeDecoder(),
-    ])
+    shared_processors.extend(
+        [
+            structlog.processors.TimeStamper(fmt="iso"),
+            structlog.processors.StackInfoRenderer(),
+            structlog.processors.UnicodeDecoder(),
+        ]
+    )
 
     if is_production:
         renderer: structlog.types.Processor = structlog.processors.JSONRenderer()

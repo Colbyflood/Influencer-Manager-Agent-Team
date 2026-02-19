@@ -49,9 +49,9 @@ class TestGmailWatchStore:
         assert result == (2000, "second")
 
         # Verify only one row exists
-        row_count = watch_store._conn.execute(
-            "SELECT COUNT(*) FROM gmail_watch_state"
-        ).fetchone()[0]
+        row_count = watch_store._conn.execute("SELECT COUNT(*) FROM gmail_watch_state").fetchone()[
+            0
+        ]
         assert row_count == 1
 
     def test_save_updates_updated_at(self, watch_store: GmailWatchStore) -> None:
