@@ -15,6 +15,7 @@ dependencies = [
     "httpx>=0.28.1",
     "mail-parser-reply>=1.36",
     "pydantic>=2.12,<3",
+    "pydantic-settings>=2.13.0",
     "pyyaml>=6.0.3",
     "slack-bolt>=1.27.0",
     "slack-sdk>=3.40.1",
