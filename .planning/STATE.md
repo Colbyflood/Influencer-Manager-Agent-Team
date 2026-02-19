@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core value:** The agent must negotiate influencer rates accurately using CPM-based logic and reliably communicate the outcome -- every agreed deal must result in a clear, actionable Slack notification to the team.
-**Current focus:** Phase 5: Campaign Ingestion and Operational Readiness -- In Progress
+**Current focus:** Phase 5: Campaign Ingestion and Operational Readiness -- Complete
 
 ## Current Position
 
 Phase: 5 of 5 (Campaign Ingestion and Operational Readiness)
-Plan: 3 of 4 in current phase (05-01, 05-02, 05-03 complete)
-Status: In Progress
-Last activity: 2026-02-19 -- Completed 05-02-PLAN.md (ClickUp Webhook and Campaign Ingestion)
+Plan: 4 of 4 in current phase (05-01, 05-02, 05-03, 05-04 complete)
+Status: Complete
+Last activity: 2026-02-19 -- Completed 05-04-PLAN.md (App Entry Point and Audit Wiring)
 
-Progress: [#########-] 94%
+Progress: [##########] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 17
+- Total plans completed: 18
 - Average duration: 4min
-- Total execution time: 1.10 hours
+- Total execution time: 1.20 hours
 
 **By Phase:**
 
@@ -31,10 +31,10 @@ Progress: [#########-] 94%
 | 2 - Email & Data | 3/3 | 10min | 3min |
 | 3 - LLM Pipeline | 4/4 | 16min | 4min |
 | 4 - Slack & HITL | 4/4 | 17min | 4min |
-| 5 - Campaign Ingestion | 3/4 | 15min | 5min |
+| 5 - Campaign Ingestion | 4/4 | 21min | 5min |
 
 **Recent Trend:**
-- Last 5 plans: 04-03 (4min), 04-04 (5min), 05-01 (5min), 05-02 (5min), 05-03 (5min)
+- Last 5 plans: 04-04 (5min), 05-01 (5min), 05-02 (5min), 05-03 (5min), 05-04 (6min)
 - Trend: Consistent
 
 *Updated after each plan completion*
@@ -106,6 +106,10 @@ Recent decisions affecting current work:
 - [05-03]: type: ignore[untyped-decorator] for app.command since app param is Any (Bolt app passed at runtime).
 - [05-03]: Regex-based key:value parser for Slack command text supports multi-word values (e.g., influencer:Jane Doe).
 - [05-03]: Block Kit responses capped at 10 entries for readability with CLI fallback for full results.
+- [05-04]: Used logging.INFO/DEBUG integers for structlog make_filtering_bound_logger (get_level_from_name unavailable in 25.5.0).
+- [05-04]: Removed structlog.stdlib.add_logger_name since PrintLoggerFactory lacks .name attribute.
+- [05-04]: Local imports for SlackNotifier/SheetsClient inside initialize_services for graceful degradation.
+- [05-04]: Background task set + done_callback.discard pattern to prevent asyncio task GC (per RUF006).
 
 ### Pending Todos
 
@@ -120,5 +124,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 05-02-PLAN.md (ClickUp Webhook and Campaign Ingestion) -- Phase 5 in progress (3/4 plans done)
-Resume file: .planning/phases/05-campaign-ingestion-and-operational-readiness/05-02-SUMMARY.md
+Stopped at: Completed 05-04-PLAN.md (App Entry Point and Audit Wiring) -- All 5 phases complete (18/18 plans done)
+Resume file: .planning/phases/05-campaign-ingestion-and-operational-readiness/05-04-SUMMARY.md
