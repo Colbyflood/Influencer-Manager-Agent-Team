@@ -1,5 +1,7 @@
 """NegotiationStateMachine class with trigger, history, and valid_events."""
 
+from __future__ import annotations
+
 from negotiation.domain.errors import InvalidTransitionError
 from negotiation.domain.types import NegotiationState
 from negotiation.state_machine.transitions import TERMINAL_STATES, TRANSITIONS
@@ -25,6 +27,31 @@ class NegotiationStateMachine:
     ) -> None:
         self._state: NegotiationState = initial_state
         self._history: list[tuple[NegotiationState, str, NegotiationState]] = []
+
+    @classmethod
+    def from_snapshot(
+        cls,
+        state: NegotiationState,
+        history: list[tuple[NegotiationState, str, NegotiationState]],
+    ) -> NegotiationStateMachine:
+        """Reconstruct a state machine from a persisted snapshot.
+
+        Creates an instance at the given *state* with the provided *history*
+        without replaying events.  This makes the persistence contract
+        explicit rather than requiring external code to poke at ``_history``.
+
+        Args:
+            state: The negotiation state to restore.
+            history: The full transition history as ``(from, event, to)``
+                     tuples in chronological order.
+
+        Returns:
+            A ``NegotiationStateMachine`` positioned at *state* with the
+            given history already recorded.
+        """
+        instance = cls(initial_state=state)
+        instance._history = list(history)  # defensive copy
+        return instance
 
     @property
     def state(self) -> NegotiationState:

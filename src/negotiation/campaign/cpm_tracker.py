@@ -7,8 +7,11 @@ Per locked decision: Flexibility must consider engagement quality, NOT just
 campaign averaging alone.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 from decimal import Decimal
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -185,3 +188,55 @@ class CampaignCPMTracker:
         parts.append(f"max allowed: ${max_allowed:.2f}")
 
         return "; ".join(parts)
+
+    # ------------------------------------------------------------------
+    # Serialization
+    # ------------------------------------------------------------------
+
+    def to_dict(self) -> dict[str, Any]:
+        """Serialize the tracker to a JSON-safe dict.
+
+        Decimal values are stored as strings to avoid precision loss during
+        JSON round-trips.
+
+        Returns:
+            A dict suitable for ``json.dumps`` that captures the full
+            tracker state including recorded agreements.
+        """
+        return {
+            "campaign_id": self.campaign_id,
+            "target_min_cpm": str(self.target_min_cpm),
+            "target_max_cpm": str(self.target_max_cpm),
+            "total_influencers": self.total_influencers,
+            "agreements": [
+                {
+                    "cpm": str(cpm),
+                    "engagement_rate": engagement_rate,
+                }
+                for cpm, engagement_rate in self._agreements
+            ],
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> CampaignCPMTracker:
+        """Reconstruct a tracker from a serialized dict.
+
+        Args:
+            data: A dict produced by ``to_dict()``.
+
+        Returns:
+            A fully reconstructed ``CampaignCPMTracker`` with all
+            agreements replayed.
+        """
+        tracker = cls(
+            campaign_id=data["campaign_id"],
+            target_min_cpm=Decimal(data["target_min_cpm"]),
+            target_max_cpm=Decimal(data["target_max_cpm"]),
+            total_influencers=data["total_influencers"],
+        )
+        for agreement in data.get("agreements", []):
+            tracker.record_agreement(
+                cpm=Decimal(agreement["cpm"]),
+                engagement_rate=agreement.get("engagement_rate"),
+            )
+        return tracker
