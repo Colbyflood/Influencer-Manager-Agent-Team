@@ -15,8 +15,8 @@ Requirements for production readiness. Each maps to roadmap phases.
 
 ### Health & Observability
 
-- [ ] **OBS-01**: Agent exposes /health liveness endpoint that returns 200 when the process is alive
-- [ ] **OBS-02**: Agent exposes /ready readiness endpoint that checks DB writable and Gmail token present
+- [x] **OBS-01**: Agent exposes /health liveness endpoint that returns 200 when the process is alive
+- [x] **OBS-02**: Agent exposes /ready readiness endpoint that checks DB writable and Gmail token present
 - [ ] **OBS-03**: Agent exposes /metrics Prometheus endpoint with HTTP request metrics and custom business metrics (active negotiations, deals closed)
 - [ ] **OBS-04**: Agent reports errors to Sentry with full request context via structlog bridge
 - [ ] **OBS-05**: Agent attaches a unique request ID to every inbound request for end-to-end log traceability
@@ -65,8 +65,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | CONFIG-01 | Phase 8 | Complete |
-| OBS-01 | Phase 8 | Pending |
-| OBS-02 | Phase 8 | Pending |
+| OBS-01 | Phase 8 | Complete |
+| OBS-02 | Phase 8 | Complete |
 | STATE-03 | Phase 8 | Complete |
 | STATE-01 | Phase 9 | Pending |
 | STATE-02 | Phase 9 | Pending |

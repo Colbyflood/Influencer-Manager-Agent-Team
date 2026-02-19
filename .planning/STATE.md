@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-19)
 
 **Core value:** The agent must negotiate influencer rates accurately using CPM-based logic and reliably communicate the outcome -- every agreed deal must result in a clear, actionable Slack notification to the team.
-**Current focus:** Phase 8 - Settings and Health Infrastructure
+**Current focus:** Phase 9 - State Persistence
 
 ## Current Position
 
-Phase: 8 of 12 (Settings and Health Infrastructure)
+Phase: 9 of 12 (State Persistence)
 Plan: 1 of 2 in current phase
-Status: Executing
-Last activity: 2026-02-19 -- Completed 08-01 (centralized config)
+Status: Ready
+Last activity: 2026-02-19 -- Completed 08-02 (health endpoints and tests)
 
-Progress: [=====================.........] 73% (24/33 plans across all milestones)
+Progress: [======================........] 76% (25/33 plans across all milestones)
 
 ## Performance Metrics
 
@@ -27,7 +27,7 @@ Progress: [=====================.........] 73% (24/33 plans across all milestone
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| Phase 8 | 1/2 | 7min | 7min |
+| Phase 8 | 2/2 | 10min | 5min |
 | Phase 9 | 0/2 | -- | -- |
 | Phase 10 | 0/2 | -- | -- |
 | Phase 11 | 0/1 | -- | -- |
@@ -48,6 +48,9 @@ Recent decisions affecting current work:
 - [08-01]: Settings stored on services dict and FastAPI app.state for endpoint access
 - [08-01]: Tests pass Settings objects directly instead of patching env vars
 - [08-01]: Slack functions require explicit tokens (no env var fallback)
+- [08-02]: Health routes on top-level app (not webhook sub-router) for clean URLs
+- [08-02]: SELECT 1 for DB check (no INSERT/DELETE) per research guidance
+- [08-02]: asyncio.to_thread for blocking SQLite in async readiness endpoint
 
 ### Pending Todos
 
@@ -61,5 +64,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 08-01-PLAN.md (centralized config)
+Stopped at: Completed 08-02-PLAN.md (health endpoints and tests) -- Phase 8 complete
 Resume file: None

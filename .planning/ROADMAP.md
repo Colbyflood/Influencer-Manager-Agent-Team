@@ -26,7 +26,7 @@ Full details: [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
 
 **Milestone Goal:** Make the v1.0 negotiation agent production-grade -- persistent state, deployment infrastructure, CI/CD, monitoring, and live verification with real services.
 
-- [ ] **Phase 8: Settings and Health Infrastructure** - Typed configuration, health endpoints, and startup credential validation
+- [x] **Phase 8: Settings and Health Infrastructure** - Typed configuration, health endpoints, and startup credential validation
 - [ ] **Phase 9: Persistent Negotiation State** - SQLite-backed state persistence with crash recovery
 - [ ] **Phase 10: Docker Packaging and Deployment** - Multi-stage container with volume persistence
 - [ ] **Phase 11: CI/CD Pipeline** - GitHub Actions automated lint, typecheck, and test on every push
@@ -46,8 +46,8 @@ Full details: [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
 **Plans**: 2 plans
 
 Plans:
-- [ ] 08-01-PLAN.md — Centralized Settings class (pydantic-settings) and startup credential validation
-- [ ] 08-02-PLAN.md — Health/readiness endpoints and tests
+- [x] 08-01-PLAN.md — Centralized Settings class (pydantic-settings) and startup credential validation
+- [x] 08-02-PLAN.md — Health/readiness endpoints and tests
 
 ### Phase 9: Persistent Negotiation State
 **Goal**: Active negotiations survive process restarts and container redeployments -- no deals are silently lost
@@ -123,7 +123,7 @@ Phases execute in numeric order: 8 -> 9 -> 10 -> 11 -> 12
 | 5. Campaign Ingestion and Operational Readiness | v1.0 | 4/4 | Complete | 2026-02-19 |
 | 6. Runtime Orchestration Wiring | v1.0 | 3/3 | Complete | 2026-02-19 |
 | 7. Integration Hardening | v1.0 | 2/2 | Complete | 2026-02-19 |
-| 8. Settings and Health Infrastructure | v1.1 | 0/2 | Not started | - |
+| 8. Settings and Health Infrastructure | v1.1 | 2/2 | Complete | 2026-02-19 |
 | 9. Persistent Negotiation State | v1.1 | 0/2 | Not started | - |
 | 10. Docker Packaging and Deployment | v1.1 | 0/2 | Not started | - |
 | 11. CI/CD Pipeline | v1.1 | 0/1 | Not started | - |
