@@ -25,3 +25,30 @@
 
 ---
 
+
+## v1.1 Production Readiness (Shipped: 2026-02-19)
+
+**Phases completed:** 5 phases, 10 plans
+**Tests:** 731 passing (+ 4 live) | **Total LOC:** ~21,721 Python
+**Timeline:** 1 day (2026-02-19) | **Commits:** 53
+**Requirements:** 14/14 satisfied
+
+**Key accomplishments:**
+- Centralized pydantic-settings configuration with startup credential validation and health/readiness probes
+- SQLite-backed negotiation state persistence with crash recovery -- no deals lost on restart
+- Multi-stage Docker container with non-root execution, volume persistence, and HEALTHCHECK auto-restart
+- GitHub Actions CI pipeline with lint, typecheck, and test jobs plus branch protection
+- Prometheus metrics, Sentry error reporting, and request ID tracing for full observability
+- Live integration tests for Gmail, Sheets, and Slack with expiration-aware Gmail watch renewal
+
+**Archive:** [v1.1-ROADMAP.md](milestones/v1.1-ROADMAP.md) | [v1.1-REQUIREMENTS.md](milestones/v1.1-REQUIREMENTS.md) | [v1.1-MILESTONE-AUDIT.md](milestones/v1.1-MILESTONE-AUDIT.md)
+
+**Known tech debt (v1.1 acknowledged):**
+- Docker build/compose not tested in CI (Docker CLI unavailable in execution environment)
+- Target VM filesystem type must be confirmed as local block storage before deployment
+- Branch protection configured via GitHub UI (cannot verify programmatically)
+- Live integration tests require real credentials (not run in CI)
+- Sentry DSN not yet provisioned (code handles empty DSN as no-op)
+
+---
+
