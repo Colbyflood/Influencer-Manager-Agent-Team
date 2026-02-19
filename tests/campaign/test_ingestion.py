@@ -489,3 +489,144 @@ class TestIngestCampaign:
 
         # 1 campaign start notification + 3 missing influencer alerts = 4
         assert slack_notifier.post_escalation.call_count == 4
+
+    @pytest.mark.anyio()
+    async def test_ingest_campaign_slack_notifier_none_does_not_crash(
+        self,
+        tmp_path: Path,
+        mock_influencer_row: InfluencerRow,
+    ) -> None:
+        """When slack_notifier is None, ingest_campaign completes without error."""
+        config_path = _write_config(
+            tmp_path,
+            (
+                "field_mapping:\n"
+                '  "Client Name": "client_name"\n'
+                '  "Budget": "budget"\n'
+                '  "Target Deliverables": "target_deliverables"\n'
+                '  "Influencer List": "influencers_raw"\n'
+                '  "CPM Min": "cpm_min"\n'
+                '  "CPM Max": "cpm_max"\n'
+                '  "Platform": "platform"\n'
+                '  "Timeline": "timeline"\n'
+            ),
+        )
+
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            "id": "task_slack_none",
+            "custom_fields": [
+                {"name": "Client Name", "type": "text", "value": "No Slack Corp"},
+                {"name": "Budget", "type": "number", "value": "4000"},
+                {"name": "Target Deliverables", "type": "text", "value": "1 reel"},
+                {"name": "Influencer List", "type": "text", "value": "Alice Johnson"},
+                {"name": "CPM Min", "type": "number", "value": "10"},
+                {"name": "CPM Max", "type": "number", "value": "20"},
+                {"name": "Platform", "type": "text", "value": "instagram"},
+                {"name": "Timeline", "type": "text", "value": "July 2026"},
+            ],
+        }
+        mock_response.raise_for_status = MagicMock()
+
+        sheets_client = MagicMock()
+        sheets_client.find_influencer.return_value = mock_influencer_row
+
+        with patch("negotiation.campaign.ingestion.httpx.AsyncClient") as mock_httpx:
+            mock_client_instance = AsyncMock()
+            mock_client_instance.get.return_value = mock_response
+            mock_client_instance.__aenter__ = AsyncMock(return_value=mock_client_instance)
+            mock_client_instance.__aexit__ = AsyncMock(return_value=False)
+            mock_httpx.return_value = mock_client_instance
+
+            result = await ingest_campaign(
+                task_id="task_slack_none",
+                api_token="test-token",
+                sheets_client=sheets_client,
+                slack_notifier=None,
+                config_path=config_path,
+            )
+
+        assert isinstance(result["campaign"], Campaign)
+        assert len(result["found_influencers"]) == 1
+        assert len(result["missing_influencers"]) == 0
+
+    @pytest.mark.anyio()
+    async def test_ingest_campaign_missing_influencers_slack_none(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """Missing influencers with slack_notifier=None does not crash."""
+        config_path = _write_config(
+            tmp_path,
+            (
+                "field_mapping:\n"
+                '  "Client Name": "client_name"\n'
+                '  "Budget": "budget"\n'
+                '  "Target Deliverables": "target_deliverables"\n'
+                '  "Influencer List": "influencers_raw"\n'
+                '  "CPM Min": "cpm_min"\n'
+                '  "CPM Max": "cpm_max"\n'
+                '  "Platform": "platform"\n'
+                '  "Timeline": "timeline"\n'
+            ),
+        )
+
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            "id": "task_missing_no_slack",
+            "custom_fields": [
+                {"name": "Client Name", "type": "text", "value": "Brand Z"},
+                {"name": "Budget", "type": "number", "value": "6000"},
+                {"name": "Target Deliverables", "type": "text", "value": "2 posts"},
+                {
+                    "name": "Influencer List",
+                    "type": "text",
+                    "value": "Alice Johnson, Ghost Influencer",
+                },
+                {"name": "CPM Min", "type": "number", "value": "12"},
+                {"name": "CPM Max", "type": "number", "value": "28"},
+                {"name": "Platform", "type": "text", "value": "tiktok"},
+                {"name": "Timeline", "type": "text", "value": "August 2026"},
+            ],
+        }
+        mock_response.raise_for_status = MagicMock()
+
+        alice_row = InfluencerRow(
+            name="Alice Johnson",
+            email="alice@example.com",
+            platform=Platform.TIKTOK,
+            handle="@alice",
+            average_views=50000,
+            min_rate=Decimal("500"),
+            max_rate=Decimal("1500"),
+        )
+
+        sheets_client = MagicMock()
+
+        def find_influencer_side_effect(name: str) -> InfluencerRow:
+            if name == "Alice Johnson":
+                return alice_row
+            raise ValueError(f"Influencer '{name}' not found in sheet")
+
+        sheets_client.find_influencer.side_effect = find_influencer_side_effect
+
+        with patch("negotiation.campaign.ingestion.httpx.AsyncClient") as mock_httpx:
+            mock_client_instance = AsyncMock()
+            mock_client_instance.get.return_value = mock_response
+            mock_client_instance.__aenter__ = AsyncMock(return_value=mock_client_instance)
+            mock_client_instance.__aexit__ = AsyncMock(return_value=False)
+            mock_httpx.return_value = mock_client_instance
+
+            result = await ingest_campaign(
+                task_id="task_missing_no_slack",
+                api_token="test-token",
+                sheets_client=sheets_client,
+                slack_notifier=None,
+                config_path=config_path,
+            )
+
+        assert isinstance(result["campaign"], Campaign)
+        assert len(result["found_influencers"]) == 1
+        assert result["found_influencers"][0]["name"] == "Alice Johnson"
+        assert len(result["missing_influencers"]) == 1
+        assert result["missing_influencers"][0] == "Ghost Influencer"

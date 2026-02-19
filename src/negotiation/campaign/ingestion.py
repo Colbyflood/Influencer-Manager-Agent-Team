@@ -284,62 +284,64 @@ async def ingest_campaign(
     )
 
     # Step 6: Post Slack notification that campaign ingestion started
-    slack_notifier.post_escalation(
-        blocks=[
-            {
-                "type": "header",
-                "text": {
-                    "type": "plain_text",
-                    "text": f"Campaign Ingestion Started: {campaign.client_name}",
-                },
-            },
-            {
-                "type": "section",
-                "fields": [
-                    {"type": "mrkdwn", "text": f"*Campaign:*\n{campaign.client_name}"},
-                    {"type": "mrkdwn", "text": f"*Platform:*\n{campaign.platform.value}"},
-                    {
-                        "type": "mrkdwn",
-                        "text": (
-                            f"*Influencers Found:*\n"
-                            f"{len(found_influencers)}/{len(campaign.influencers)}"
-                        ),
-                    },
-                    {
-                        "type": "mrkdwn",
-                        "text": f"*Missing:*\n{len(missing_influencers)}",
-                    },
-                ],
-            },
-        ],
-        fallback_text=(
-            f"Campaign ingestion started for {campaign.client_name}: "
-            f"{len(found_influencers)} found, {len(missing_influencers)} missing"
-        ),
-    )
-
-    # Step 7: Post individual Slack alerts for each missing influencer
-    for name in missing_influencers:
+    if slack_notifier is not None:
         slack_notifier.post_escalation(
             blocks=[
                 {
-                    "type": "section",
+                    "type": "header",
                     "text": {
-                        "type": "mrkdwn",
-                        "text": (
-                            f"*Missing Influencer:* {name}\n"
-                            f"*Campaign:* {campaign.client_name}\n"
-                            "Please add this influencer to the Google Sheet "
-                            "so negotiations can begin."
-                        ),
+                        "type": "plain_text",
+                        "text": f"Campaign Ingestion Started: {campaign.client_name}",
                     },
+                },
+                {
+                    "type": "section",
+                    "fields": [
+                        {"type": "mrkdwn", "text": f"*Campaign:*\n{campaign.client_name}"},
+                        {"type": "mrkdwn", "text": f"*Platform:*\n{campaign.platform.value}"},
+                        {
+                            "type": "mrkdwn",
+                            "text": (
+                                f"*Influencers Found:*\n"
+                                f"{len(found_influencers)}/{len(campaign.influencers)}"
+                            ),
+                        },
+                        {
+                            "type": "mrkdwn",
+                            "text": f"*Missing:*\n{len(missing_influencers)}",
+                        },
+                    ],
                 },
             ],
             fallback_text=(
-                f"Missing influencer '{name}' for campaign "
-                f"'{campaign.client_name}'. Please add to Google Sheet."
+                f"Campaign ingestion started for {campaign.client_name}: "
+                f"{len(found_influencers)} found, {len(missing_influencers)} missing"
             ),
         )
+
+    # Step 7: Post individual Slack alerts for each missing influencer
+    for name in missing_influencers:
+        if slack_notifier is not None:
+            slack_notifier.post_escalation(
+                blocks=[
+                    {
+                        "type": "section",
+                        "text": {
+                            "type": "mrkdwn",
+                            "text": (
+                                f"*Missing Influencer:* {name}\n"
+                                f"*Campaign:* {campaign.client_name}\n"
+                                "Please add this influencer to the Google Sheet "
+                                "so negotiations can begin."
+                            ),
+                        },
+                    },
+                ],
+                fallback_text=(
+                    f"Missing influencer '{name}' for campaign "
+                    f"'{campaign.client_name}'. Please add to Google Sheet."
+                ),
+            )
 
     return {
         "campaign": campaign,
