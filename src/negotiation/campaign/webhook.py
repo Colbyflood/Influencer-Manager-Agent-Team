@@ -15,7 +15,6 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
-import os
 from collections.abc import Callable
 from typing import Any
 
@@ -79,7 +78,7 @@ async def clickup_webhook(request: Request) -> dict[str, str]:
     Raises:
         HTTPException: 401 if signature is missing or invalid.
     """
-    secret = os.environ.get("CLICKUP_WEBHOOK_SECRET", "")
+    secret = request.app.state.settings.clickup_webhook_secret
     if not secret:
         logger.error("CLICKUP_WEBHOOK_SECRET not configured")
         raise HTTPException(status_code=500, detail="Webhook secret not configured")

@@ -17,7 +17,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -91,8 +90,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--db",
         type=str,
-        default=os.environ.get("AUDIT_DB_PATH", "data/audit.db"),
-        help="Path to audit database (default: AUDIT_DB_PATH env or data/audit.db)",
+        default="data/audit.db",
+        help="Path to audit database (default: data/audit.db)",
     )
 
     return parser

@@ -3,14 +3,15 @@
 from __future__ import annotations
 
 import inspect
-import os
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import structlog
 from fastapi import FastAPI
+from pydantic import SecretStr
 
 from negotiation.app import configure_logging, create_app, initialize_services
+from negotiation.config import Settings
 
 
 def _reset_structlog() -> None:
@@ -18,16 +19,18 @@ def _reset_structlog() -> None:
     structlog.reset_defaults()
 
 
-def _clean_env(monkeypatch) -> None:
-    """Remove all optional service env vars to ensure clean baseline."""
-    for key in (
-        "SLACK_BOT_TOKEN",
-        "GOOGLE_SHEETS_KEY",
-        "GMAIL_TOKEN_PATH",
-        "ANTHROPIC_API_KEY",
-        "AGENT_EMAIL",
-    ):
-        monkeypatch.delenv(key, raising=False)
+def _base_settings(tmp_path: Path, **overrides) -> Settings:
+    """Build a Settings instance pointing audit_db to tmp_path.
+
+    By default all optional credentials are empty so no external services
+    are initialized.  Pass keyword overrides to customise.
+    """
+    defaults = {
+        "audit_db_path": tmp_path / "audit.db",
+        "gmail_token_path": tmp_path / "nonexistent-token.json",
+    }
+    defaults.update(overrides)
+    return Settings(**defaults)  # type: ignore[call-arg]
 
 
 class TestConfigureLogging:
@@ -49,19 +52,18 @@ class TestConfigureLogging:
             isinstance(p, structlog.processors.JSONRenderer) for p in processors
         )
 
-    def test_production_env_var_activates_production_mode(self, monkeypatch) -> None:
+    def test_production_true_activates_json_renderer(self) -> None:
+        """Passing production=True enables JSON rendering (caller reads from Settings)."""
         _reset_structlog()
-        monkeypatch.setenv("PRODUCTION", "true")
-        configure_logging()
+        configure_logging(production=True)
         config = structlog.get_config()
         processors = config["processors"]
         assert any(
             isinstance(p, structlog.processors.JSONRenderer) for p in processors
         )
 
-    def test_no_production_env_defaults_to_dev(self, monkeypatch) -> None:
+    def test_default_is_development_mode(self) -> None:
         _reset_structlog()
-        monkeypatch.delenv("PRODUCTION", raising=False)
         configure_logging()
         config = structlog.get_config()
         processors = config["processors"]
@@ -71,15 +73,13 @@ class TestConfigureLogging:
 class TestInitializeServices:
     """Tests for service initialization with mocked external dependencies."""
 
-    def test_creates_audit_db_connection(self, tmp_path: Path, monkeypatch) -> None:
+    def test_creates_audit_db_connection(self, tmp_path: Path) -> None:
         _reset_structlog()
         configure_logging(production=False)
         audit_path = tmp_path / "test_audit.db"
-        monkeypatch.setenv("AUDIT_DB_PATH", str(audit_path))
-        monkeypatch.delenv("SLACK_BOT_TOKEN", raising=False)
-        monkeypatch.delenv("GOOGLE_SHEETS_KEY", raising=False)
+        settings = _base_settings(tmp_path, audit_db_path=audit_path)
 
-        services = initialize_services()
+        services = initialize_services(settings)
 
         assert services["audit_conn"] is not None
         assert services["audit_logger"] is not None
@@ -89,15 +89,13 @@ class TestInitializeServices:
 
         close_audit_db(services["audit_conn"])
 
-    def test_audit_db_path_env_var_respected(self, tmp_path: Path, monkeypatch) -> None:
+    def test_audit_db_path_setting_respected(self, tmp_path: Path) -> None:
         _reset_structlog()
         configure_logging(production=False)
         custom_path = tmp_path / "custom" / "audit.db"
-        monkeypatch.setenv("AUDIT_DB_PATH", str(custom_path))
-        monkeypatch.delenv("SLACK_BOT_TOKEN", raising=False)
-        monkeypatch.delenv("GOOGLE_SHEETS_KEY", raising=False)
+        settings = _base_settings(tmp_path, audit_db_path=custom_path)
 
-        services = initialize_services()
+        services = initialize_services(settings)
 
         assert custom_path.exists()
         assert custom_path.parent.exists()
@@ -106,14 +104,12 @@ class TestInitializeServices:
 
         close_audit_db(services["audit_conn"])
 
-    def test_slack_notifier_none_when_no_token(self, tmp_path: Path, monkeypatch) -> None:
+    def test_slack_notifier_none_when_no_token(self, tmp_path: Path) -> None:
         _reset_structlog()
         configure_logging(production=False)
-        monkeypatch.setenv("AUDIT_DB_PATH", str(tmp_path / "audit.db"))
-        monkeypatch.delenv("SLACK_BOT_TOKEN", raising=False)
-        monkeypatch.delenv("GOOGLE_SHEETS_KEY", raising=False)
+        settings = _base_settings(tmp_path)
 
-        services = initialize_services()
+        services = initialize_services(settings)
 
         assert services["slack_notifier"] is None
         assert services["bolt_app"] is None
@@ -123,15 +119,16 @@ class TestInitializeServices:
         close_audit_db(services["audit_conn"])
 
     def test_configures_error_notifier_when_slack_available(
-        self, tmp_path: Path, monkeypatch
+        self, tmp_path: Path
     ) -> None:
         _reset_structlog()
         configure_logging(production=False)
-        monkeypatch.setenv("AUDIT_DB_PATH", str(tmp_path / "audit.db"))
-        monkeypatch.setenv("SLACK_BOT_TOKEN", "xoxb-test-token")
-        monkeypatch.setenv("SLACK_ESCALATION_CHANNEL", "C12345")
-        monkeypatch.setenv("SLACK_AGREEMENT_CHANNEL", "C67890")
-        monkeypatch.delenv("GOOGLE_SHEETS_KEY", raising=False)
+        settings = _base_settings(
+            tmp_path,
+            slack_bot_token=SecretStr("xoxb-test-token"),
+            slack_escalation_channel="C12345",
+            slack_agreement_channel="C67890",
+        )
 
         mock_notifier_instance = MagicMock()
         mock_bolt_app = MagicMock()
@@ -139,7 +136,7 @@ class TestInitializeServices:
         with patch("negotiation.slack.client.SlackNotifier", return_value=mock_notifier_instance), \
              patch("negotiation.app.configure_error_notifier") as mock_cfg_notifier, \
              patch("negotiation.app.create_slack_app", return_value=mock_bolt_app):
-            services = initialize_services()
+            services = initialize_services(settings)
 
             mock_cfg_notifier.assert_called_once_with(mock_notifier_instance)
             assert services["slack_notifier"] is mock_notifier_instance
@@ -148,14 +145,12 @@ class TestInitializeServices:
 
         close_audit_db(services["audit_conn"])
 
-    def test_sheets_client_none_when_no_key(self, tmp_path: Path, monkeypatch) -> None:
+    def test_sheets_client_none_when_no_key(self, tmp_path: Path) -> None:
         _reset_structlog()
         configure_logging(production=False)
-        monkeypatch.setenv("AUDIT_DB_PATH", str(tmp_path / "audit.db"))
-        monkeypatch.delenv("SLACK_BOT_TOKEN", raising=False)
-        monkeypatch.delenv("GOOGLE_SHEETS_KEY", raising=False)
+        settings = _base_settings(tmp_path)
 
-        services = initialize_services()
+        services = initialize_services(settings)
 
         assert services["sheets_client"] is None
 
@@ -163,19 +158,17 @@ class TestInitializeServices:
 
         close_audit_db(services["audit_conn"])
 
-    def test_gmail_client_initialized_with_token(
-        self, tmp_path: Path, monkeypatch
-    ) -> None:
-        """GmailClient is created when GMAIL_TOKEN_PATH is set."""
+    def test_gmail_client_initialized_with_token(self, tmp_path: Path) -> None:
+        """GmailClient is created when gmail_token_path exists."""
         _reset_structlog()
         configure_logging(production=False)
-        monkeypatch.setenv("AUDIT_DB_PATH", str(tmp_path / "audit.db"))
-        monkeypatch.setenv("GMAIL_TOKEN_PATH", str(tmp_path / "token.json"))
-        monkeypatch.setenv("AGENT_EMAIL", "agent@example.com")
-        _clean_env(monkeypatch)
-        # Re-set the ones we need after clean
-        monkeypatch.setenv("GMAIL_TOKEN_PATH", str(tmp_path / "token.json"))
-        monkeypatch.setenv("AGENT_EMAIL", "agent@example.com")
+        token_path = tmp_path / "token.json"
+        token_path.write_text("{}")  # file must exist
+        settings = _base_settings(
+            tmp_path,
+            gmail_token_path=token_path,
+            agent_email="agent@example.com",
+        )
 
         mock_service = MagicMock()
         mock_gmail_client = MagicMock()
@@ -190,23 +183,20 @@ class TestInitializeServices:
                 return_value=mock_gmail_client,
             ),
         ):
-            services = initialize_services()
+            services = initialize_services(settings)
             assert services["gmail_client"] is mock_gmail_client
 
         from negotiation.audit.store import close_audit_db
 
         close_audit_db(services["audit_conn"])
 
-    def test_gmail_client_none_without_token(
-        self, tmp_path: Path, monkeypatch
-    ) -> None:
-        """GmailClient is None when GMAIL_TOKEN_PATH is not set."""
+    def test_gmail_client_none_without_token(self, tmp_path: Path) -> None:
+        """GmailClient is None when gmail_token_path does not exist."""
         _reset_structlog()
         configure_logging(production=False)
-        monkeypatch.setenv("AUDIT_DB_PATH", str(tmp_path / "audit.db"))
-        _clean_env(monkeypatch)
+        settings = _base_settings(tmp_path)
 
-        services = initialize_services()
+        services = initialize_services(settings)
 
         assert services["gmail_client"] is None
 
@@ -214,15 +204,14 @@ class TestInitializeServices:
 
         close_audit_db(services["audit_conn"])
 
-    def test_anthropic_client_initialized_with_api_key(
-        self, tmp_path: Path, monkeypatch
-    ) -> None:
-        """Anthropic client is created when ANTHROPIC_API_KEY is set."""
+    def test_anthropic_client_initialized_with_api_key(self, tmp_path: Path) -> None:
+        """Anthropic client is created when anthropic_api_key is set."""
         _reset_structlog()
         configure_logging(production=False)
-        monkeypatch.setenv("AUDIT_DB_PATH", str(tmp_path / "audit.db"))
-        _clean_env(monkeypatch)
-        monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+        settings = _base_settings(
+            tmp_path,
+            anthropic_api_key=SecretStr("test-key"),
+        )
 
         mock_client = MagicMock()
 
@@ -230,23 +219,20 @@ class TestInitializeServices:
             "negotiation.llm.client.get_anthropic_client",
             return_value=mock_client,
         ):
-            services = initialize_services()
+            services = initialize_services(settings)
             assert services["anthropic_client"] is mock_client
 
         from negotiation.audit.store import close_audit_db
 
         close_audit_db(services["audit_conn"])
 
-    def test_anthropic_client_none_without_key(
-        self, tmp_path: Path, monkeypatch
-    ) -> None:
-        """Anthropic client is None when ANTHROPIC_API_KEY is not set."""
+    def test_anthropic_client_none_without_key(self, tmp_path: Path) -> None:
+        """Anthropic client is None when anthropic_api_key is not set."""
         _reset_structlog()
         configure_logging(production=False)
-        monkeypatch.setenv("AUDIT_DB_PATH", str(tmp_path / "audit.db"))
-        _clean_env(monkeypatch)
+        settings = _base_settings(tmp_path)
 
-        services = initialize_services()
+        services = initialize_services(settings)
 
         assert services["anthropic_client"] is None
 
@@ -255,15 +241,16 @@ class TestInitializeServices:
         close_audit_db(services["audit_conn"])
 
     def test_slack_dispatcher_initialized_when_notifier_available(
-        self, tmp_path: Path, monkeypatch
+        self, tmp_path: Path
     ) -> None:
         """SlackDispatcher is created when SlackNotifier and ThreadStateManager exist."""
         _reset_structlog()
         configure_logging(production=False)
-        monkeypatch.setenv("AUDIT_DB_PATH", str(tmp_path / "audit.db"))
-        _clean_env(monkeypatch)
-        monkeypatch.setenv("SLACK_BOT_TOKEN", "xoxb-test")
-        monkeypatch.setenv("AGENT_EMAIL", "agent@example.com")
+        settings = _base_settings(
+            tmp_path,
+            slack_bot_token=SecretStr("xoxb-test"),
+            agent_email="agent@example.com",
+        )
 
         mock_notifier = MagicMock()
         mock_bolt_app = MagicMock()
@@ -283,23 +270,20 @@ class TestInitializeServices:
                 return_value=mock_dispatcher,
             ),
         ):
-            services = initialize_services()
+            services = initialize_services(settings)
             assert services["slack_dispatcher"] is mock_dispatcher
 
         from negotiation.audit.store import close_audit_db
 
         close_audit_db(services["audit_conn"])
 
-    def test_slack_dispatcher_none_without_notifier(
-        self, tmp_path: Path, monkeypatch
-    ) -> None:
+    def test_slack_dispatcher_none_without_notifier(self, tmp_path: Path) -> None:
         """SlackDispatcher is None when SlackNotifier is unavailable."""
         _reset_structlog()
         configure_logging(production=False)
-        monkeypatch.setenv("AUDIT_DB_PATH", str(tmp_path / "audit.db"))
-        _clean_env(monkeypatch)
+        settings = _base_settings(tmp_path)
 
-        services = initialize_services()
+        services = initialize_services(settings)
 
         assert services["slack_dispatcher"] is None
 
@@ -311,13 +295,12 @@ class TestInitializeServices:
 class TestCreateApp:
     """Tests for FastAPI app creation."""
 
-    def test_returns_fastapi_instance(self, tmp_path: Path, monkeypatch) -> None:
+    def test_returns_fastapi_instance(self, tmp_path: Path) -> None:
         _reset_structlog()
         configure_logging(production=False)
-        monkeypatch.setenv("AUDIT_DB_PATH", str(tmp_path / "audit.db"))
-        _clean_env(monkeypatch)
+        settings = _base_settings(tmp_path)
 
-        services = initialize_services()
+        services = initialize_services(settings)
         app = create_app(services)
 
         assert isinstance(app, FastAPI)
@@ -326,14 +309,13 @@ class TestCreateApp:
 
         close_audit_db(services["audit_conn"])
 
-    def test_create_app_uses_lifespan(self, tmp_path: Path, monkeypatch) -> None:
+    def test_create_app_uses_lifespan(self, tmp_path: Path) -> None:
         """FastAPI app uses lifespan context manager instead of on_event."""
         _reset_structlog()
         configure_logging(production=False)
-        monkeypatch.setenv("AUDIT_DB_PATH", str(tmp_path / "audit.db"))
-        _clean_env(monkeypatch)
+        settings = _base_settings(tmp_path)
 
-        services = initialize_services()
+        services = initialize_services(settings)
         app = create_app(services)
 
         assert app.router.lifespan_context is not None
@@ -347,14 +329,13 @@ class TestCreateApp:
         source = inspect.getsource(create_app)
         assert "on_event" not in source
 
-    def test_gmail_webhook_route_exists(self, tmp_path: Path, monkeypatch) -> None:
+    def test_gmail_webhook_route_exists(self, tmp_path: Path) -> None:
         """Verify /webhooks/gmail endpoint is registered."""
         _reset_structlog()
         configure_logging(production=False)
-        monkeypatch.setenv("AUDIT_DB_PATH", str(tmp_path / "audit.db"))
-        _clean_env(monkeypatch)
+        settings = _base_settings(tmp_path)
 
-        services = initialize_services()
+        services = initialize_services(settings)
         app = create_app(services)
 
         route_paths = [route.path for route in app.routes]
@@ -364,13 +345,21 @@ class TestCreateApp:
 
         close_audit_db(services["audit_conn"])
 
+    def test_settings_stored_on_app_state(self, tmp_path: Path) -> None:
+        """Verify app.state.settings is set for use by webhook endpoints."""
+        _reset_structlog()
+        configure_logging(production=False)
+        settings = _base_settings(tmp_path)
 
-class TestWebhookPortEnvVar:
-    """Tests for WEBHOOK_PORT environment variable."""
+        services = initialize_services(settings)
+        app = create_app(services)
 
-    def test_webhook_port_env_var_is_respected(self, monkeypatch) -> None:
-        monkeypatch.setenv("WEBHOOK_PORT", "9999")
-        assert int(os.environ["WEBHOOK_PORT"]) == 9999
+        assert hasattr(app.state, "settings")
+        assert isinstance(app.state.settings, Settings)
+
+        from negotiation.audit.store import close_audit_db
+
+        close_audit_db(services["audit_conn"])
 
 
 class TestMainImport:

@@ -200,14 +200,16 @@ class TestGetSheetsClient:
         get_sheets_client(service_account_path=sa_path)
         mock_sa.assert_called_once_with(filename=str(sa_path))
 
-    @patch.dict("os.environ", {"SHEETS_SERVICE_ACCOUNT_PATH": "/env/sa.json"})
     @patch("negotiation.auth.credentials.gspread.service_account")
-    def test_env_var_path(self, mock_sa: MagicMock):
-        """Uses SHEETS_SERVICE_ACCOUNT_PATH env var when no explicit path."""
-        get_sheets_client()
-        mock_sa.assert_called_once_with(filename="/env/sa.json")
+    def test_no_path_falls_back_to_gspread_default(self, mock_sa: MagicMock):
+        """Falls back to gspread default when no explicit path is provided.
 
-    @patch.dict("os.environ", {}, clear=True)
+        NOTE: The SHEETS_SERVICE_ACCOUNT_PATH env var fallback was removed.
+        Callers now pass the path explicitly from Settings.
+        """
+        get_sheets_client()
+        mock_sa.assert_called_once_with()
+
     @patch("negotiation.auth.credentials.gspread.service_account")
     def test_default_gspread_path(self, mock_sa: MagicMock):
         """Falls back to gspread default when no path specified."""

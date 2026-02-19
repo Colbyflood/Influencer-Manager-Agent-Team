@@ -10,21 +10,22 @@ import hashlib
 import hmac
 import json
 from typing import Any
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from fastapi import FastAPI
-
 from negotiation.campaign.webhook import router, set_campaign_processor, verify_signature
+from negotiation.config import Settings
+
+# Test webhook secret
+TEST_SECRET = "test-webhook-secret-12345"
 
 # Create a minimal FastAPI app wrapping the router for TestClient usage
 app = FastAPI()
 app.include_router(router)
-
-# Test webhook secret
-TEST_SECRET = "test-webhook-secret-12345"
+app.state.settings = Settings(clickup_webhook_secret=TEST_SECRET)  # type: ignore[call-arg]
 
 
 def _sign(body: bytes, secret: str = TEST_SECRET) -> str:
@@ -49,9 +50,8 @@ def mock_processor() -> MagicMock:
 
 @pytest.fixture()
 def client(mock_processor: MagicMock) -> TestClient:
-    """Create a test client with CLICKUP_WEBHOOK_SECRET set."""
-    with patch.dict("os.environ", {"CLICKUP_WEBHOOK_SECRET": TEST_SECRET}):
-        yield TestClient(app)  # type: ignore[misc]
+    """Create a test client with settings configured."""
+    yield TestClient(app)  # type: ignore[misc]
 
 
 # --- verify_signature unit tests ---
@@ -194,20 +194,23 @@ class TestClickUpWebhookEndpoint:
         assert response.json() == {"status": "ok"}
         mock_processor.assert_not_called()
 
-    def test_missing_webhook_secret_env_returns_500(self) -> None:
-        """If CLICKUP_WEBHOOK_SECRET is not set, return 500."""
-        with patch.dict("os.environ", {}, clear=True):
-            no_secret_client = TestClient(app)
-            payload = _make_payload()
-            body = json.dumps(payload).encode()
+    def test_missing_webhook_secret_returns_500(self) -> None:
+        """If clickup_webhook_secret is empty in Settings, return 500."""
+        no_secret_app = FastAPI()
+        no_secret_app.include_router(router)
+        no_secret_app.state.settings = Settings(clickup_webhook_secret="")  # type: ignore[call-arg]
 
-            response = no_secret_client.post(
-                "/webhooks/clickup",
-                content=body,
-                headers={"X-Signature": "any", "Content-Type": "application/json"},
-            )
+        no_secret_client = TestClient(no_secret_app)
+        payload = _make_payload()
+        body = json.dumps(payload).encode()
 
-            assert response.status_code == 500
+        response = no_secret_client.post(
+            "/webhooks/clickup",
+            content=body,
+            headers={"X-Signature": "any", "Content-Type": "application/json"},
+        )
+
+        assert response.status_code == 500
 
 
 class TestHealthCheck:

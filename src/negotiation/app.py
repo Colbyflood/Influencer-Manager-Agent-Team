@@ -18,10 +18,8 @@ import asyncio
 import base64
 import json
 import logging
-import os
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from pathlib import Path
 from typing import Any
 
 import structlog
@@ -35,6 +33,7 @@ from negotiation.audit.wiring import wire_audit_to_campaign_ingestion
 from negotiation.campaign.ingestion import ingest_campaign
 from negotiation.campaign.webhook import router as webhook_router
 from negotiation.campaign.webhook import set_campaign_processor
+from negotiation.config import Settings, get_settings, validate_credentials
 from negotiation.resilience.retry import configure_error_notifier
 from negotiation.slack.app import create_slack_app, start_slack_app
 from negotiation.slack.commands import register_commands
@@ -46,19 +45,13 @@ logger = structlog.get_logger()
 def configure_logging(production: bool = False) -> None:
     """Configure structlog for production (JSON) or development (console).
 
-    Production mode (``PRODUCTION`` env var set or *production=True*): JSON
-    rendering at INFO level. Development mode: colored console rendering at
-    DEBUG level.
+    Production mode (*production=True*): JSON rendering at INFO level.
+    Development mode: colored console rendering at DEBUG level.
 
     Args:
-        production: Force production mode if ``True``. Otherwise checks
-            the ``PRODUCTION`` environment variable.
+        production: Enable production mode if ``True``.
     """
-    is_production = production or os.environ.get("PRODUCTION", "").lower() in (
-        "1",
-        "true",
-        "yes",
-    )
+    is_production = production
 
     shared_processors: list[structlog.types.Processor] = [
         structlog.contextvars.merge_contextvars,
@@ -86,7 +79,7 @@ def configure_logging(production: bool = False) -> None:
     structlog.contextvars.bind_contextvars(service="negotiation-agent")
 
 
-def initialize_services() -> dict[str, Any]:
+def initialize_services(settings: Settings | None = None) -> dict[str, Any]:
     """Set up all shared services for the application.
 
     Creates the audit database, AuditLogger, SlackNotifier (if credentials
@@ -95,13 +88,19 @@ def initialize_services() -> dict[str, Any]:
     SlackDispatcher (if Slack available), registers slash commands, and wires
     audit logging into pipeline functions.
 
+    Args:
+        settings: Application settings.  If ``None``, ``get_settings()`` is used.
+
     Returns:
         A dict of initialized service instances keyed by name.
     """
+    if settings is None:
+        settings = get_settings()
+
     services: dict[str, Any] = {}
 
     # a. Initialize SQLite audit database
-    audit_db_path = Path(os.environ.get("AUDIT_DB_PATH", "data/audit.db"))
+    audit_db_path = settings.audit_db_path
     audit_db_path.parent.mkdir(parents=True, exist_ok=True)
     audit_conn = init_audit_db(audit_db_path)
     services["audit_conn"] = audit_conn
@@ -110,18 +109,16 @@ def initialize_services() -> dict[str, Any]:
     audit_logger = AuditLogger(audit_conn)
     services["audit_logger"] = audit_logger
 
-    # c. Create SlackNotifier (if SLACK_BOT_TOKEN available)
+    # c. Create SlackNotifier (if slack_bot_token available)
     slack_notifier = None
-    slack_bot_token = os.environ.get("SLACK_BOT_TOKEN")
+    slack_bot_token = settings.slack_bot_token.get_secret_value() or None
     if slack_bot_token:
         try:
             from negotiation.slack.client import SlackNotifier
 
-            escalation_channel = os.environ.get("SLACK_ESCALATION_CHANNEL", "")
-            agreement_channel = os.environ.get("SLACK_AGREEMENT_CHANNEL", "")
             slack_notifier = SlackNotifier(
-                escalation_channel=escalation_channel,
-                agreement_channel=agreement_channel,
+                escalation_channel=settings.slack_escalation_channel,
+                agreement_channel=settings.slack_agreement_channel,
                 bot_token=slack_bot_token,
             )
             logger.info("SlackNotifier initialized")
@@ -138,13 +135,15 @@ def initialize_services() -> dict[str, Any]:
 
     # e. Create SheetsClient (if credentials available)
     sheets_client = None
-    sheets_key = os.environ.get("GOOGLE_SHEETS_KEY")
+    sheets_key = settings.google_sheets_key or None
     if sheets_key:
         try:
             from negotiation.auth.credentials import get_sheets_client
             from negotiation.sheets.client import SheetsClient
 
-            gc = get_sheets_client()
+            gc = get_sheets_client(
+                service_account_path=settings.sheets_service_account_path,
+            )
             sheets_client = SheetsClient(gc, sheets_key)
             logger.info("SheetsClient initialized")
         except Exception:
@@ -176,27 +175,25 @@ def initialize_services() -> dict[str, Any]:
         register_commands(bolt_app, thread_state_manager)
         logger.info("Registered /claim and /resume slash commands")
 
-    # g. GmailClient (if GMAIL_TOKEN_PATH is set)
+    # g. GmailClient (if gmail token file exists)
     gmail_client = None
-    gmail_token = os.environ.get("GMAIL_TOKEN_PATH")
-    if gmail_token:
+    if settings.gmail_token_path.exists():
         try:
             from negotiation.auth.credentials import get_gmail_service
             from negotiation.email.client import GmailClient
 
             service = get_gmail_service()
-            agent_email = os.environ.get("AGENT_EMAIL", "")
-            gmail_client = GmailClient(service, agent_email)
+            gmail_client = GmailClient(service, settings.agent_email)
             logger.info("GmailClient initialized")
         except Exception:
             logger.warning("Failed to initialize GmailClient", exc_info=True)
     else:
-        logger.info("GMAIL_TOKEN_PATH not set, GmailClient disabled")
+        logger.info("Gmail token file not found, GmailClient disabled")
     services["gmail_client"] = gmail_client
 
-    # h. Anthropic client (if ANTHROPIC_API_KEY is set)
+    # h. Anthropic client (if anthropic_api_key is set)
     anthropic_client = None
-    if os.environ.get("ANTHROPIC_API_KEY"):
+    if settings.anthropic_api_key.get_secret_value():
         try:
             from negotiation.llm.client import get_anthropic_client
 
@@ -216,12 +213,11 @@ def initialize_services() -> dict[str, Any]:
             from negotiation.slack.triggers import load_triggers_config
 
             triggers_config = load_triggers_config()
-            agent_email = os.environ.get("AGENT_EMAIL", "")
             slack_dispatcher = SlackDispatcher(
                 notifier=slack_notifier,
                 thread_state_manager=thread_state_manager,
                 triggers_config=triggers_config,
-                agent_email=agent_email,
+                agent_email=settings.agent_email,
             )
             logger.info("SlackDispatcher initialized")
         except Exception:
@@ -260,8 +256,13 @@ def initialize_services() -> dict[str, Any]:
     audited_ingest = wire_audit_to_campaign_ingestion(ingest_campaign, audit_logger)
     services["audited_ingest"] = audited_ingest
 
+    # Store config values needed by other functions via services dict
+    services["_settings"] = settings
+    services["gmail_pubsub_topic"] = settings.gmail_pubsub_topic
+    services["slack_app_token"] = settings.slack_app_token.get_secret_value()
+
     # Wire campaign processor callback for webhook
-    clickup_token = os.environ.get("CLICKUP_API_TOKEN", "")
+    clickup_token = settings.clickup_api_token
     # Track background tasks to prevent garbage collection (per RUF006)
     background_tasks: set[asyncio.Task[Any]] = set()
     services["background_tasks"] = background_tasks
@@ -527,7 +528,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     services = app.state.services
     gmail_client = services.get("gmail_client")
     if gmail_client:
-        topic = os.environ.get("GMAIL_PUBSUB_TOPIC", "")
+        topic = services.get("gmail_pubsub_topic", "")
         if topic:
             try:
                 watch_result = await asyncio.to_thread(gmail_client.setup_watch, topic)
@@ -558,6 +559,7 @@ def create_app(services: dict[str, Any]) -> FastAPI:
     """
     fastapi_app = FastAPI(title="Negotiation Agent Webhooks", lifespan=lifespan)
     fastapi_app.state.services = services
+    fastapi_app.state.settings = services.get("_settings", get_settings())
     fastapi_app.include_router(webhook_router)
 
     @fastapi_app.post("/webhooks/gmail")
@@ -746,7 +748,7 @@ async def renew_gmail_watch_periodically(services: dict[str, Any]) -> None:
     """
     interval_seconds = 6 * 24 * 3600  # 6 days
     gmail_client = services.get("gmail_client")
-    topic = os.environ.get("GMAIL_PUBSUB_TOPIC", "")
+    topic = services.get("gmail_pubsub_topic", "")
 
     if not gmail_client or not topic:
         return
@@ -777,7 +779,7 @@ async def run_slack_bot(services: dict[str, Any]) -> None:
         logger.warning("No Slack Bolt app available, skipping Socket Mode")
         return
 
-    app_token = os.environ.get("SLACK_APP_TOKEN")
+    app_token = services.get("slack_app_token", "")
     if not app_token:
         logger.warning("SLACK_APP_TOKEN not set, skipping Socket Mode")
         return
@@ -798,15 +800,17 @@ async def main() -> None:
     4. Run uvicorn + Slack Bolt + Gmail watch renewal with asyncio.gather
     5. Close audit DB on exit
     """
-    is_production = os.environ.get("PRODUCTION", "").lower() in ("1", "true", "yes")
-    configure_logging(production=is_production)
+    settings = get_settings()
+    configure_logging(production=settings.production)
     logger.info("Application starting")
 
-    services = initialize_services()
+    validate_credentials(settings)
+
+    services = initialize_services(settings)
 
     fastapi_app = create_app(services)
 
-    port = int(os.environ.get("WEBHOOK_PORT", "8000"))
+    port = settings.webhook_port
     config = uvicorn.Config(
         fastapi_app,
         host="0.0.0.0",
@@ -819,7 +823,7 @@ async def main() -> None:
         tasks_to_run: list[Any] = [server.serve(), run_slack_bot(services)]
         # Add Gmail watch renewal if Gmail is configured
         gmail_client = services.get("gmail_client")
-        gmail_topic = os.environ.get("GMAIL_PUBSUB_TOPIC", "")
+        gmail_topic = services.get("gmail_pubsub_topic", "")
         if gmail_client and gmail_topic:
             tasks_to_run.append(renew_gmail_watch_periodically(services))
         await asyncio.gather(*tasks_to_run)

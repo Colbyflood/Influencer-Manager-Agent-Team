@@ -8,7 +8,6 @@ Provides helpers for:
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 import google.auth.transport.requests
@@ -96,9 +95,8 @@ def get_sheets_client(
     """Load a gspread client using service account credentials.
 
     The path to the service account JSON key file is resolved in order:
-    1. Explicit ``service_account_path`` argument
-    2. ``SHEETS_SERVICE_ACCOUNT_PATH`` environment variable
-    3. Default gspread location (``~/.config/gspread/service_account.json``)
+    1. Explicit ``service_account_path`` argument (callers pass from Settings)
+    2. Default gspread location (``~/.config/gspread/service_account.json``)
 
     Args:
         service_account_path: Optional explicit path to the service account
@@ -109,10 +107,6 @@ def get_sheets_client(
     """
     if service_account_path is not None:
         return gspread.service_account(filename=str(service_account_path))
-
-    env_path = os.environ.get("SHEETS_SERVICE_ACCOUNT_PATH")
-    if env_path:
-        return gspread.service_account(filename=env_path)
 
     # Fall back to gspread default (~/.config/gspread/service_account.json)
     return gspread.service_account()

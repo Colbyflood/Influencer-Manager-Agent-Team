@@ -6,7 +6,6 @@ messages to designated channels.
 
 from __future__ import annotations
 
-import os
 from typing import Any
 
 from slack_sdk import WebClient
@@ -24,20 +23,21 @@ class SlackNotifier:
         self,
         escalation_channel: str,
         agreement_channel: str,
-        bot_token: str | None = None,
+        bot_token: str,
     ) -> None:
         """Initialize the SlackNotifier.
 
         Args:
             escalation_channel: Channel ID for escalation messages.
             agreement_channel: Channel ID for agreement alerts.
-            bot_token: Slack bot token. Falls back to SLACK_BOT_TOKEN env var.
+            bot_token: Slack bot token.  Required.
 
         Raises:
-            KeyError: If bot_token is None and SLACK_BOT_TOKEN is not set.
+            ValueError: If ``bot_token`` is empty.
         """
-        token = bot_token or os.environ["SLACK_BOT_TOKEN"]
-        self._client = WebClient(token=token)
+        if not bot_token:
+            raise ValueError("bot_token is required")
+        self._client = WebClient(token=bot_token)
         self._escalation_channel = escalation_channel
         self._agreement_channel = agreement_channel
 

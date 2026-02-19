@@ -9,8 +9,6 @@ and commands are independently testable.
 
 from __future__ import annotations
 
-import os
-
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 
@@ -19,13 +17,17 @@ def create_slack_app(bot_token: str | None = None) -> App:
     """Create a Slack Bolt App instance.
 
     Args:
-        bot_token: The Slack Bot User OAuth Token.  Falls back to the
-            ``SLACK_BOT_TOKEN`` environment variable if not provided.
+        bot_token: The Slack Bot User OAuth Token.  Required.
 
     Returns:
         A configured Bolt ``App`` instance.
+
+    Raises:
+        ValueError: If ``bot_token`` is not provided.
     """
-    return App(token=bot_token or os.environ["SLACK_BOT_TOKEN"])
+    if not bot_token:
+        raise ValueError("bot_token is required")
+    return App(token=bot_token)
 
 
 def start_slack_app(app: App, app_token: str | None = None) -> None:
@@ -34,8 +36,12 @@ def start_slack_app(app: App, app_token: str | None = None) -> None:
     Args:
         app: The Bolt ``App`` instance to start.
         app_token: The Slack App-Level Token with ``connections:write``
-            scope.  Falls back to ``SLACK_APP_TOKEN`` environment
-            variable if not provided.
+            scope.  Required.
+
+    Raises:
+        ValueError: If ``app_token`` is not provided.
     """
-    handler = SocketModeHandler(app, app_token or os.environ["SLACK_APP_TOKEN"])
+    if not app_token:
+        raise ValueError("app_token is required")
+    handler = SocketModeHandler(app, app_token)
     handler.start()  # type: ignore[no-untyped-call]
