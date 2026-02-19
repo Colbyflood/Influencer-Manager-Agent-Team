@@ -1,0 +1,14 @@
+# Maps ClickUp custom field names to Campaign model fields
+# Update these to match your ClickUp form's custom field names
+field_mapping:
+  "Client Name": "client_name"
+  "Budget": "budget"
+  "Target Deliverables": "target_deliverables"
+  "Influencer List": "influencers_raw"
+  "CPM Min": "cpm_min"
+  "CPM Max": "cpm_max"
+  "Platform": "platform"
+  "Timeline": "timeline"
+
+# How the influencer list is formatted in ClickUp
+influencer_list_format: "comma_separated"  # or "newline_separated"

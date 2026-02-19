@@ -5,17 +5,22 @@ description = "AI-powered influencer rate negotiation agent"
 requires-python = ">=3.12"
 dependencies = [
     "anthropic>=0.82.0",
+    "fastapi>=0.129.0",
     "google-api-python-client>=2.190.0",
     "google-auth>=2.48.0",
     "google-auth-httplib2>=0.3.0",
     "google-auth-oauthlib>=1.2.4",
     "google-cloud-pubsub>=2.35.0",
     "gspread>=6.2.1",
+    "httpx>=0.28.1",
     "mail-parser-reply>=1.36",
     "pydantic>=2.12,<3",
     "pyyaml>=6.0.3",
     "slack-bolt>=1.27.0",
     "slack-sdk>=3.40.1",
+    "structlog>=25.5.0",
+    "tenacity>=9.1.4",
+    "uvicorn>=0.41.0",
 ]
 
 [dependency-groups]
