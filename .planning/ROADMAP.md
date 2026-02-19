@@ -14,9 +14,10 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Core Domain and Pricing Engine** - Deterministic pricing logic, negotiation state machine, platform rate cards, and rate boundary enforcement (completed 2026-02-19)
 - [x] **Phase 2: Email and Data Integration** - Gmail API send/receive with threading, Google Sheet connection for influencer data, and email parsing (completed 2026-02-19)
-- [ ] **Phase 3: LLM Negotiation Pipeline** - Intent classification, counter-offer composition, knowledge base integration, and the end-to-end negotiation loop
+- [x] **Phase 3: LLM Negotiation Pipeline** - Intent classification, counter-offer composition, knowledge base integration, and the end-to-end negotiation loop (completed 2026-02-19)
 - [x] **Phase 4: Slack and Human-in-the-Loop** - Escalation routing, agreement alerts, human takeover, and configurable trigger rules (completed 2026-02-19)
 - [x] **Phase 5: Campaign Ingestion and Operational Readiness** - ClickUp campaign data input, conversation logging, audit trail, and production hardening (completed 2026-02-19)
+- [ ] **Phase 6: Runtime Orchestration Wiring** - Connect all Phase 1-5 components in app.py: Gmail inbound handler, negotiation loop activation, SlackDispatcher wiring, campaign-to-negotiation handoff, and tech debt cleanup (GAP CLOSURE)
 
 ## Phase Details
 
@@ -102,15 +103,35 @@ Plans:
 - [ ] 05-03-PLAN.md — Audit logger, CLI query interface, Slack /audit command
 - [ ] 05-04-PLAN.md — Application entry point, audit wiring, production hardening (FastAPI + Slack Bolt + structlog)
 
+### Phase 6: Runtime Orchestration Wiring
+**Goal**: All Phase 1-5 components are connected in the runtime entry point so the agent can receive emails, run the negotiation loop, dispatch Slack notifications, and start negotiations from campaign ingestion — delivering the core value end-to-end
+**Depends on**: Phase 5
+**Gap Closure**: Closes all 4 integration gaps and 2 broken flows from v1.0 milestone audit
+**Success Criteria** (what must be TRUE):
+  1. When an influencer replies to a negotiation email, the agent receives the reply (via Gmail Pub/Sub or polling), classifies intent, runs the pricing engine, composes a response, validates it, and either sends or escalates — all without manual intervention
+  2. When a ClickUp campaign is ingested with found influencers, the agent retrieves each influencer's PayRange from the Sheet and sends initial outreach emails to start negotiations
+  3. SlackDispatcher pre-check gate runs before every negotiation loop iteration — checking human takeover, trigger evaluation, and routing escalations/agreements to Slack
+  4. All email sends, receives, escalations, and agreements are logged to the audit trail via the wiring functions
+  5. CampaignCPMTracker is instantiated per campaign and provides per-influencer flexibility guidance to the negotiation loop
+  6. Deprecated FastAPI on_event pattern is replaced with lifespan handlers
+**Plans**: TBD (created during plan-phase)
+
+Plans:
+- [ ] 06-01-PLAN.md — Gmail inbound handler and negotiation orchestrator
+- [ ] 06-02-PLAN.md — Campaign-to-negotiation handoff and CPMTracker wiring
+- [ ] 06-03-PLAN.md — SlackDispatcher and audit wiring activation in app.py
+- [ ] 06-04-PLAN.md — Tech debt cleanup (lifespan, unused exports, integration tests)
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Core Domain and Pricing Engine | 1/3 | Complete    | 2026-02-19 |
-| 2. Email and Data Integration | 0/3 | Complete    | 2026-02-19 |
-| 3. LLM Negotiation Pipeline | 1/4 | In Progress | - |
-| 4. Slack and Human-in-the-Loop | 0/4 | Complete    | 2026-02-19 |
-| 5. Campaign Ingestion and Operational Readiness | 0/4 | Complete    | 2026-02-19 |
+| 1. Core Domain and Pricing Engine | 3/3 | Complete    | 2026-02-19 |
+| 2. Email and Data Integration | 3/3 | Complete    | 2026-02-19 |
+| 3. LLM Negotiation Pipeline | 4/4 | Complete    | 2026-02-19 |
+| 4. Slack and Human-in-the-Loop | 4/4 | Complete    | 2026-02-19 |
+| 5. Campaign Ingestion and Operational Readiness | 4/4 | Complete    | 2026-02-19 |
+| 6. Runtime Orchestration Wiring | 0/4 | Not Started | - |
