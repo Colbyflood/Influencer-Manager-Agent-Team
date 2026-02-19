@@ -16,6 +16,7 @@ from negotiation.config import Settings, get_settings, validate_credentials
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture(autouse=True)
 def _clear_settings_cache() -> None:
     """Clear get_settings lru_cache before each test."""
@@ -25,6 +26,7 @@ def _clear_settings_cache() -> None:
 # ---------------------------------------------------------------------------
 # Settings defaults
 # ---------------------------------------------------------------------------
+
 
 class TestSettingsDefaults:
     """Verify that Settings fields have the expected default values."""
@@ -53,6 +55,7 @@ class TestSettingsDefaults:
 # ---------------------------------------------------------------------------
 # Credential validation
 # ---------------------------------------------------------------------------
+
 
 class TestValidateCredentials:
     """Verify validate_credentials behaviour in production and dev modes."""
@@ -117,6 +120,7 @@ class TestValidateCredentials:
 # ---------------------------------------------------------------------------
 # get_settings cache
 # ---------------------------------------------------------------------------
+
 
 class TestGetSettingsCached:
     """Verify lru_cache on get_settings."""

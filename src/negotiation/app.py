@@ -239,9 +239,7 @@ def initialize_services(settings: Settings | None = None) -> dict[str, Any]:
         except Exception:
             logger.warning("Failed to initialize SlackDispatcher", exc_info=True)
     else:
-        logger.info(
-            "SlackNotifier or ThreadStateManager unavailable, SlackDispatcher disabled"
-        )
+        logger.info("SlackNotifier or ThreadStateManager unavailable, SlackDispatcher disabled")
     services["slack_dispatcher"] = slack_dispatcher
 
     # j. In-memory negotiation state store
@@ -255,8 +253,7 @@ def initialize_services(settings: Settings | None = None) -> dict[str, Any]:
         # Reconstruct history as list of (NegotiationState, str, NegotiationState) tuples
         history_raw = json.loads(row["history_json"])
         history_tuples: list[tuple[NegotiationState, str, NegotiationState]] = [
-            (NegotiationState(h[0]), h[1], NegotiationState(h[2]))
-            for h in history_raw
+            (NegotiationState(h[0]), h[1], NegotiationState(h[2])) for h in history_raw
         ]
         state_machine = NegotiationStateMachine.from_snapshot(
             NegotiationState(row["state"]),
@@ -274,9 +271,7 @@ def initialize_services(settings: Settings | None = None) -> dict[str, Any]:
             "cpm_tracker": cpm_tracker,
         }
     if active_rows:
-        logger.info(
-            "Negotiation state recovery complete", recovered=len(active_rows)
-        )
+        logger.info("Negotiation state recovery complete", recovered=len(active_rows))
 
     # k. History ID lock for thread-safe history ID updates
     services["history_lock"] = asyncio.Lock()
@@ -293,9 +288,7 @@ def initialize_services(settings: Settings | None = None) -> dict[str, Any]:
     from negotiation.audit.wiring import create_audited_process_reply
     from negotiation.llm.negotiation_loop import process_influencer_reply
 
-    audited_process_reply = create_audited_process_reply(
-        process_influencer_reply, audit_logger
-    )
+    audited_process_reply = create_audited_process_reply(process_influencer_reply, audit_logger)
     services["audited_process_reply"] = audited_process_reply
 
     # n. Wire audit logging into campaign ingestion
@@ -341,9 +334,7 @@ def initialize_services(settings: Settings | None = None) -> dict[str, Any]:
                     influencer_count=len(found_influencers),
                 )
             elif not found_influencers:
-                logger.info(
-                    "No influencers found for campaign, no negotiations to start"
-                )
+                logger.info("No influencers found for campaign, no negotiations to start")
 
         try:
             loop = asyncio.get_event_loop()
@@ -494,9 +485,7 @@ async def start_negotiations_for_campaign(
             )
 
             # Send as a new email (not a reply -- new thread)
-            influencer_email = (
-                str(sheet_data.email) if hasattr(sheet_data, "email") else ""
-            )
+            influencer_email = str(sheet_data.email) if hasattr(sheet_data, "email") else ""
             if not influencer_email:
                 logger.warning("No email for influencer, skipping", influencer=name)
                 continue
@@ -563,9 +552,7 @@ async def start_negotiations_for_campaign(
             )
 
         except Exception:
-            logger.exception(
-                "Failed to start negotiation for influencer", influencer=name
-            )
+            logger.exception("Failed to start negotiation for influencer", influencer=name)
 
 
 @asynccontextmanager
@@ -591,9 +578,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
                 watch_result = await asyncio.to_thread(gmail_client.setup_watch, topic)
                 async with services["history_lock"]:
                     services["history_id"] = str(watch_result.get("historyId", ""))
-                logger.info(
-                    "Gmail watch registered", history_id=services["history_id"]
-                )
+                logger.info("Gmail watch registered", history_id=services["history_id"])
             except Exception:
                 logger.warning("Failed to register Gmail watch", exc_info=True)
     logger.info("FastAPI application starting")
@@ -637,9 +622,7 @@ def create_app(services: dict[str, Any]) -> FastAPI:
 
         decoded = json.loads(base64.urlsafe_b64decode(message_data))
         notification_history_id = decoded.get("historyId", "")
-        logger.info(
-            "Gmail notification received", history_id=notification_history_id
-        )
+        logger.info("Gmail notification received", history_id=notification_history_id)
 
         # Fetch new messages under lock to prevent race conditions
         async with svc["history_lock"]:
@@ -791,9 +774,7 @@ async def process_inbound_email(message_id: str, services: dict[str, Any]) -> No
                     state_machine=state_machine,
                     context=context,
                     campaign=thread_state["campaign"],
-                    cpm_tracker_data=serialize_cpm_tracker(
-                        thread_state["cpm_tracker"]
-                    ),
+                    cpm_tracker_data=serialize_cpm_tracker(thread_state["cpm_tracker"]),
                     round_count=thread_state["round_count"],
                 )
 

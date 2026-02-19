@@ -70,9 +70,7 @@ def process_influencer_reply(
     kb_content = load_knowledge_base(str(negotiation_context["platform"]))
 
     # Step 3 - Classify intent
-    classification = classify_intent(
-        email_body, str(negotiation_context), client
-    )
+    classification = classify_intent(email_body, str(negotiation_context), client)
 
     # Step 4 - Handle UNCLEAR intent
     if classification.intent == NegotiationIntent.UNCLEAR:
@@ -118,9 +116,7 @@ def process_influencer_reply(
 
     # Step 9 - Compose counter-offer email
     negotiation_stage = (
-        "counter"
-        if classification.intent == NegotiationIntent.COUNTER
-        else "question_response"
+        "counter" if classification.intent == NegotiationIntent.COUNTER else "question_response"
     )
     composed = compose_counter_email(
         influencer_name=str(negotiation_context["influencer_name"]),

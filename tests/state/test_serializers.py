@@ -101,9 +101,9 @@ class TestStateMachineFromSnapshot:
     def test_state_machine_from_snapshot_round_trip(self) -> None:
         """State machine should be reconstructable from state + history."""
         sm = NegotiationStateMachine()
-        sm.trigger("send_offer")       # INITIAL_OFFER -> AWAITING_REPLY
-        sm.trigger("receive_reply")    # AWAITING_REPLY -> COUNTER_RECEIVED
-        sm.trigger("send_counter")     # COUNTER_RECEIVED -> COUNTER_SENT
+        sm.trigger("send_offer")  # INITIAL_OFFER -> AWAITING_REPLY
+        sm.trigger("receive_reply")  # AWAITING_REPLY -> COUNTER_RECEIVED
+        sm.trigger("send_counter")  # COUNTER_RECEIVED -> COUNTER_SENT
 
         original_state = sm.state
         original_history = sm.history

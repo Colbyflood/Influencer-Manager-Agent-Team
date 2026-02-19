@@ -193,10 +193,7 @@ def build_campaign(task_id: str, parsed_fields: dict[str, Any]) -> Campaign:
         platform = Platform.INSTAGRAM
 
     # Build influencer list with platform
-    influencers = [
-        CampaignInfluencer(name=name, platform=platform)
-        for name in influencer_names
-    ]
+    influencers = [CampaignInfluencer(name=name, platform=platform) for name in influencer_names]
 
     # Convert monetary values to Decimal via string to avoid float rejection
     budget = Decimal(str(parsed_fields.get("budget", "0")))
@@ -269,10 +266,12 @@ async def ingest_campaign(
     for influencer in campaign.influencers:
         try:
             sheet_data = sheets_client.find_influencer(influencer.name)
-            found_influencers.append({
-                "name": influencer.name,
-                "sheet_data": sheet_data,
-            })
+            found_influencers.append(
+                {
+                    "name": influencer.name,
+                    "sheet_data": sheet_data,
+                }
+            )
         except ValueError:
             missing_influencers.append(influencer.name)
 

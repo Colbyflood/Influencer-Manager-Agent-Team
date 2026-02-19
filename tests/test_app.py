@@ -59,9 +59,7 @@ class TestConfigureLogging:
         configure_logging(production=True)
         config = structlog.get_config()
         processors = config["processors"]
-        assert any(
-            isinstance(p, structlog.processors.JSONRenderer) for p in processors
-        )
+        assert any(isinstance(p, structlog.processors.JSONRenderer) for p in processors)
 
     def test_production_true_activates_json_renderer(self) -> None:
         """Passing production=True enables JSON rendering (caller reads from Settings)."""
@@ -69,9 +67,7 @@ class TestConfigureLogging:
         configure_logging(production=True)
         config = structlog.get_config()
         processors = config["processors"]
-        assert any(
-            isinstance(p, structlog.processors.JSONRenderer) for p in processors
-        )
+        assert any(isinstance(p, structlog.processors.JSONRenderer) for p in processors)
 
     def test_default_is_development_mode(self) -> None:
         _reset_structlog()
@@ -129,9 +125,7 @@ class TestInitializeServices:
 
         close_audit_db(services["audit_conn"])
 
-    def test_configures_error_notifier_when_slack_available(
-        self, tmp_path: Path
-    ) -> None:
+    def test_configures_error_notifier_when_slack_available(self, tmp_path: Path) -> None:
         _reset_structlog()
         configure_logging(production=False)
         settings = _base_settings(
@@ -144,9 +138,11 @@ class TestInitializeServices:
         mock_notifier_instance = MagicMock()
         mock_bolt_app = MagicMock()
 
-        with patch("negotiation.slack.client.SlackNotifier", return_value=mock_notifier_instance), \
-             patch("negotiation.app.configure_error_notifier") as mock_cfg_notifier, \
-             patch("negotiation.app.create_slack_app", return_value=mock_bolt_app):
+        with (
+            patch("negotiation.slack.client.SlackNotifier", return_value=mock_notifier_instance),
+            patch("negotiation.app.configure_error_notifier") as mock_cfg_notifier,
+            patch("negotiation.app.create_slack_app", return_value=mock_bolt_app),
+        ):
             services = initialize_services(settings)
 
             mock_cfg_notifier.assert_called_once_with(mock_notifier_instance)
@@ -251,9 +247,7 @@ class TestInitializeServices:
 
         close_audit_db(services["audit_conn"])
 
-    def test_slack_dispatcher_initialized_when_notifier_available(
-        self, tmp_path: Path
-    ) -> None:
+    def test_slack_dispatcher_initialized_when_notifier_available(self, tmp_path: Path) -> None:
         """SlackDispatcher is created when SlackNotifier and ThreadStateManager exist."""
         _reset_structlog()
         configure_logging(production=False)
@@ -405,13 +399,9 @@ def _make_campaign() -> Campaign:
         budget=Decimal("5000"),
         target_deliverables="1 Instagram Reel",
         influencers=[
-            CampaignInfluencer(
-                name="Alice", platform=Platform.INSTAGRAM, engagement_rate=4.5
-            ),
+            CampaignInfluencer(name="Alice", platform=Platform.INSTAGRAM, engagement_rate=4.5),
         ],
-        cpm_range=CampaignCPMRange(
-            min_cpm=Decimal("20"), max_cpm=Decimal("35")
-        ),
+        cpm_range=CampaignCPMRange(min_cpm=Decimal("20"), max_cpm=Decimal("35")),
         platform=Platform.INSTAGRAM,
         timeline="2 weeks",
         created_at="2026-01-15T10:00:00Z",
@@ -448,9 +438,7 @@ def _make_context(thread_id: str = "thread-abc") -> dict:
 class TestStatePersistence:
     """Integration tests for state persistence wiring (STATE-01, STATE-02)."""
 
-    def test_state_persistence_on_negotiation_start(
-        self, tmp_path: Path
-    ) -> None:
+    def test_state_persistence_on_negotiation_start(self, tmp_path: Path) -> None:
         """Verify state_store is initialized and save/load_active round-trips."""
         _reset_structlog()
         configure_logging(production=False)
@@ -465,8 +453,7 @@ class TestStatePersistence:
         # Verify negotiation_state table exists
         conn = services["audit_conn"]
         cursor = conn.execute(
-            "SELECT name FROM sqlite_master WHERE type='table' "
-            "AND name='negotiation_state'"
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='negotiation_state'"
         )
         assert cursor.fetchone() is not None
 
@@ -496,9 +483,7 @@ class TestStatePersistence:
 
         close_audit_db(conn)
 
-    def test_startup_recovery_loads_non_terminal(
-        self, tmp_path: Path
-    ) -> None:
+    def test_startup_recovery_loads_non_terminal(self, tmp_path: Path) -> None:
         """Startup recovery loads AWAITING_REPLY and COUNTER_RECEIVED but not AGREED."""
         _reset_structlog()
         configure_logging(production=False)
@@ -564,14 +549,8 @@ class TestStatePersistence:
         assert "thread-2" not in neg_states  # AGREED is terminal
 
         # Verify state machines have correct states
-        assert (
-            neg_states["thread-1"]["state_machine"].state
-            == NegotiationState.AWAITING_REPLY
-        )
-        assert (
-            neg_states["thread-3"]["state_machine"].state
-            == NegotiationState.COUNTER_RECEIVED
-        )
+        assert neg_states["thread-1"]["state_machine"].state == NegotiationState.AWAITING_REPLY
+        assert neg_states["thread-3"]["state_machine"].state == NegotiationState.COUNTER_RECEIVED
 
         # Verify context round-tripped (next_cpm comes back as string from JSON)
         ctx1 = neg_states["thread-1"]["context"]
@@ -609,9 +588,7 @@ class TestStatePersistence:
 
         close_audit_db(services["audit_conn"])
 
-    def test_state_store_save_updates_existing_row(
-        self, tmp_path: Path
-    ) -> None:
+    def test_state_store_save_updates_existing_row(self, tmp_path: Path) -> None:
         """Saving with the same thread_id updates the row (not duplicates)."""
         _reset_structlog()
         configure_logging(production=False)

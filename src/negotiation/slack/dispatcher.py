@@ -90,9 +90,7 @@ class SlackDispatcher:
             return {"action": "skip", "reason": "Thread is human-managed"}
 
         # 2. Check for human reply in Gmail thread (auto-claim)
-        if detect_human_reply(
-            gmail_service, thread_id, self._agent_email, influencer_email
-        ):
+        if detect_human_reply(gmail_service, thread_id, self._agent_email, influencer_email):
             self._thread_state.claim_thread(thread_id, "auto-detected")
             logger.info("Human reply detected in thread %s, auto-claimed", thread_id)
             return {"action": "skip", "reason": "Human reply detected in thread"}
@@ -133,9 +131,7 @@ class SlackDispatcher:
         Returns:
             The Slack message timestamp (ts) for reference.
         """
-        details_link = (
-            f"https://mail.google.com/mail/u/0/#inbox/{payload.thread_id}"
-        )
+        details_link = f"https://mail.google.com/mail/u/0/#inbox/{payload.thread_id}"
         blocks = build_escalation_blocks(
             influencer_name=payload.influencer_name,
             influencer_email=payload.influencer_email,
@@ -173,9 +169,7 @@ class SlackDispatcher:
             next_steps=payload.next_steps,
             mention_users=payload.mention_users if payload.mention_users else None,
         )
-        fallback_text = (
-            f"Deal Agreed: {payload.influencer_name} - ${payload.agreed_rate:,.2f}"
-        )
+        fallback_text = f"Deal Agreed: {payload.influencer_name} - ${payload.agreed_rate:,.2f}"
         return self._notifier.post_agreement(blocks, fallback_text)
 
     def handle_negotiation_result(
@@ -204,16 +198,12 @@ class SlackDispatcher:
         action = result.get("action", "")
 
         if action == "escalate":
-            esc_payload = self._build_escalation_payload(
-                result, negotiation_context
-            )
+            esc_payload = self._build_escalation_payload(result, negotiation_context)
             slack_ts = self.dispatch_escalation(esc_payload)
             result["slack_ts"] = slack_ts
 
         elif action == "accept":
-            agr_payload = self._build_agreement_payload(
-                result, negotiation_context
-            )
+            agr_payload = self._build_agreement_payload(result, negotiation_context)
             slack_ts = self.dispatch_agreement(agr_payload)
             result["slack_ts"] = slack_ts
 

@@ -25,26 +25,28 @@ class TestBuildParser:
 
     def test_accepts_all_arguments(self) -> None:
         parser = build_parser()
-        args = parser.parse_args([
-            "--influencer",
-            "Jane Doe",
-            "--campaign",
-            "camp_123",
-            "--from-date",
-            "2026-01-01",
-            "--to-date",
-            "2026-02-01",
-            "--event-type",
-            "email_sent",
-            "--last",
-            "7d",
-            "--format",
-            "json",
-            "--limit",
-            "100",
-            "--db",
-            "/tmp/test.db",
-        ])
+        args = parser.parse_args(
+            [
+                "--influencer",
+                "Jane Doe",
+                "--campaign",
+                "camp_123",
+                "--from-date",
+                "2026-01-01",
+                "--to-date",
+                "2026-02-01",
+                "--event-type",
+                "email_sent",
+                "--last",
+                "7d",
+                "--format",
+                "json",
+                "--limit",
+                "100",
+                "--db",
+                "/tmp/test.db",
+            ]
+        )
         assert args.influencer == "Jane Doe"
         assert args.campaign == "camp_123"
         assert args.from_date == "2026-01-01"

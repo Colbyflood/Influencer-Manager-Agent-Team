@@ -46,9 +46,7 @@ class TestDetectHumanReply:
 
     def test_returns_false_when_only_agent_and_influencer(self) -> None:
         """Only agent and influencer emails -- no human reply detected."""
-        service = _mock_service_with_messages(
-            ["agent@company.com", "influencer@gmail.com"]
-        )
+        service = _mock_service_with_messages(["agent@company.com", "influencer@gmail.com"])
         result = detect_human_reply(
             service, "thread_1", "agent@company.com", "influencer@gmail.com"
         )
@@ -100,9 +98,7 @@ class TestDetectHumanReply:
 
     def test_is_case_insensitive(self) -> None:
         """Email comparison is case-insensitive."""
-        service = _mock_service_with_messages(
-            ["Agent@Company.COM", "INFLUENCER@gmail.com"]
-        )
+        service = _mock_service_with_messages(["Agent@Company.COM", "INFLUENCER@gmail.com"])
         result = detect_human_reply(
             service, "thread_1", "agent@company.com", "influencer@gmail.com"
         )

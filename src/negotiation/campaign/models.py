@@ -55,9 +55,7 @@ class CampaignCPMRange(BaseModel):
     def min_must_not_exceed_max(self) -> "CampaignCPMRange":
         """Ensure min_cpm does not exceed max_cpm."""
         if self.min_cpm > self.max_cpm:
-            raise ValueError(
-                f"min_cpm ({self.min_cpm}) must not exceed max_cpm ({self.max_cpm})"
-            )
+            raise ValueError(f"min_cpm ({self.min_cpm}) must not exceed max_cpm ({self.max_cpm})")
         return self
 
 
@@ -99,7 +97,8 @@ class Campaign(BaseModel):
     @field_validator("influencers")
     @classmethod
     def must_have_at_least_one_influencer(
-        cls, v: list[CampaignInfluencer],
+        cls,
+        v: list[CampaignInfluencer],
     ) -> list[CampaignInfluencer]:
         """Ensure at least one influencer is assigned to the campaign."""
         if len(v) == 0:

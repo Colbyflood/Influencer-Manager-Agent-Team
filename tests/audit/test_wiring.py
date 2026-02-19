@@ -147,9 +147,7 @@ class TestCreateAuditedProcessReply:
 
     def test_action_escalate_logs_escalation(self, tmp_path: Path) -> None:
         audit_logger, conn = _make_logger(tmp_path)
-        original = MagicMock(
-            return_value={"action": "escalate", "reason": "CPM too high"}
-        )
+        original = MagicMock(return_value={"action": "escalate", "reason": "CPM too high"})
 
         wrapped = create_audited_process_reply(original, audit_logger)
         ctx = {
@@ -172,9 +170,7 @@ class TestCreateAuditedProcessReply:
         audit_logger, conn = _make_logger(tmp_path)
         classification = MagicMock()
         classification.proposed_rate = "750"
-        original = MagicMock(
-            return_value={"action": "accept", "classification": classification}
-        )
+        original = MagicMock(return_value={"action": "accept", "classification": classification})
 
         wrapped = create_audited_process_reply(original, audit_logger)
         ctx = {
@@ -231,9 +227,7 @@ class TestCreateAuditedProcessReply:
 
     def test_extracts_context_from_positional_args(self, tmp_path: Path) -> None:
         audit_logger, conn = _make_logger(tmp_path)
-        original = MagicMock(
-            return_value={"action": "escalate", "reason": "test"}
-        )
+        original = MagicMock(return_value={"action": "escalate", "reason": "test"})
 
         wrapped = create_audited_process_reply(original, audit_logger)
         ctx = {"influencer_name": "Jack", "thread_id": "t_010", "negotiation_state": "s"}

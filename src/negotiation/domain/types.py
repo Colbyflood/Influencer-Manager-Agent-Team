@@ -77,9 +77,7 @@ def get_platform_for_deliverable(deliverable_type: DeliverableType) -> Platform:
     raise ValueError(f"Unknown deliverable type: {deliverable_type}")
 
 
-def validate_platform_deliverable(
-    platform: Platform, deliverable_type: DeliverableType
-) -> None:
+def validate_platform_deliverable(platform: Platform, deliverable_type: DeliverableType) -> None:
     """Validate that a deliverable type is valid for the given platform.
 
     Args:

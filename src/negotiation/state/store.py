@@ -65,8 +65,7 @@ class NegotiationStateStore:
 
         # Serialize history as list of [from.value, event, to.value] triples
         history_list: list[list[str]] = [
-            [from_s.value, event, to_s.value]
-            for from_s, event, to_s in state_machine.history
+            [from_s.value, event, to_s.value] for from_s, event, to_s in state_machine.history
         ]
 
         self._conn.execute(
@@ -93,8 +92,8 @@ class NegotiationStateStore:
                 json.dumps(cpm_tracker_data),
                 json.dumps(history_list),
                 thread_id,  # for the COALESCE subquery
-                now,        # default created_at on first insert
-                now,        # updated_at always set to now
+                now,  # default created_at on first insert
+                now,  # updated_at always set to now
             ),
         )
         self._conn.commit()

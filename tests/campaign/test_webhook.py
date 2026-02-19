@@ -98,7 +98,9 @@ class TestClickUpWebhookEndpoint:
     """Tests for the /webhooks/clickup endpoint."""
 
     def test_valid_signature_returns_200(
-        self, client: TestClient, mock_processor: MagicMock,
+        self,
+        client: TestClient,
+        mock_processor: MagicMock,
     ) -> None:
         payload = _make_payload()
         body = json.dumps(payload).encode()
@@ -141,7 +143,9 @@ class TestClickUpWebhookEndpoint:
         assert "Invalid signature" in response.json()["detail"]
 
     def test_non_task_created_event_returns_200_no_processing(
-        self, client: TestClient, mock_processor: MagicMock,
+        self,
+        client: TestClient,
+        mock_processor: MagicMock,
     ) -> None:
         """Non-taskCreated events are acknowledged but not processed."""
         payload = _make_payload(event="taskUpdated")
@@ -159,7 +163,9 @@ class TestClickUpWebhookEndpoint:
         mock_processor.assert_not_called()
 
     def test_task_created_event_calls_processor_with_task_id(
-        self, client: TestClient, mock_processor: MagicMock,
+        self,
+        client: TestClient,
+        mock_processor: MagicMock,
     ) -> None:
         """taskCreated event triggers the campaign processor with correct task_id."""
         payload = _make_payload(event="taskCreated", task_id="task_xyz")
@@ -177,7 +183,9 @@ class TestClickUpWebhookEndpoint:
         mock_processor.assert_called_once_with("task_xyz")
 
     def test_task_created_missing_task_id_returns_200_no_processing(
-        self, client: TestClient, mock_processor: MagicMock,
+        self,
+        client: TestClient,
+        mock_processor: MagicMock,
     ) -> None:
         """taskCreated without task_id is acknowledged but processor is not called."""
         payload: dict[str, str] = {"event": "taskCreated"}
@@ -211,5 +219,3 @@ class TestClickUpWebhookEndpoint:
         )
 
         assert response.status_code == 500
-
-

@@ -118,5 +118,3 @@ async def clickup_webhook(request: Request) -> dict[str, str]:
         logger.warning("No campaign processor registered; skipping task", task_id=task_id)
 
     return {"status": "ok"}
-
-

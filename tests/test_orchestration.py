@@ -212,10 +212,12 @@ class TestProcessInboundEmail:
         mock_dispatcher.pre_check.return_value = None  # proceed
         mock_dispatcher.handle_negotiation_result.side_effect = lambda r, c: r
 
-        mock_process = MagicMock(return_value={
-            "action": "send",
-            "email_body": "Here is our counter offer.",
-        })
+        mock_process = MagicMock(
+            return_value={
+                "action": "send",
+                "email_body": "Here is our counter offer.",
+            }
+        )
 
         mock_anthropic = MagicMock()
 
@@ -245,9 +247,7 @@ class TestProcessInboundEmail:
         mock_gmail.get_message.assert_called_once_with("msg_123")
         mock_dispatcher.pre_check.assert_called_once()
         mock_process.assert_called_once()
-        mock_gmail.send_reply.assert_called_once_with(
-            "thread_abc", "Here is our counter offer."
-        )
+        mock_gmail.send_reply.assert_called_once_with("thread_abc", "Here is our counter offer.")
         assert negotiation_states["thread_abc"]["round_count"] == 1
 
     def test_skips_unknown_thread(self) -> None:
@@ -332,10 +332,12 @@ class TestProcessInboundEmail:
         mock_dispatcher.pre_check.return_value = None  # proceed
         mock_dispatcher.handle_negotiation_result.side_effect = lambda r, c: r
 
-        mock_process = MagicMock(return_value={
-            "action": "send",
-            "email_body": "Counter offer.",
-        })
+        mock_process = MagicMock(
+            return_value={
+                "action": "send",
+                "email_body": "Counter offer.",
+            }
+        )
 
         mock_anthropic = MagicMock()
 
@@ -383,10 +385,12 @@ class TestProcessInboundEmail:
         mock_dispatcher.pre_check.return_value = None
         mock_dispatcher.handle_negotiation_result.side_effect = lambda r, c: r
 
-        mock_process = MagicMock(return_value={
-            "action": "send",
-            "email_body": "Counter offer.",
-        })
+        mock_process = MagicMock(
+            return_value={
+                "action": "send",
+                "email_body": "Counter offer.",
+            }
+        )
 
         mock_anthropic = MagicMock()
         mock_audit = MagicMock()
@@ -441,10 +445,12 @@ class TestProcessInboundEmail:
         mock_dispatcher.pre_check.return_value = None
         mock_dispatcher.handle_negotiation_result.side_effect = lambda r, c: r
 
-        mock_process = MagicMock(return_value={
-            "action": "send",
-            "email_body": "Counter offer.",
-        })
+        mock_process = MagicMock(
+            return_value={
+                "action": "send",
+                "email_body": "Counter offer.",
+            }
+        )
 
         mock_anthropic = MagicMock()
 
@@ -491,10 +497,12 @@ class TestProcessInboundEmail:
         mock_dispatcher.pre_check.return_value = None
         mock_dispatcher.handle_negotiation_result.side_effect = lambda r, c: r
 
-        mock_process = MagicMock(return_value={
-            "action": "escalate",
-            "reason": "high CPM",
-        })
+        mock_process = MagicMock(
+            return_value={
+                "action": "escalate",
+                "reason": "high CPM",
+            }
+        )
 
         mock_anthropic = MagicMock()
 
@@ -578,11 +586,13 @@ class TestStartNegotiationsForCampaign:
             mock_sm_instance = MagicMock()
             mock_sm_cls.return_value = mock_sm_instance
 
-            asyncio.run(start_negotiations_for_campaign(
-                found_influencers=found_influencers,
-                campaign=campaign,
-                services=services,
-            ))
+            asyncio.run(
+                start_negotiations_for_campaign(
+                    found_influencers=found_influencers,
+                    campaign=campaign,
+                    services=services,
+                )
+            )
 
         # State entry created with the thread_id from Gmail
         assert "thread_123" in negotiation_states
@@ -612,13 +622,15 @@ class TestStartNegotiationsForCampaign:
 
         campaign = _make_mock_campaign()
 
-        asyncio.run(start_negotiations_for_campaign(
-            found_influencers=[
-                {"name": "Jane", "sheet_data": _make_mock_influencer_row()},
-            ],
-            campaign=campaign,
-            services=services,
-        ))
+        asyncio.run(
+            start_negotiations_for_campaign(
+                found_influencers=[
+                    {"name": "Jane", "sheet_data": _make_mock_influencer_row()},
+                ],
+                campaign=campaign,
+                services=services,
+            )
+        )
 
         assert negotiation_states == {}
 
@@ -634,13 +646,15 @@ class TestStartNegotiationsForCampaign:
 
         campaign = _make_mock_campaign()
 
-        asyncio.run(start_negotiations_for_campaign(
-            found_influencers=[
-                {"name": "Jane", "sheet_data": _make_mock_influencer_row()},
-            ],
-            campaign=campaign,
-            services=services,
-        ))
+        asyncio.run(
+            start_negotiations_for_campaign(
+                found_influencers=[
+                    {"name": "Jane", "sheet_data": _make_mock_influencer_row()},
+                ],
+                campaign=campaign,
+                services=services,
+            )
+        )
 
         assert negotiation_states == {}
 
@@ -688,11 +702,13 @@ class TestStartNegotiationsForCampaign:
             mock_tracker_instance = MagicMock()
             mock_tracker_cls.return_value = mock_tracker_instance
 
-            asyncio.run(start_negotiations_for_campaign(
-                found_influencers=found_influencers,
-                campaign=campaign,
-                services=services,
-            ))
+            asyncio.run(
+                start_negotiations_for_campaign(
+                    found_influencers=found_influencers,
+                    campaign=campaign,
+                    services=services,
+                )
+            )
 
         mock_tracker_cls.assert_called_once_with(
             campaign_id="CAMP-001",

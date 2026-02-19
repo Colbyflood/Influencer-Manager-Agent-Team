@@ -90,8 +90,7 @@ class TestResumeCommand:
 
         ack.assert_called_once()
         respond.assert_called_once_with(
-            "Thread resumed for influencer@example.com. "
-            "Agent will handle this negotiation again."
+            "Thread resumed for influencer@example.com. Agent will handle this negotiation again."
         )
 
     def test_resume_with_empty_text_responds_usage(self) -> None:

@@ -46,15 +46,9 @@ def init_audit_db(db_path: Path) -> sqlite3.Connection:
         )
     """)
 
-    conn.execute(
-        "CREATE INDEX IF NOT EXISTS idx_audit_influencer ON audit_log (influencer_name)"
-    )
-    conn.execute(
-        "CREATE INDEX IF NOT EXISTS idx_audit_campaign ON audit_log (campaign_id)"
-    )
-    conn.execute(
-        "CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON audit_log (timestamp)"
-    )
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_audit_influencer ON audit_log (influencer_name)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_audit_campaign ON audit_log (campaign_id)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON audit_log (timestamp)")
 
     conn.commit()
     return conn

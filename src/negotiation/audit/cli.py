@@ -178,9 +178,7 @@ def format_table(results: list[dict[str, Any]]) -> str:
             truncate(row.get("negotiation_state"), widths[4]),
             truncate(row.get("direction"), widths[5]),
         ]
-        lines.append(
-            "  ".join(c.ljust(w) for c, w in zip(cells, widths, strict=True))
-        )
+        lines.append("  ".join(c.ljust(w) for c, w in zip(cells, widths, strict=True)))
 
     return "\n".join(lines)
 

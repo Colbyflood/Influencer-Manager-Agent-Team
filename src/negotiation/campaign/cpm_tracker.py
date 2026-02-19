@@ -62,7 +62,9 @@ class CampaignCPMTracker:
         self._agreements: list[tuple[Decimal, float | None]] = []
 
     def record_agreement(
-        self, cpm: Decimal, engagement_rate: float | None = None,
+        self,
+        cpm: Decimal,
+        engagement_rate: float | None = None,
     ) -> None:
         """Record a CPM agreement for an influencer.
 
@@ -85,7 +87,8 @@ class CampaignCPMTracker:
         return total / len(self._agreements)
 
     def get_flexibility(
-        self, influencer_engagement_rate: float | None = None,
+        self,
+        influencer_engagement_rate: float | None = None,
     ) -> CPMFlexibility:
         """Calculate CPM flexibility for an influencer.
 
@@ -110,8 +113,8 @@ class CampaignCPMTracker:
             remaining = self.total_influencers - len(self._agreements)
             if remaining > 0:
                 # Distribute savings across remaining influencers
-                budget_premium = savings * Decimal(str(len(self._agreements))) / Decimal(
-                    str(remaining)
+                budget_premium = (
+                    savings * Decimal(str(len(self._agreements))) / Decimal(str(remaining))
                 )
 
         # Calculate engagement premium
@@ -123,9 +126,7 @@ class CampaignCPMTracker:
                 engagement_desc = f"high engagement ({influencer_engagement_rate}% > 5%): +15%"
             elif influencer_engagement_rate > 3.0:
                 engagement_premium = self.target_max_cpm * Decimal("0.08")
-                engagement_desc = (
-                    f"moderate engagement ({influencer_engagement_rate}% > 3%): +8%"
-                )
+                engagement_desc = f"moderate engagement ({influencer_engagement_rate}% > 3%): +8%"
             else:
                 engagement_desc = f"low engagement ({influencer_engagement_rate}%): no premium"
 

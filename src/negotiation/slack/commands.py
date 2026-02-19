@@ -39,10 +39,7 @@ def register_commands(app: App, thread_state_manager: ThreadStateManager) -> Non
             respond("Usage: /claim <influencer_name_or_email>")
             return
         thread_state_manager.claim_thread(identifier, command["user_id"])
-        respond(
-            f"Thread claimed for {identifier}. "
-            "Agent will stop processing this negotiation."
-        )
+        respond(f"Thread claimed for {identifier}. Agent will stop processing this negotiation.")
 
     @app.command("/resume")
     def handle_resume(
@@ -57,7 +54,4 @@ def register_commands(app: App, thread_state_manager: ThreadStateManager) -> Non
             respond("Usage: /resume <influencer_name_or_email>")
             return
         thread_state_manager.resume_thread(identifier)
-        respond(
-            f"Thread resumed for {identifier}. "
-            "Agent will handle this negotiation again."
-        )
+        respond(f"Thread resumed for {identifier}. Agent will handle this negotiation again.")

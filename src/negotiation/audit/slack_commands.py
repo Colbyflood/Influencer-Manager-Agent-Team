@@ -103,9 +103,7 @@ def format_audit_blocks(
     elif total <= _MAX_DISPLAY_ENTRIES:
         count_text = f"{total} entries found."
     else:
-        count_text = (
-            f"{total} entries found (showing most recent {_MAX_DISPLAY_ENTRIES})"
-        )
+        count_text = f"{total} entries found (showing most recent {_MAX_DISPLAY_ENTRIES})"
 
     blocks.append(
         {
@@ -128,9 +126,7 @@ def format_audit_blocks(
         ]
 
         if entry.get("campaign_id"):
-            fields.append(
-                {"type": "mrkdwn", "text": f"*Campaign:*\n{entry['campaign_id']}"}
-            )
+            fields.append({"type": "mrkdwn", "text": f"*Campaign:*\n{entry['campaign_id']}"})
 
         if entry.get("negotiation_state"):
             fields.append(
@@ -141,14 +137,10 @@ def format_audit_blocks(
             )
 
         if entry.get("direction"):
-            fields.append(
-                {"type": "mrkdwn", "text": f"*Direction:*\n{entry['direction']}"}
-            )
+            fields.append({"type": "mrkdwn", "text": f"*Direction:*\n{entry['direction']}"})
 
         if entry.get("rates_used"):
-            fields.append(
-                {"type": "mrkdwn", "text": f"*Rates:*\n{entry['rates_used']}"}
-            )
+            fields.append({"type": "mrkdwn", "text": f"*Rates:*\n{entry['rates_used']}"})
 
         blocks.append({"type": "section", "fields": fields})
         blocks.append({"type": "divider"})
@@ -204,9 +196,7 @@ def register_audit_command(
             try:
                 from_date = parse_last_duration(query_params["last"])
             except ValueError:
-                respond(
-                    f"Invalid duration: {query_params['last']}. Use e.g. 7d, 24h, 30d."
-                )
+                respond(f"Invalid duration: {query_params['last']}. Use e.g. 7d, 24h, 30d.")
                 return
 
         results = query_audit_trail(

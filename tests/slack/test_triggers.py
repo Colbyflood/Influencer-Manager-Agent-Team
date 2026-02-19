@@ -27,6 +27,7 @@ from negotiation.slack.triggers import (
 # TriggerType enum tests
 # ---------------------------------------------------------------------------
 
+
 class TestTriggerType:
     """Test TriggerType StrEnum values."""
 
@@ -52,6 +53,7 @@ class TestTriggerType:
 # ---------------------------------------------------------------------------
 # Config loading tests
 # ---------------------------------------------------------------------------
+
 
 class TestLoadTriggersConfig:
     """Test YAML config loading with Pydantic validation."""
@@ -135,6 +137,7 @@ class TestLoadTriggersConfig:
 # ---------------------------------------------------------------------------
 # Deterministic trigger tests
 # ---------------------------------------------------------------------------
+
 
 class TestCpmOverThresholdTrigger:
     """Test the CPM-over-threshold deterministic trigger."""
@@ -243,9 +246,7 @@ class TestAmbiguousIntentTrigger:
 
     def test_disabled_does_not_fire(self) -> None:
         """Disabled ambiguous intent trigger does not fire."""
-        config = EscalationTriggersConfig(
-            ambiguous_intent=TriggerConfig(enabled=False)
-        )
+        config = EscalationTriggersConfig(ambiguous_intent=TriggerConfig(enabled=False))
         results = evaluate_triggers(
             email_body="Something something",
             proposed_cpm=20.0,
@@ -260,6 +261,7 @@ class TestAmbiguousIntentTrigger:
 # ---------------------------------------------------------------------------
 # LLM classification tests (mocked)
 # ---------------------------------------------------------------------------
+
 
 class TestClassifyTriggers:
     """Test LLM-based trigger classification (mocked Anthropic client)."""
@@ -365,6 +367,7 @@ class TestClassifyTriggers:
 # ---------------------------------------------------------------------------
 # Full evaluation tests
 # ---------------------------------------------------------------------------
+
 
 class TestEvaluateTriggers:
     """Test the full evaluate_triggers pipeline."""
@@ -487,6 +490,7 @@ class TestEvaluateTriggers:
 # TriggerResult model tests
 # ---------------------------------------------------------------------------
 
+
 class TestTriggerResult:
     """Test TriggerResult Pydantic model."""
 
@@ -513,6 +517,7 @@ class TestTriggerResult:
 # ---------------------------------------------------------------------------
 # TriggerClassification model tests
 # ---------------------------------------------------------------------------
+
 
 class TestTriggerClassification:
     """Test TriggerClassification Pydantic model."""

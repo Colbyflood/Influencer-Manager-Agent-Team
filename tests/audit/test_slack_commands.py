@@ -91,9 +91,7 @@ class TestFormatAuditBlocks:
         assert "Use CLI for full results" in overflow_text
 
         # Only 10 entry section blocks (not 15)
-        entry_sections = [
-            b for b in blocks if b["type"] == "section" and "fields" in b
-        ]
+        entry_sections = [b for b in blocks if b["type"] == "section" and "fields" in b]
         assert len(entry_sections) == 10
 
     def test_empty_results(self) -> None:
@@ -130,6 +128,7 @@ class TestRegisterAuditCommand:
                 nonlocal handler_fn
                 handler_fn = fn
                 return fn
+
             return decorator
 
         mock_app.command = capture_command

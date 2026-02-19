@@ -20,7 +20,9 @@ class TestCampaignInfluencer:
 
     def test_influencer_with_engagement_rate(self):
         inf = CampaignInfluencer(
-            name="Bob", platform=Platform.TIKTOK, engagement_rate=5.2,
+            name="Bob",
+            platform=Platform.TIKTOK,
+            engagement_rate=5.2,
         )
         assert inf.engagement_rate == 5.2
 
@@ -83,7 +85,8 @@ class TestCampaign:
                 CampaignInfluencer(name="Alice", platform=Platform.INSTAGRAM),
             ],
             "cpm_range": CampaignCPMRange(
-                min_cpm=Decimal("20"), max_cpm=Decimal("30"),
+                min_cpm=Decimal("20"),
+                max_cpm=Decimal("30"),
             ),
             "platform": Platform.INSTAGRAM,
             "timeline": "2026-03-01 to 2026-03-31",

@@ -89,8 +89,7 @@ class TriggerClassification(BaseModel):
     legal_evidence: str = Field(
         default="",
         description=(
-            "Quote from the email demonstrating legal/contract language."
-            " Empty if not detected."
+            "Quote from the email demonstrating legal/contract language. Empty if not detected."
         ),
     )
     unusual_deliverables_detected: bool = Field(
@@ -102,9 +101,7 @@ class TriggerClassification(BaseModel):
     )
 
 
-DEFAULT_TRIGGERS_PATH = (
-    Path(__file__).resolve().parents[3] / "config" / "escalation_triggers.yaml"
-)
+DEFAULT_TRIGGERS_PATH = Path(__file__).resolve().parents[3] / "config" / "escalation_triggers.yaml"
 
 _TRIGGER_CLASSIFICATION_SYSTEM_PROMPT = """\
 Analyze this influencer email for three escalation triggers:

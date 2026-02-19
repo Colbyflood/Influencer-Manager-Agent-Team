@@ -18,9 +18,7 @@ class InvalidTransitionError(NegotiationError):
     def __init__(self, current_state: NegotiationState, event: str) -> None:
         self.current_state = current_state
         self.event = event
-        super().__init__(
-            f"Cannot apply event '{event}' in state '{current_state}'"
-        )
+        super().__init__(f"Cannot apply event '{event}' in state '{current_state}'")
 
 
 class InvalidDeliverableError(NegotiationError):
@@ -34,9 +32,7 @@ class InvalidDeliverableError(NegotiationError):
     def __init__(self, platform: Platform, deliverable_type: DeliverableType) -> None:
         self.platform = platform
         self.deliverable_type = deliverable_type
-        super().__init__(
-            f"{deliverable_type} is not a valid deliverable type for {platform}"
-        )
+        super().__init__(f"{deliverable_type} is not a valid deliverable type for {platform}")
 
 
 class PricingError(NegotiationError):

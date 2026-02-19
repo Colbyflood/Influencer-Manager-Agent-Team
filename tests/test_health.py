@@ -17,6 +17,7 @@ from negotiation.health import register_health_routes
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_app(services: dict | None = None) -> FastAPI:
     """Create a minimal FastAPI app with health routes and given services."""
     app = FastAPI()
@@ -28,6 +29,7 @@ def _make_app(services: dict | None = None) -> FastAPI:
 # ---------------------------------------------------------------------------
 # /health (liveness)
 # ---------------------------------------------------------------------------
+
 
 class TestHealthEndpoint:
     """GET /health liveness probe."""
@@ -45,6 +47,7 @@ class TestHealthEndpoint:
 # ---------------------------------------------------------------------------
 # /ready (readiness)
 # ---------------------------------------------------------------------------
+
 
 class TestReadyEndpoint:
     """GET /ready readiness probe."""

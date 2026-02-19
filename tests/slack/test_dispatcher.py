@@ -134,9 +134,7 @@ class TestPreCheck:
     ) -> None:
         """Human-managed threads are silently skipped."""
         thread_state.claim_thread("thread_abc123", "U_HUMAN")
-        gmail = _mock_gmail_service(
-            ["agent@company.com", "jane@influencer.com"]
-        )
+        gmail = _mock_gmail_service(["agent@company.com", "jane@influencer.com"])
 
         result = dispatcher.pre_check(
             email_body="Hi there",
@@ -185,9 +183,7 @@ class TestPreCheck:
         thread_state: ThreadStateManager,
     ) -> None:
         """Detecting a human reply auto-claims the thread."""
-        gmail = _mock_gmail_service(
-            ["agent@company.com", "boss@company.com"]
-        )
+        gmail = _mock_gmail_service(["agent@company.com", "boss@company.com"])
 
         dispatcher.pre_check(
             email_body="Hi",
@@ -206,9 +202,7 @@ class TestPreCheck:
         dispatcher: SlackDispatcher,
     ) -> None:
         """CPM over threshold triggers escalation."""
-        gmail = _mock_gmail_service(
-            ["agent@company.com", "jane@influencer.com"]
-        )
+        gmail = _mock_gmail_service(["agent@company.com", "jane@influencer.com"])
 
         result = dispatcher.pre_check(
             email_body="I want $5000 for this",
@@ -230,9 +224,7 @@ class TestPreCheck:
         dispatcher: SlackDispatcher,
     ) -> None:
         """No gates fired -- returns None to proceed with negotiation."""
-        gmail = _mock_gmail_service(
-            ["agent@company.com", "jane@influencer.com"]
-        )
+        gmail = _mock_gmail_service(["agent@company.com", "jane@influencer.com"])
 
         result = dispatcher.pre_check(
             email_body="Hi there",
@@ -263,9 +255,7 @@ class TestPreCheck:
             triggers_config=config,
             agent_email="agent@company.com",
         )
-        gmail = _mock_gmail_service(
-            ["agent@company.com", "jane@influencer.com"]
-        )
+        gmail = _mock_gmail_service(["agent@company.com", "jane@influencer.com"])
 
         # Pass None as anthropic_client -- should not error
         result = disp.pre_check(
@@ -517,9 +507,7 @@ class TestHandleNegotiationResult:
             ],
         }
 
-        enriched = dispatcher.handle_negotiation_result(
-            result, negotiation_context
-        )
+        enriched = dispatcher.handle_negotiation_result(result, negotiation_context)
 
         mock_notifier.post_escalation.assert_called_once()
         assert "slack_ts" in enriched
@@ -543,9 +531,7 @@ class TestHandleNegotiationResult:
             "classification": classification,
         }
 
-        enriched = dispatcher.handle_negotiation_result(
-            result, negotiation_context
-        )
+        enriched = dispatcher.handle_negotiation_result(result, negotiation_context)
 
         mock_notifier.post_agreement.assert_called_once()
         assert "slack_ts" in enriched
@@ -563,9 +549,7 @@ class TestHandleNegotiationResult:
             "email_body": "Counter offer...",
         }
 
-        enriched = dispatcher.handle_negotiation_result(
-            result, negotiation_context
-        )
+        enriched = dispatcher.handle_negotiation_result(result, negotiation_context)
 
         mock_notifier.post_escalation.assert_not_called()
         mock_notifier.post_agreement.assert_not_called()
@@ -587,9 +571,7 @@ class TestHandleNegotiationResult:
             ),
         }
 
-        enriched = dispatcher.handle_negotiation_result(
-            result, negotiation_context
-        )
+        enriched = dispatcher.handle_negotiation_result(result, negotiation_context)
 
         mock_notifier.post_escalation.assert_not_called()
         mock_notifier.post_agreement.assert_not_called()

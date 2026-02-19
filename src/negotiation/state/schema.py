@@ -34,8 +34,6 @@ def init_negotiation_state_table(conn: sqlite3.Connection) -> None:
         )
     """)
 
-    conn.execute(
-        "CREATE INDEX IF NOT EXISTS idx_neg_state_state ON negotiation_state (state)"
-    )
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_neg_state_state ON negotiation_state (state)")
 
     conn.commit()
