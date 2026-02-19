@@ -31,14 +31,24 @@ from negotiation.audit.slack_commands import register_audit_command
 from negotiation.audit.store import close_audit_db, init_audit_db
 from negotiation.audit.wiring import wire_audit_to_campaign_ingestion
 from negotiation.campaign.ingestion import ingest_campaign
+from negotiation.campaign.models import Campaign
 from negotiation.campaign.webhook import router as webhook_router
 from negotiation.campaign.webhook import set_campaign_processor
 from negotiation.config import Settings, get_settings, validate_credentials
+from negotiation.domain.types import NegotiationState
 from negotiation.health import register_health_routes
 from negotiation.resilience.retry import configure_error_notifier
 from negotiation.slack.app import create_slack_app, start_slack_app
 from negotiation.slack.commands import register_commands
 from negotiation.slack.takeover import ThreadStateManager
+from negotiation.state.schema import init_negotiation_state_table
+from negotiation.state.serializers import (
+    deserialize_context,
+    deserialize_cpm_tracker,
+    serialize_cpm_tracker,
+)
+from negotiation.state.store import NegotiationStateStore
+from negotiation.state_machine import NegotiationStateMachine
 
 logger = structlog.get_logger()
 
@@ -105,6 +115,11 @@ def initialize_services(settings: Settings | None = None) -> dict[str, Any]:
     audit_db_path.parent.mkdir(parents=True, exist_ok=True)
     audit_conn = init_audit_db(audit_db_path)
     services["audit_conn"] = audit_conn
+
+    # Initialize negotiation state table on same audit DB connection
+    init_negotiation_state_table(audit_conn)
+    state_store = NegotiationStateStore(audit_conn)
+    services["state_store"] = state_store
 
     # b. Create AuditLogger
     audit_logger = AuditLogger(audit_conn)
@@ -232,6 +247,36 @@ def initialize_services(settings: Settings | None = None) -> dict[str, Any]:
     # j. In-memory negotiation state store
     negotiation_states: dict[str, dict[str, Any]] = {}
     services["negotiation_states"] = negotiation_states
+
+    # Startup recovery: load non-terminal negotiations from SQLite
+    active_rows = state_store.load_active()
+    for row in active_rows:
+        thread_id = row["thread_id"]
+        # Reconstruct history as list of (NegotiationState, str, NegotiationState) tuples
+        history_raw = json.loads(row["history_json"])
+        history_tuples: list[tuple[NegotiationState, str, NegotiationState]] = [
+            (NegotiationState(h[0]), h[1], NegotiationState(h[2]))
+            for h in history_raw
+        ]
+        state_machine = NegotiationStateMachine.from_snapshot(
+            NegotiationState(row["state"]),
+            history_tuples,
+        )
+        context = deserialize_context(row["context_json"])
+        campaign_obj = Campaign.model_validate_json(row["campaign_json"])
+        cpm_tracker = deserialize_cpm_tracker(json.loads(row["cpm_tracker_json"]))
+
+        negotiation_states[thread_id] = {
+            "state_machine": state_machine,
+            "context": context,
+            "round_count": row["round_count"],
+            "campaign": campaign_obj,
+            "cpm_tracker": cpm_tracker,
+        }
+    if active_rows:
+        logger.info(
+            "Negotiation state recovery complete", recovered=len(active_rows)
+        )
 
     # k. History ID lock for thread-safe history ID updates
     services["history_lock"] = asyncio.Lock()
@@ -407,7 +452,6 @@ async def start_negotiations_for_campaign(
     from negotiation.llm.composer import compose_counter_email
     from negotiation.llm.knowledge_base import load_knowledge_base
     from negotiation.pricing import calculate_initial_offer
-    from negotiation.state_machine import NegotiationStateMachine
 
     cpm_tracker = CampaignCPMTracker(
         campaign_id=campaign.campaign_id,
@@ -486,6 +530,18 @@ async def start_negotiations_for_campaign(
                 "campaign": campaign,
                 "cpm_tracker": cpm_tracker,
             }
+
+            # Persist to SQLite (STATE-01: write before moving to next influencer)
+            _state_store = services.get("state_store")
+            if _state_store is not None:
+                _state_store.save(
+                    thread_id=thread_id,
+                    state_machine=state_machine,
+                    context=context,
+                    campaign=campaign,
+                    cpm_tracker_data=serialize_cpm_tracker(cpm_tracker),
+                    round_count=0,
+                )
 
             # Log to audit trail
             if audit_logger is not None:
@@ -707,6 +763,18 @@ async def process_inbound_email(message_id: str, services: dict[str, Any]) -> No
         if dispatcher is not None:
             result = dispatcher.handle_negotiation_result(result, context)
 
+        # Persist state after negotiation loop (STATE-01: write before response)
+        _state_store = services.get("state_store")
+        if _state_store is not None:
+            _state_store.save(
+                thread_id=inbound.thread_id,
+                state_machine=state_machine,
+                context=context,
+                campaign=thread_state["campaign"],
+                cpm_tracker_data=serialize_cpm_tracker(thread_state["cpm_tracker"]),
+                round_count=thread_state["round_count"],
+            )
+
         # Step 6: If action is "send", send the reply
         if result["action"] == "send":
             await asyncio.to_thread(
@@ -715,6 +783,20 @@ async def process_inbound_email(message_id: str, services: dict[str, Any]) -> No
                 result["email_body"],
             )
             thread_state["round_count"] += 1
+
+            # Persist updated round_count after send (STATE-01)
+            if _state_store is not None:
+                _state_store.save(
+                    thread_id=inbound.thread_id,
+                    state_machine=state_machine,
+                    context=context,
+                    campaign=thread_state["campaign"],
+                    cpm_tracker_data=serialize_cpm_tracker(
+                        thread_state["cpm_tracker"]
+                    ),
+                    round_count=thread_state["round_count"],
+                )
+
             logger.info(
                 "Counter-offer sent",
                 thread_id=inbound.thread_id,
