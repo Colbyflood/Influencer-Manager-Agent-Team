@@ -11,6 +11,7 @@ import sqlite3
 from datetime import UTC, datetime
 from typing import Any
 
+from negotiation.state.serializers import serialize_context
 from negotiation.state_machine.transitions import TERMINAL_STATES
 
 
@@ -52,9 +53,9 @@ class NegotiationStateStore:
         Args:
             thread_id: Unique thread identifier (primary key).
             state_machine: A ``NegotiationStateMachine`` instance.
-            context: The negotiation context dict (Decimals must already be
-                     serialized to strings by the caller or via
-                     ``serialize_context``).
+            context: The negotiation context dict.  Decimal values are
+                     automatically serialized to strings via
+                     ``serialize_context``.
             campaign: A Pydantic ``Campaign`` model with ``model_dump_json()``.
             cpm_tracker_data: Already-serialized CPM tracker dict (from
                               ``serialize_cpm_tracker`` / ``to_dict``).
@@ -87,7 +88,7 @@ class NegotiationStateStore:
                 thread_id,
                 state_machine.state.value,
                 round_count,
-                json.dumps(context),
+                serialize_context(context),
                 campaign.model_dump_json(),
                 json.dumps(cpm_tracker_data),
                 json.dumps(history_list),

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import inspect
+from decimal import Decimal
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -11,7 +12,17 @@ from fastapi import FastAPI
 from pydantic import SecretStr
 
 from negotiation.app import configure_logging, create_app, initialize_services
+from negotiation.campaign.cpm_tracker import CampaignCPMTracker
+from negotiation.campaign.models import (
+    Campaign,
+    CampaignCPMRange,
+    CampaignInfluencer,
+)
 from negotiation.config import Settings
+from negotiation.domain.types import NegotiationState, Platform
+from negotiation.state.serializers import serialize_cpm_tracker
+from negotiation.state.store import NegotiationStateStore
+from negotiation.state_machine import NegotiationStateMachine
 
 
 def _reset_structlog() -> None:
@@ -379,3 +390,265 @@ class TestMainImport:
         from negotiation.app import initialize_services
 
         assert callable(initialize_services)
+
+
+# ------------------------------------------------------------------
+# Helpers for state persistence tests
+# ------------------------------------------------------------------
+
+
+def _make_campaign() -> Campaign:
+    """Build a minimal Campaign for testing."""
+    return Campaign(
+        campaign_id="camp-001",
+        client_name="TestCorp",
+        budget=Decimal("5000"),
+        target_deliverables="1 Instagram Reel",
+        influencers=[
+            CampaignInfluencer(
+                name="Alice", platform=Platform.INSTAGRAM, engagement_rate=4.5
+            ),
+        ],
+        cpm_range=CampaignCPMRange(
+            min_cpm=Decimal("20"), max_cpm=Decimal("35")
+        ),
+        platform=Platform.INSTAGRAM,
+        timeline="2 weeks",
+        created_at="2026-01-15T10:00:00Z",
+    )
+
+
+def _make_cpm_tracker() -> CampaignCPMTracker:
+    """Build a minimal CampaignCPMTracker for testing."""
+    return CampaignCPMTracker(
+        campaign_id="camp-001",
+        target_min_cpm=Decimal("20"),
+        target_max_cpm=Decimal("35"),
+        total_influencers=3,
+    )
+
+
+def _make_context(thread_id: str = "thread-abc") -> dict:
+    """Build a minimal negotiation context dict."""
+    return {
+        "influencer_name": "Alice",
+        "influencer_email": "alice@example.com",
+        "thread_id": thread_id,
+        "platform": "instagram",
+        "average_views": 50000,
+        "deliverables_summary": "1 Instagram Reel",
+        "deliverable_types": ["1 Instagram Reel"],
+        "next_cpm": Decimal("25"),
+        "client_name": "TestCorp",
+        "campaign_id": "camp-001",
+        "history": "",
+    }
+
+
+class TestStatePersistence:
+    """Integration tests for state persistence wiring (STATE-01, STATE-02)."""
+
+    def test_state_persistence_on_negotiation_start(
+        self, tmp_path: Path
+    ) -> None:
+        """Verify state_store is initialized and save/load_active round-trips."""
+        _reset_structlog()
+        configure_logging(production=False)
+        settings = _base_settings(tmp_path)
+
+        services = initialize_services(settings)
+
+        # Verify state_store is a NegotiationStateStore
+        state_store = services["state_store"]
+        assert isinstance(state_store, NegotiationStateStore)
+
+        # Verify negotiation_state table exists
+        conn = services["audit_conn"]
+        cursor = conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' "
+            "AND name='negotiation_state'"
+        )
+        assert cursor.fetchone() is not None
+
+        # Manually create objects and save
+        sm = NegotiationStateMachine()
+        sm.trigger("send_offer")
+        context = _make_context()
+        campaign = _make_campaign()
+        tracker = _make_cpm_tracker()
+
+        state_store.save(
+            thread_id="thread-abc",
+            state_machine=sm,
+            context=context,
+            campaign=campaign,
+            cpm_tracker_data=serialize_cpm_tracker(tracker),
+            round_count=0,
+        )
+
+        # Verify load_active returns the saved row
+        active = state_store.load_active()
+        assert len(active) == 1
+        assert active[0]["thread_id"] == "thread-abc"
+        assert active[0]["state"] == NegotiationState.AWAITING_REPLY.value
+
+        from negotiation.audit.store import close_audit_db
+
+        close_audit_db(conn)
+
+    def test_startup_recovery_loads_non_terminal(
+        self, tmp_path: Path
+    ) -> None:
+        """Startup recovery loads AWAITING_REPLY and COUNTER_RECEIVED but not AGREED."""
+        _reset_structlog()
+        configure_logging(production=False)
+        settings = _base_settings(tmp_path)
+
+        # First run: initialize and save 3 negotiations
+        services1 = initialize_services(settings)
+        state_store = services1["state_store"]
+        campaign = _make_campaign()
+        tracker = _make_cpm_tracker()
+
+        # 1) AWAITING_REPLY (non-terminal)
+        sm1 = NegotiationStateMachine()
+        sm1.trigger("send_offer")
+        state_store.save(
+            thread_id="thread-1",
+            state_machine=sm1,
+            context=_make_context("thread-1"),
+            campaign=campaign,
+            cpm_tracker_data=serialize_cpm_tracker(tracker),
+            round_count=0,
+        )
+
+        # 2) AGREED (terminal)
+        sm2 = NegotiationStateMachine()
+        sm2.trigger("send_offer")
+        sm2.trigger("receive_reply")
+        sm2.trigger("accept")
+        state_store.save(
+            thread_id="thread-2",
+            state_machine=sm2,
+            context=_make_context("thread-2"),
+            campaign=campaign,
+            cpm_tracker_data=serialize_cpm_tracker(tracker),
+            round_count=2,
+        )
+
+        # 3) COUNTER_RECEIVED (non-terminal)
+        sm3 = NegotiationStateMachine()
+        sm3.trigger("send_offer")
+        sm3.trigger("receive_reply")
+        state_store.save(
+            thread_id="thread-3",
+            state_machine=sm3,
+            context=_make_context("thread-3"),
+            campaign=campaign,
+            cpm_tracker_data=serialize_cpm_tracker(tracker),
+            round_count=1,
+        )
+
+        from negotiation.audit.store import close_audit_db
+
+        close_audit_db(services1["audit_conn"])
+
+        # Second run: simulate restart with same DB path
+        services2 = initialize_services(settings)
+        neg_states = services2["negotiation_states"]
+
+        # Should have exactly 2 non-terminal entries
+        assert len(neg_states) == 2
+        assert "thread-1" in neg_states
+        assert "thread-3" in neg_states
+        assert "thread-2" not in neg_states  # AGREED is terminal
+
+        # Verify state machines have correct states
+        assert (
+            neg_states["thread-1"]["state_machine"].state
+            == NegotiationState.AWAITING_REPLY
+        )
+        assert (
+            neg_states["thread-3"]["state_machine"].state
+            == NegotiationState.COUNTER_RECEIVED
+        )
+
+        # Verify context round-tripped (next_cpm comes back as string from JSON)
+        ctx1 = neg_states["thread-1"]["context"]
+        assert ctx1["influencer_name"] == "Alice"
+        assert ctx1["campaign_id"] == "camp-001"
+
+        # Verify campaign round-tripped
+        camp1 = neg_states["thread-1"]["campaign"]
+        assert isinstance(camp1, Campaign)
+        assert camp1.client_name == "TestCorp"
+
+        # Verify CPM tracker round-tripped
+        trk1 = neg_states["thread-1"]["cpm_tracker"]
+        assert isinstance(trk1, CampaignCPMTracker)
+        assert trk1.campaign_id == "camp-001"
+
+        # Verify round_count round-tripped
+        assert neg_states["thread-1"]["round_count"] == 0
+        assert neg_states["thread-3"]["round_count"] == 1
+
+        close_audit_db(services2["audit_conn"])
+
+    def test_startup_recovery_empty_database(self, tmp_path: Path) -> None:
+        """Fresh database yields empty negotiation_states with no errors."""
+        _reset_structlog()
+        configure_logging(production=False)
+        settings = _base_settings(tmp_path)
+
+        services = initialize_services(settings)
+
+        assert services["negotiation_states"] == {}
+        assert isinstance(services["state_store"], NegotiationStateStore)
+
+        from negotiation.audit.store import close_audit_db
+
+        close_audit_db(services["audit_conn"])
+
+    def test_state_store_save_updates_existing_row(
+        self, tmp_path: Path
+    ) -> None:
+        """Saving with the same thread_id updates the row (not duplicates)."""
+        _reset_structlog()
+        configure_logging(production=False)
+        settings = _base_settings(tmp_path)
+
+        services = initialize_services(settings)
+        state_store = services["state_store"]
+        campaign = _make_campaign()
+        tracker = _make_cpm_tracker()
+
+        sm = NegotiationStateMachine()
+        sm.trigger("send_offer")
+        state_store.save(
+            thread_id="thread-upd",
+            state_machine=sm,
+            context=_make_context("thread-upd"),
+            campaign=campaign,
+            cpm_tracker_data=serialize_cpm_tracker(tracker),
+            round_count=0,
+        )
+
+        # Update: receive_reply transitions to COUNTER_RECEIVED
+        sm.trigger("receive_reply")
+        state_store.save(
+            thread_id="thread-upd",
+            state_machine=sm,
+            context=_make_context("thread-upd"),
+            campaign=campaign,
+            cpm_tracker_data=serialize_cpm_tracker(tracker),
+            round_count=1,
+        )
+
+        active = state_store.load_active()
+        assert len(active) == 1
+        assert active[0]["state"] == NegotiationState.COUNTER_RECEIVED.value
+        assert active[0]["round_count"] == 1
+
+        from negotiation.audit.store import close_audit_db
+
+        close_audit_db(services["audit_conn"])

@@ -573,7 +573,7 @@ class TestStartNegotiationsForCampaign:
                 "negotiation.pricing.calculate_initial_offer",
                 return_value=Decimal("250"),
             ),
-            patch("negotiation.state_machine.NegotiationStateMachine") as mock_sm_cls,
+            patch("negotiation.app.NegotiationStateMachine") as mock_sm_cls,
         ):
             mock_sm_instance = MagicMock()
             mock_sm_cls.return_value = mock_sm_instance
