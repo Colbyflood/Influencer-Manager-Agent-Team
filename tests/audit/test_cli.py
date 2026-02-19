@@ -17,7 +17,7 @@ from negotiation.audit.cli import (
     parse_last_duration,
 )
 from negotiation.audit.logger import AuditLogger
-from negotiation.audit.store import close_audit_db, init_audit_db, query_audit_trail
+from negotiation.audit.store import close_audit_db, init_audit_db
 
 
 class TestBuildParser:

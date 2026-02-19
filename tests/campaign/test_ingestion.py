@@ -25,7 +25,6 @@ from negotiation.campaign.models import Campaign
 from negotiation.domain.types import Platform
 from negotiation.sheets.models import InfluencerRow
 
-
 # --- Fixtures ---
 
 

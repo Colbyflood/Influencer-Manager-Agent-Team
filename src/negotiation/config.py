@@ -78,7 +78,7 @@ def get_settings() -> Settings:
         The application ``Settings``.
     """
     try:
-        return Settings()  # type: ignore[call-arg]
+        return Settings()
     except ValidationError as exc:
         # Log only the structured errors list -- never the full exception
         # which may contain raw SecretStr values.

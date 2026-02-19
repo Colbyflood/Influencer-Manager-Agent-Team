@@ -12,7 +12,9 @@ from negotiation.llm.composer import compose_counter_email
 from negotiation.llm.models import ComposedEmail
 
 
-def _make_mock_client(response_text: str = "Dear Sarah,\n\nThank you for your proposal.") -> MagicMock:
+def _make_mock_client(
+    response_text: str = "Dear Sarah,\n\nThank you for your proposal.",
+) -> MagicMock:
     """Create a mock Anthropic client with a canned response."""
     mock_client = MagicMock()
     mock_response = MagicMock()

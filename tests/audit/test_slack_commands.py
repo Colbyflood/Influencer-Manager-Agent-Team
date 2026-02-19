@@ -125,7 +125,7 @@ class TestRegisterAuditCommand:
         mock_app = MagicMock()
         handler_fn: Any = None
 
-        def capture_command(cmd: str):  # noqa: ANN202
+        def capture_command(cmd: str):
             def decorator(fn: Any) -> Any:
                 nonlocal handler_fn
                 handler_fn = fn
