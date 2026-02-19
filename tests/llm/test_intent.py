@@ -9,7 +9,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from negotiation.llm.client import DEFAULT_CONFIDENCE_THRESHOLD, INTENT_MODEL
+from negotiation.llm.client import INTENT_MODEL
 from negotiation.llm.intent import classify_intent
 from negotiation.llm.models import (
     IntentClassification,
@@ -47,9 +47,7 @@ def test_classify_accept_intent(mock_anthropic_client: MagicMock) -> None:
         summary="Influencer agrees to the deal.",
         key_concerns=[],
     )
-    mock_anthropic_client.messages.parse.return_value = make_mock_parse_response(
-        classification
-    )
+    mock_anthropic_client.messages.parse.return_value = make_mock_parse_response(classification)
 
     result = classify_intent(
         email_body="Sounds great, let's do it!",
@@ -75,9 +73,7 @@ def test_classify_counter_with_rate(mock_anthropic_client: MagicMock) -> None:
         summary="Influencer counters with $2,000.",
         key_concerns=[],
     )
-    mock_anthropic_client.messages.parse.return_value = make_mock_parse_response(
-        classification
-    )
+    mock_anthropic_client.messages.parse.return_value = make_mock_parse_response(classification)
 
     result = classify_intent(
         email_body="I'd love to but I charge $2,000 for this kind of content.",
@@ -105,9 +101,7 @@ def test_classify_counter_with_deliverables(mock_anthropic_client: MagicMock) ->
         summary="Influencer proposes 2 reels instead of 1.",
         key_concerns=[],
     )
-    mock_anthropic_client.messages.parse.return_value = make_mock_parse_response(
-        classification
-    )
+    mock_anthropic_client.messages.parse.return_value = make_mock_parse_response(classification)
 
     result = classify_intent(
         email_body="Could we do 2 reels instead of 1? I think that'd be better.",
@@ -134,9 +128,7 @@ def test_classify_reject_intent(mock_anthropic_client: MagicMock) -> None:
         summary="Influencer declines the partnership.",
         key_concerns=[],
     )
-    mock_anthropic_client.messages.parse.return_value = make_mock_parse_response(
-        classification
-    )
+    mock_anthropic_client.messages.parse.return_value = make_mock_parse_response(classification)
 
     result = classify_intent(
         email_body="I'll pass on this one, thanks.",
@@ -161,9 +153,7 @@ def test_classify_question_intent(mock_anthropic_client: MagicMock) -> None:
         summary="Influencer asks about partnership details.",
         key_concerns=["What does the partnership include?", "Timeline unclear"],
     )
-    mock_anthropic_client.messages.parse.return_value = make_mock_parse_response(
-        classification
-    )
+    mock_anthropic_client.messages.parse.return_value = make_mock_parse_response(classification)
 
     result = classify_intent(
         email_body="What exactly does the partnership include? And what's the timeline?",
@@ -189,9 +179,7 @@ def test_low_confidence_overrides_to_unclear(mock_anthropic_client: MagicMock) -
         summary="Ambiguous response, maybe positive.",
         key_concerns=[],
     )
-    mock_anthropic_client.messages.parse.return_value = make_mock_parse_response(
-        classification
-    )
+    mock_anthropic_client.messages.parse.return_value = make_mock_parse_response(classification)
 
     result = classify_intent(
         email_body="Hmm, interesting. Let me think about it...",
@@ -216,9 +204,7 @@ def test_unclear_intent_not_overridden(mock_anthropic_client: MagicMock) -> None
         summary="Cannot determine intent.",
         key_concerns=[],
     )
-    mock_anthropic_client.messages.parse.return_value = make_mock_parse_response(
-        classification
-    )
+    mock_anthropic_client.messages.parse.return_value = make_mock_parse_response(classification)
 
     result = classify_intent(
         email_body="...",
@@ -244,9 +230,7 @@ def test_confidence_at_threshold_not_overridden(
         summary="Probably accepts.",
         key_concerns=[],
     )
-    mock_anthropic_client.messages.parse.return_value = make_mock_parse_response(
-        classification
-    )
+    mock_anthropic_client.messages.parse.return_value = make_mock_parse_response(classification)
 
     result = classify_intent(
         email_body="Yeah, I think that works.",
@@ -273,9 +257,7 @@ def test_parse_called_with_correct_arguments(
         summary="Accepts.",
         key_concerns=[],
     )
-    mock_anthropic_client.messages.parse.return_value = make_mock_parse_response(
-        classification
-    )
+    mock_anthropic_client.messages.parse.return_value = make_mock_parse_response(classification)
 
     context = "Offered $1,000 for 1 reel."
     email = "Sounds great!"
@@ -313,9 +295,7 @@ def test_custom_model_parameter(mock_anthropic_client: MagicMock) -> None:
         summary="Accepts.",
         key_concerns=[],
     )
-    mock_anthropic_client.messages.parse.return_value = make_mock_parse_response(
-        classification
-    )
+    mock_anthropic_client.messages.parse.return_value = make_mock_parse_response(classification)
 
     classify_intent(
         email_body="Sure!",
@@ -341,9 +321,7 @@ def test_custom_confidence_threshold(mock_anthropic_client: MagicMock) -> None:
         summary="Maybe accepts.",
         key_concerns=[],
     )
-    mock_anthropic_client.messages.parse.return_value = make_mock_parse_response(
-        classification
-    )
+    mock_anthropic_client.messages.parse.return_value = make_mock_parse_response(classification)
 
     # With threshold=0.50, confidence=0.55 should NOT be overridden
     result = classify_intent(
