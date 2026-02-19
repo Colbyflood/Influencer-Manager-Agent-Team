@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node ./.claude/get-shit-done/bin/gsd-tools.cjs commit:*)",
+      "Bash(git -C \"/Users/colbyflood/Influencer Manager Agent Team\" log --oneline -3)",
+      "Skill(gsd:discuss-phase)",
+      "WebSearch",
+      "Skill(gsd:plan-phase)"
+    ]
+  }
+}
