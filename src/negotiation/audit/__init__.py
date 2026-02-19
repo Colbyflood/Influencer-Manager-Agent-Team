@@ -1,4 +1,4 @@
-"""Audit trail models, storage, logger, CLI, Slack command, and wiring for negotiation event tracking."""
+"""Audit trail: models, storage, logger, CLI, Slack command, and wiring for event tracking."""
 
 from negotiation.audit.cli import build_parser
 from negotiation.audit.logger import AuditLogger
