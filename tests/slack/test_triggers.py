@@ -8,7 +8,7 @@ Tests config loading (YAML + Pydantic), deterministic triggers
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -22,7 +22,6 @@ from negotiation.slack.triggers import (
     evaluate_triggers,
     load_triggers_config,
 )
-
 
 # ---------------------------------------------------------------------------
 # TriggerType enum tests
