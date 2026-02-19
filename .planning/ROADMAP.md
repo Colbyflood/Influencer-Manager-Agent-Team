@@ -102,12 +102,12 @@ Plans:
   4. Running pytest -m live with real credentials verifies actual Gmail send/receive, Sheets read, and Slack message delivery
   5. Gmail Pub/Sub watch is renewed based on its persisted expiration timestamp, not process uptime, so restarts do not cause missed emails
 
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 12-01: TBD
-- [ ] 12-02: TBD
-- [ ] 12-03: TBD
+- [ ] 12-01-PLAN.md — Prometheus metrics, Sentry error reporting, and request ID tracing middleware
+- [ ] 12-02-PLAN.md — Opt-in @pytest.mark.live integration tests for Gmail, Sheets, and Slack
+- [ ] 12-03-PLAN.md — Gmail watch expiration persistence and expiry-aware renewal
 
 ## Progress
 
