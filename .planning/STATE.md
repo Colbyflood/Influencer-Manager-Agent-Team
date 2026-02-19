@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 ## Current Position
 
 Phase: 12 of 12 (Monitoring, Observability, and Live Verification)
-Plan: 2 of 3 in current phase
-Status: In Progress
-Last activity: 2026-02-19 -- Completed 12-02 (Live integration tests for Gmail, Sheets, Slack)
+Plan: 3 of 3 in current phase
+Status: Complete
+Last activity: 2026-02-19 -- Completed 12-03 (Gmail watch expiration persistence)
 
-Progress: [=============================.] 97% (32/33 plans across all milestones)
+Progress: [==============================] 100% (33/33 plans across all milestones)
 
 ## Performance Metrics
 
@@ -31,7 +31,7 @@ Progress: [=============================.] 97% (32/33 plans across all milestone
 | Phase 9 | 2/2 | 8min | 4min |
 | Phase 10 | 2/2 | 3min | 1.5min |
 | Phase 11 | 1/1 | 20min | 20min |
-| Phase 12 | 2/3 | 6min | 3min |
+| Phase 12 | 3/3 | 9min | 3min |
 
 *Updated after each plan completion*
 
@@ -74,6 +74,8 @@ Recent decisions affecting current work:
 - [12-02]: Native pytest marker via pyproject.toml addopts (no custom CLI options or collection hooks)
 - [12-02]: Session-scoped live fixtures to avoid re-creating API clients per test
 - [12-02]: Credential-skip pattern: each fixture pytest.skip() if creds unavailable
+- [12-03]: Singleton row pattern (CHECK id=1) instead of key-value table for watch state
+- [12-03]: Mocked datetime in tests to avoid sleep-based timestamp assertions
 
 ### Pending Todos
 
@@ -87,5 +89,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 12-02-PLAN.md (Live integration tests for Gmail, Sheets, Slack)
+Stopped at: Completed 12-03-PLAN.md (Gmail watch expiration persistence) -- All phases complete
 Resume file: None

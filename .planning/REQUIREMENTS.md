@@ -31,7 +31,7 @@ Requirements for production readiness. Each maps to roadmap phases.
 
 - [x] **CONFIG-01**: Agent loads all configuration from environment variables via pydantic-settings with .env file support
 - [x] **CONFIG-02**: Agent includes @pytest.mark.live integration tests that verify real Gmail, Sheets, and Slack connections
-- [ ] **CONFIG-03**: Agent persists Gmail watch expiration timestamp and renews relative to actual expiry, not process uptime
+- [x] **CONFIG-03**: Agent persists Gmail watch expiration timestamp and renews relative to actual expiry, not process uptime
 
 ## v2 Requirements
 
@@ -77,7 +77,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | OBS-04 | Phase 12 | Complete |
 | OBS-05 | Phase 12 | Complete |
 | CONFIG-02 | Phase 12 | Complete |
-| CONFIG-03 | Phase 12 | Pending |
+| CONFIG-03 | Phase 12 | Complete |
 
 **Coverage:**
 - v1.1 requirements: 14 total

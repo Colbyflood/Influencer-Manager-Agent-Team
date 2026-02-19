@@ -30,7 +30,7 @@ Full details: [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
 - [x] **Phase 9: Persistent Negotiation State** - SQLite-backed state persistence with crash recovery
 - [x] **Phase 10: Docker Packaging and Deployment** - Multi-stage container with volume persistence (completed 2026-02-19)
 - [x] **Phase 11: CI/CD Pipeline** - GitHub Actions automated lint, typecheck, and test on every push (completed 2026-02-19)
-- [ ] **Phase 12: Monitoring, Observability, and Live Verification** - Prometheus metrics, Sentry errors, request tracing, live tests, and Gmail watch renewal
+- [x] **Phase 12: Monitoring, Observability, and Live Verification** - Prometheus metrics, Sentry errors, request tracing, live tests, and Gmail watch renewal (completed 2026-02-19)
 
 ## Phase Details
 
@@ -127,4 +127,4 @@ Phases execute in numeric order: 8 -> 9 -> 10 -> 11 -> 12
 | 9. Persistent Negotiation State | v1.1 | Complete    | 2026-02-19 | 2026-02-19 |
 | 10. Docker Packaging and Deployment | 2/2 | Complete    | 2026-02-19 | - |
 | 11. CI/CD Pipeline | 1/1 | Complete    | 2026-02-19 | - |
-| 12. Monitoring, Observability, and Live Verification | 2/3 | In Progress|  | - |
+| 12. Monitoring, Observability, and Live Verification | 3/3 | Complete   | 2026-02-19 | - |
