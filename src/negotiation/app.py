@@ -37,6 +37,7 @@ from negotiation.campaign.webhook import set_campaign_processor
 from negotiation.config import Settings, get_settings, validate_credentials
 from negotiation.domain.types import NegotiationState
 from negotiation.health import register_health_routes
+from negotiation.observability.metrics import ACTIVE_NEGOTIATIONS, DEALS_CLOSED
 from negotiation.resilience.retry import configure_error_notifier
 from negotiation.slack.app import create_slack_app, start_slack_app
 from negotiation.slack.commands import register_commands
@@ -53,24 +54,45 @@ from negotiation.state_machine import NegotiationStateMachine
 logger = structlog.get_logger()
 
 
-def configure_logging(production: bool = False) -> None:
+def configure_logging(production: bool = False, sentry_dsn: str = "") -> None:
     """Configure structlog for production (JSON) or development (console).
 
     Production mode (*production=True*): JSON rendering at INFO level.
     Development mode: colored console rendering at DEBUG level.
 
+    When *sentry_dsn* is provided, Sentry SDK is initialized and a
+    ``SentryProcessor`` is inserted into the structlog chain (after
+    ``add_log_level``, before ``TimeStamper``) so ERROR-level log events
+    are forwarded to Sentry with full structured context.
+
     Args:
         production: Enable production mode if ``True``.
+        sentry_dsn: Sentry DSN string.  Empty string disables Sentry.
     """
     is_production = production
+
+    # Optionally initialize Sentry SDK
+    if sentry_dsn:
+        from negotiation.observability.sentry import init_sentry
+
+        init_sentry(sentry_dsn)
 
     shared_processors: list[structlog.types.Processor] = [
         structlog.contextvars.merge_contextvars,
         structlog.stdlib.add_log_level,
+    ]
+
+    # Insert SentryProcessor after add_log_level, before TimeStamper
+    if sentry_dsn:
+        from negotiation.observability.sentry import get_sentry_processor
+
+        shared_processors.append(get_sentry_processor())
+
+    shared_processors.extend([
         structlog.processors.TimeStamper(fmt="iso"),
         structlog.processors.StackInfoRenderer(),
         structlog.processors.UnicodeDecoder(),
-    ]
+    ])
 
     if is_production:
         renderer: structlog.types.Processor = structlog.processors.JSONRenderer()
@@ -270,6 +292,7 @@ def initialize_services(settings: Settings | None = None) -> dict[str, Any]:
             "campaign": campaign_obj,
             "cpm_tracker": cpm_tracker,
         }
+    ACTIVE_NEGOTIATIONS.set(len(negotiation_states))
     if active_rows:
         logger.info("Negotiation state recovery complete", recovered=len(active_rows))
 
@@ -519,6 +542,7 @@ async def start_negotiations_for_campaign(
                 "campaign": campaign,
                 "cpm_tracker": cpm_tracker,
             }
+            ACTIVE_NEGOTIATIONS.set(len(negotiation_states))
 
             # Persist to SQLite (STATE-01: write before moving to next influencer)
             _state_store = services.get("state_store")
@@ -604,6 +628,19 @@ def create_app(services: dict[str, Any]) -> FastAPI:
     fastapi_app.state.settings = services.get("_settings", get_settings())
     fastapi_app.include_router(webhook_router)
     register_health_routes(fastapi_app)
+
+    # Observability: Prometheus metrics endpoint
+    app_settings = services.get("_settings")
+    if app_settings is not None and app_settings.enable_metrics:
+        from negotiation.observability.metrics import setup_metrics
+
+        setup_metrics(fastapi_app)
+
+    # Observability: Request ID middleware (before instrumentator so request_id
+    # is available in all logs during instrumented requests)
+    from negotiation.observability.middleware import RequestIdMiddleware
+
+    fastapi_app.add_middleware(RequestIdMiddleware)
 
     @fastapi_app.post("/webhooks/gmail")
     async def gmail_notification(request: Request) -> dict[str, str]:
@@ -784,6 +821,8 @@ async def process_inbound_email(message_id: str, services: dict[str, Any]) -> No
                 round=thread_state["round_count"],
             )
         elif result["action"] == "accept":
+            DEALS_CLOSED.inc()
+            ACTIVE_NEGOTIATIONS.set(len(negotiation_states))
             logger.info(
                 "Deal accepted",
                 thread_id=inbound.thread_id,
@@ -796,6 +835,7 @@ async def process_inbound_email(message_id: str, services: dict[str, Any]) -> No
                 reason=result.get("reason"),
             )
         elif result["action"] == "reject":
+            ACTIVE_NEGOTIATIONS.set(len(negotiation_states))
             logger.info(
                 "Influencer rejected",
                 thread_id=inbound.thread_id,
@@ -866,7 +906,7 @@ async def main() -> None:
     5. Close audit DB on exit
     """
     settings = get_settings()
-    configure_logging(production=settings.production)
+    configure_logging(production=settings.production, sentry_dsn=settings.sentry_dsn)
     logger.info("Application starting")
 
     validate_credentials(settings)
