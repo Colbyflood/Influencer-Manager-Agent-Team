@@ -1,0 +1,38 @@
+# Escalation Trigger Configuration
+# Edit this file to enable/disable triggers or change thresholds.
+# All triggers are enabled by default.
+#
+# To disable a trigger, set "enabled: false" for that trigger.
+# Team members can edit this file without code changes.
+
+# Fires when influencer's proposed CPM exceeds this threshold.
+# The CPM (cost per thousand views) is calculated from the proposed rate
+# and average views using the pricing engine.
+cpm_over_threshold:
+  enabled: true
+  cpm_threshold: 30.0  # dollars per thousand views
+
+# Fires when intent classification confidence is below the threshold.
+# This also triggers independently in the negotiation loop itself.
+ambiguous_intent:
+  enabled: true
+
+# Fires when email tone is hostile, aggressive, or threatening.
+# Uses LLM-based detection (not keyword matching) per locked decision.
+# Optional: add keywords that always trigger escalation (bypass LLM).
+hostile_tone:
+  enabled: true
+  always_trigger_keywords: []
+
+# Fires when email contains legal or contract-related language.
+# Uses LLM-based detection (not keyword matching) per locked decision.
+# Optional: add keywords that always trigger escalation (bypass LLM).
+legal_language:
+  enabled: true
+  always_trigger_keywords: []
+
+# Fires when influencer requests unusual or non-standard deliverables.
+# Uses LLM-based detection to identify requests outside standard
+# platform content (posts, stories, reels, videos, shorts).
+unusual_deliverables:
+  enabled: true

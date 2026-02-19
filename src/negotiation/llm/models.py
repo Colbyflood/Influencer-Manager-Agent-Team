@@ -106,6 +106,12 @@ class EscalationPayload(BaseModel):
     """Data structure for human escalation when validation fails or confidence is low.
 
     Consumed by Phase 4 (Slack escalation) to present draft + context to human reviewers.
+
+    Phase 3 fields: reason, email_draft, validation_failures,
+    influencer_name, thread_id, proposed_rate, our_rate.
+
+    Phase 4 additions: influencer_email, client_name, evidence_quote,
+    suggested_actions, trigger_type.
     """
 
     reason: str = Field(description="Why escalation was triggered")
@@ -123,4 +129,50 @@ class EscalationPayload(BaseModel):
     our_rate: Decimal | None = Field(
         default=None,
         description="Our counter-offer rate, if any",
+    )
+    # Phase 4 additions (defaults for backward compatibility with Phase 3)
+    influencer_email: str = Field(
+        default="",
+        description="Influencer's email address for Slack notifications",
+    )
+    client_name: str = Field(
+        default="",
+        description="Client/brand name for Slack notifications",
+    )
+    evidence_quote: str = Field(
+        default="",
+        description="Quote from the email that triggered escalation",
+    )
+    suggested_actions: list[str] = Field(
+        default_factory=list,
+        description="Suggested actions for the human reviewer",
+    )
+    trigger_type: str = Field(
+        default="",
+        description="The type of trigger that caused escalation",
+    )
+
+
+class AgreementPayload(BaseModel):
+    """Data for agreement Slack notifications (HUMAN-03).
+
+    Constructed by the Phase 4 orchestration layer by combining data from
+    IntentClassification, the negotiation context, and the pricing engine.
+    """
+
+    influencer_name: str = Field(description="Name of the influencer")
+    influencer_email: str = Field(description="Influencer's email address")
+    client_name: str = Field(description="Client/brand name")
+    agreed_rate: Decimal = Field(description="The agreed-upon rate")
+    platform: str = Field(description="Social media platform")
+    deliverables: str = Field(description="Description of agreed deliverables")
+    cpm_achieved: Decimal = Field(description="CPM achieved with the agreed rate")
+    thread_id: str = Field(description="Email thread identifier")
+    next_steps: list[str] = Field(
+        default_factory=list,
+        description="Next steps after agreement (e.g., 'Send contract')",
+    )
+    mention_users: list[str] = Field(
+        default_factory=list,
+        description="Slack user IDs to @ mention on agreement alerts",
     )

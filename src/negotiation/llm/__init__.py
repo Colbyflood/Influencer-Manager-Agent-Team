@@ -17,6 +17,7 @@ from negotiation.llm.composer import compose_counter_email
 from negotiation.llm.intent import classify_intent
 from negotiation.llm.knowledge_base import list_available_platforms, load_knowledge_base
 from negotiation.llm.models import (
+    AgreementPayload,
     ComposedEmail,
     EscalationPayload,
     IntentClassification,
@@ -33,6 +34,7 @@ __all__ = [
     "DEFAULT_CONFIDENCE_THRESHOLD",
     "DEFAULT_MAX_ROUNDS",
     "INTENT_MODEL",
+    "AgreementPayload",
     "ComposedEmail",
     "EscalationPayload",
     "IntentClassification",
