@@ -668,12 +668,15 @@ dependencies = [
     { name = "gspread" },
     { name = "httpx" },
     { name = "mail-parser-reply" },
+    { name = "prometheus-fastapi-instrumentator" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "pyyaml" },
+    { name = "sentry-sdk" },
     { name = "slack-bolt" },
     { name = "slack-sdk" },
     { name = "structlog" },
+    { name = "structlog-sentry" },
     { name = "tenacity" },
     { name = "uvicorn" },
 ]
@@ -700,12 +703,15 @@ requires-dist = [
     { name = "gspread", specifier = ">=6.2.1" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "mail-parser-reply", specifier = ">=1.36" },
+    { name = "prometheus-fastapi-instrumentator", specifier = ">=7.1.0" },
     { name = "pydantic", specifier = ">=2.12,<3" },
     { name = "pydantic-settings", specifier = ">=2.13.0" },
     { name = "pyyaml", specifier = ">=6.0.3" },
+    { name = "sentry-sdk", specifier = ">=2.53.0" },
     { name = "slack-bolt", specifier = ">=1.27.0" },
     { name = "slack-sdk", specifier = ">=3.40.1" },
     { name = "structlog", specifier = ">=25.5.0" },
+    { name = "structlog-sentry", specifier = ">=2.2.1" },
     { name = "tenacity", specifier = ">=9.1.4" },
     { name = "uvicorn", specifier = ">=0.41.0" },
 ]
@@ -982,6 +988,28 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/f9/e2/3e91f31a7d2b083fe6ef3fa267035b518369d9511ffab804f839851d2779/pluggy-1.6.0.tar.gz", hash = "sha256:7dcc130b76258d33b90f61b658791dede3486c3e6bfb003ee5c9bfb396dd22f3", size = 69412, upload-time = "2025-05-15T12:30:07.975Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/54/20/4d324d65cc6d9205fabedc306948156824eb9f0ee1633355a8f7ec5c66bf/pluggy-1.6.0-py3-none-any.whl", hash = "sha256:e920276dd6813095e9377c0bc5566d94c932c33b27a3e3945d8389c374dd4746", size = 20538, upload-time = "2025-05-15T12:30:06.134Z" },
+]
+
+[[package]]
+name = "prometheus-client"
+version = "0.24.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/f0/58/a794d23feb6b00fc0c72787d7e87d872a6730dd9ed7c7b3e954637d8f280/prometheus_client-0.24.1.tar.gz", hash = "sha256:7e0ced7fbbd40f7b84962d5d2ab6f17ef88a72504dcf7c0b40737b43b2a461f9", size = 85616, upload-time = "2026-01-14T15:26:26.965Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/74/c3/24a2f845e3917201628ecaba4f18bab4d18a337834c1df2a159ee9d22a42/prometheus_client-0.24.1-py3-none-any.whl", hash = "sha256:150db128af71a5c2482b36e588fc8a6b95e498750da4b17065947c16070f4055", size = 64057, upload-time = "2026-01-14T15:26:24.42Z" },
+]
+
+[[package]]
+name = "prometheus-fastapi-instrumentator"
+version = "7.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "prometheus-client" },
+    { name = "starlette" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/69/6d/24d53033cf93826aa7857699a4450c1c67e5b9c710e925b1ed2b320c04df/prometheus_fastapi_instrumentator-7.1.0.tar.gz", hash = "sha256:be7cd61eeea4e5912aeccb4261c6631b3f227d8924542d79eaf5af3f439cbe5e", size = 20220, upload-time = "2025-03-19T19:35:05.351Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/27/72/0824c18f3bc75810f55dacc2dd933f6ec829771180245ae3cc976195dec0/prometheus_fastapi_instrumentator-7.1.0-py3-none-any.whl", hash = "sha256:978130f3c0bb7b8ebcc90d35516a6fe13e02d2eb358c8f83887cdef7020c31e9", size = 19296, upload-time = "2025-03-19T19:35:04.323Z" },
 ]
 
 [[package]]
@@ -1322,6 +1350,19 @@ wheels = [
 ]
 
 [[package]]
+name = "sentry-sdk"
+version = "2.53.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "certifi" },
+    { name = "urllib3" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d3/06/66c8b705179bc54087845f28fd1b72f83751b6e9a195628e2e9af9926505/sentry_sdk-2.53.0.tar.gz", hash = "sha256:6520ef2c4acd823f28efc55e43eb6ce2e6d9f954a95a3aa96b6fd14871e92b77", size = 412369, upload-time = "2026-02-16T11:11:14.743Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/47/d4/2fdf854bc3b9c7f55219678f812600a20a138af2dd847d99004994eada8f/sentry_sdk-2.53.0-py2.py3-none-any.whl", hash = "sha256:46e1ed8d84355ae54406c924f6b290c3d61f4048625989a723fd622aab838899", size = 437908, upload-time = "2026-02-16T11:11:13.227Z" },
+]
+
+[[package]]
 name = "slack-bolt"
 version = "1.27.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1371,6 +1412,19 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/ef/52/9ba0f43b686e7f3ddfeaa78ac3af750292662284b3661e91ad5494f21dbc/structlog-25.5.0.tar.gz", hash = "sha256:098522a3bebed9153d4570c6d0288abf80a031dfdb2048d59a49e9dc2190fc98", size = 1460830, upload-time = "2025-10-27T08:28:23.028Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a8/45/a132b9074aa18e799b891b91ad72133c98d8042c70f6240e4c5f9dabee2f/structlog-25.5.0-py3-none-any.whl", hash = "sha256:a8453e9b9e636ec59bd9e79bbd4a72f025981b3ba0f5837aebf48f02f37a7f9f", size = 72510, upload-time = "2025-10-27T08:28:21.535Z" },
+]
+
+[[package]]
+name = "structlog-sentry"
+version = "2.2.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "sentry-sdk" },
+    { name = "structlog" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/a9/c8/a6d66c4a691a47c9c572ab84640012bb70c8c4f710763bd544236d98f278/structlog_sentry-2.2.1.tar.gz", hash = "sha256:78cf8751c7712e361d9d5e82fcde6c3f692a67e3e67068ccdd46448014636138", size = 6855, upload-time = "2024-11-12T14:31:51.695Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e3/ba/1b1226db704c16426d59e1fcbeaf5138dbc5a50d424aab92b453d33add47/structlog_sentry-2.2.1-py3-none-any.whl", hash = "sha256:868c82348bc18b7d51ef8f878c57e82835c1758dba38f7589fa02a267096a95d", size = 11218, upload-time = "2024-11-12T14:31:50.594Z" },
 ]
 
 [[package]]
