@@ -299,6 +299,201 @@ def initialize_services() -> dict[str, Any]:
     return services
 
 
+def build_negotiation_context(
+    influencer_name: str,
+    influencer_email: str,
+    sheet_data: Any,  # InfluencerRow
+    campaign: Any,  # Campaign model
+    thread_id: str,
+    cpm_tracker: Any | None = None,
+) -> dict[str, Any]:
+    """Assemble the negotiation_context dict that process_influencer_reply expects.
+
+    Args:
+        influencer_name: The influencer's name.
+        influencer_email: The influencer's email address.
+        sheet_data: InfluencerRow from Sheets lookup.
+        campaign: The Campaign model from ingestion.
+        thread_id: The Gmail thread ID for this conversation.
+        cpm_tracker: Optional CampaignCPMTracker for flexibility guidance.
+
+    Returns:
+        A dict matching process_influencer_reply's expected negotiation_context keys.
+    """
+    # Determine target CPM -- use tracker flexibility if available, else campaign floor
+    next_cpm = campaign.cpm_range.min_cpm
+    if cpm_tracker is not None:
+        engagement_rate = getattr(sheet_data, "engagement_rate", None)
+        flexibility = cpm_tracker.get_flexibility(
+            influencer_engagement_rate=engagement_rate,
+        )
+        next_cpm = flexibility.target_cpm
+
+    # Build deliverable types from campaign target_deliverables
+    deliverable_types = [campaign.target_deliverables]
+
+    return {
+        "influencer_name": influencer_name,
+        "influencer_email": influencer_email,
+        "thread_id": thread_id,
+        "platform": str(sheet_data.platform)
+        if hasattr(sheet_data, "platform")
+        else str(campaign.platform),
+        "average_views": int(sheet_data.average_views),
+        "deliverables_summary": campaign.target_deliverables,
+        "deliverable_types": deliverable_types,
+        "next_cpm": next_cpm,
+        "client_name": campaign.client_name,
+        "campaign_id": campaign.campaign_id,
+        "history": "",
+    }
+
+
+async def start_negotiations_for_campaign(
+    found_influencers: list[dict[str, Any]],
+    campaign: Any,
+    services: dict[str, Any],
+) -> None:
+    """Start negotiations for each found influencer from campaign ingestion.
+
+    For each influencer:
+    1. Get PayRange from Sheet data
+    2. Calculate initial offer using pricing engine
+    3. Create NegotiationStateMachine
+    4. Instantiate CampaignCPMTracker for per-influencer flexibility
+    5. Compose initial outreach email using compose_counter_email with stage="initial_outreach"
+    6. Send via GmailClient.send() as a new thread
+    7. Store negotiation state in negotiation_states[thread_id]
+
+    Args:
+        found_influencers: List of dicts with "name" and "sheet_data" (InfluencerRow) keys.
+        campaign: The Campaign model from ingestion.
+        services: The services dict from initialize_services.
+    """
+    gmail_client = services.get("gmail_client")
+    anthropic_client = services.get("anthropic_client")
+    negotiation_states = services.get("negotiation_states", {})
+    audit_logger = services.get("audit_logger")
+
+    if gmail_client is None:
+        logger.warning("GmailClient not available, cannot start negotiations")
+        return
+
+    if anthropic_client is None:
+        logger.warning("Anthropic client not available, cannot compose outreach emails")
+        return
+
+    # Instantiate CampaignCPMTracker for this campaign
+    from negotiation.campaign.cpm_tracker import CampaignCPMTracker
+    from negotiation.email.models import OutboundEmail
+    from negotiation.llm.composer import compose_counter_email
+    from negotiation.llm.knowledge_base import load_knowledge_base
+    from negotiation.pricing import calculate_initial_offer
+    from negotiation.state_machine import NegotiationStateMachine
+
+    cpm_tracker = CampaignCPMTracker(
+        campaign_id=campaign.campaign_id,
+        target_min_cpm=campaign.cpm_range.min_cpm,
+        target_max_cpm=campaign.cpm_range.max_cpm,
+        total_influencers=len(found_influencers),
+    )
+
+    for influencer_data in found_influencers:
+        name = influencer_data["name"]
+        sheet_data = influencer_data["sheet_data"]  # InfluencerRow
+
+        try:
+            # Calculate initial offer
+            initial_rate = calculate_initial_offer(int(sheet_data.average_views))
+
+            # Create state machine
+            state_machine = NegotiationStateMachine()
+
+            # Compose initial outreach email
+            # Reuse compose_counter_email with negotiation_stage="initial_outreach"
+            kb_content = load_knowledge_base(
+                str(sheet_data.platform)
+                if hasattr(sheet_data, "platform")
+                else str(campaign.platform)
+            )
+
+            composed = compose_counter_email(
+                influencer_name=name,
+                their_rate="not yet discussed",
+                our_rate=str(initial_rate),
+                deliverables_summary=campaign.target_deliverables,
+                platform=str(sheet_data.platform)
+                if hasattr(sheet_data, "platform")
+                else str(campaign.platform),
+                negotiation_stage="initial_outreach",
+                knowledge_base_content=kb_content,
+                negotiation_history="",
+                client=anthropic_client,
+            )
+
+            # Send as a new email (not a reply -- new thread)
+            influencer_email = (
+                str(sheet_data.email) if hasattr(sheet_data, "email") else ""
+            )
+            if not influencer_email:
+                logger.warning("No email for influencer, skipping", influencer=name)
+                continue
+
+            outbound = OutboundEmail(
+                to=influencer_email,
+                subject=f"Collaboration Opportunity - {campaign.client_name}",
+                body=composed.email_body,
+            )
+
+            send_result = await asyncio.to_thread(gmail_client.send, outbound)
+            thread_id = send_result.get("threadId", "")
+
+            # Trigger state machine transition
+            state_machine.trigger("send_offer")
+
+            # Build negotiation context and store state
+            context = build_negotiation_context(
+                influencer_name=name,
+                influencer_email=influencer_email,
+                sheet_data=sheet_data,
+                campaign=campaign,
+                thread_id=thread_id,
+                cpm_tracker=cpm_tracker,
+            )
+
+            negotiation_states[thread_id] = {
+                "state_machine": state_machine,
+                "context": context,
+                "round_count": 0,
+                "campaign": campaign,
+                "cpm_tracker": cpm_tracker,
+            }
+
+            # Log to audit trail
+            if audit_logger is not None:
+                audit_logger.log_email_sent(
+                    campaign_id=campaign.campaign_id,
+                    influencer_name=name,
+                    thread_id=thread_id,
+                    email_body=composed.email_body,
+                    negotiation_state="initial_offer",
+                    rates_used=str(initial_rate),
+                )
+
+            logger.info(
+                "Initial outreach sent",
+                influencer=name,
+                thread_id=thread_id,
+                initial_rate=str(initial_rate),
+                campaign=campaign.client_name,
+            )
+
+        except Exception:
+            logger.exception(
+                "Failed to start negotiation for influencer", influencer=name
+            )
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     """Lifespan context manager for FastAPI startup and shutdown.
