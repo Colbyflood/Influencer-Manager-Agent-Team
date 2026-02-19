@@ -10,9 +10,9 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Email Integration
 
 - [x] **EMAIL-01**: Agent can send emails via Gmail API on behalf of the team
-- [ ] **EMAIL-02**: Agent can receive and process inbound emails via Gmail API with push notifications
+- [x] **EMAIL-02**: Agent can receive and process inbound emails via Gmail API with push notifications
 - [x] **EMAIL-03**: Agent maintains email thread context so influencers see a coherent conversation history
-- [ ] **EMAIL-04**: Agent can parse influencer reply content from email threads (handle MIME, inline replies, forwarding)
+- [x] **EMAIL-04**: Agent can parse influencer reply content from email threads (handle MIME, inline replies, forwarding)
 
 ### Negotiation Logic
 
@@ -90,9 +90,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | EMAIL-01 | Phase 2 | Complete |
-| EMAIL-02 | Phase 2 | Pending |
+| EMAIL-02 | Phase 2 | Complete |
 | EMAIL-03 | Phase 2 | Complete |
-| EMAIL-04 | Phase 2 | Pending |
+| EMAIL-04 | Phase 2 | Complete |
 | NEG-01 | Phase 2 | Complete |
 | NEG-02 | Phase 1 | Complete |
 | NEG-03 | Phase 1 | Complete |
