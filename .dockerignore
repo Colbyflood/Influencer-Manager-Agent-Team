@@ -1,0 +1,48 @@
+# Virtual environments (rebuilt in container)
+.venv/
+venv/
+
+# Version control
+.git/
+.gitignore
+
+# Python caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Dev/test tools
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Data (persisted via volume, not baked into image)
+data/
+
+# Credentials -- NEVER bake into image
+credentials.json
+token.json
+service_account.json
+*.pem
+*.key
+.env
+.env.*
+
+# OS
+.DS_Store
+
+# Planning / tooling docs
+.planning/
+.claude/
+
+# Tests (not needed in production image)
+tests/
