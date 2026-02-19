@@ -40,9 +40,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Knowledge Base
 
-- [ ] **KB-01**: Agent references a curated knowledge base of influencer marketing best practices during negotiations
-- [ ] **KB-02**: Agent references negotiation strategy guidelines (anchoring, concession patterns, tone) when composing responses
-- [ ] **KB-03**: Knowledge base files are editable by the team to update guidance without code changes
+- [x] **KB-01**: Agent references a curated knowledge base of influencer marketing best practices during negotiations
+- [x] **KB-02**: Agent references negotiation strategy guidelines (anchoring, concession patterns, tone) when composing responses
+- [x] **KB-03**: Knowledge base files are editable by the team to update guidance without code changes
 
 ## v2 Requirements
 
@@ -108,9 +108,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DATA-02 | Phase 2 | Complete |
 | DATA-03 | Phase 5 | Pending |
 | DATA-04 | Phase 5 | Pending |
-| KB-01 | Phase 3 | Pending |
-| KB-02 | Phase 3 | Pending |
-| KB-03 | Phase 3 | Pending |
+| KB-01 | Phase 3 | Complete |
+| KB-02 | Phase 3 | Complete |
+| KB-03 | Phase 3 | Complete |
 
 **Coverage:**
 - v1 requirements: 22 total
@@ -119,4 +119,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-18*
-*Last updated: 2026-02-18 after roadmap creation*
+*Last updated: 2026-02-19 after 03-01 plan completion*

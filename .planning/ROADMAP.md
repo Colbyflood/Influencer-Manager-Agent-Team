@@ -64,7 +64,7 @@ Plans:
 **Plans**: 4 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — LLM foundation: Anthropic SDK, Pydantic models, knowledge base files and loader
+- [x] 03-01-PLAN.md — LLM foundation: Anthropic SDK, Pydantic models, knowledge base files and loader
 - [ ] 03-02-PLAN.md — Intent classification with structured outputs (TDD)
 - [ ] 03-03-PLAN.md — Email composition and deterministic validation gate (TDD)
 - [ ] 03-04-PLAN.md — End-to-end negotiation loop orchestrator
@@ -107,6 +107,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 |-------|----------------|--------|-----------|
 | 1. Core Domain and Pricing Engine | 1/3 | Complete    | 2026-02-19 |
 | 2. Email and Data Integration | 0/3 | Complete    | 2026-02-19 |
-| 3. LLM Negotiation Pipeline | 0/4 | Planned     | - |
+| 3. LLM Negotiation Pipeline | 1/4 | In Progress | - |
 | 4. Slack and Human-in-the-Loop | 0/0 | Not started | - |
 | 5. Campaign Ingestion and Operational Readiness | 0/0 | Not started | - |
