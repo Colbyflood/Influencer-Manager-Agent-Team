@@ -57,11 +57,11 @@ Plans:
   1. Every negotiation state transition is written to SQLite before the response is returned, so killing the process at any point loses zero state
   2. After a restart, all non-terminal negotiations are loaded from the database and the agent resumes responding to influencer emails on those threads
   3. The in-memory negotiation_states dict and the SQLite table are always consistent -- no drift between them during normal operation
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 09-01: TBD
-- [ ] 09-02: TBD
+- [ ] 09-01-PLAN.md — State persistence module (schema, store, serializers) and domain object serialization methods
+- [ ] 09-02-PLAN.md — Wire state store into app.py (initialization, startup recovery, write-on-every-transition)
 
 ### Phase 10: Docker Packaging and Deployment
 **Goal**: Agent runs as a Docker container that persists data across restarts and can be deployed to any VM with docker compose up
