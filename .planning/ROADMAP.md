@@ -86,10 +86,10 @@ Plans:
   1. Pushing a commit to any branch triggers a GitHub Actions workflow that runs ruff lint, mypy typecheck, and pytest
   2. A pull request cannot be merged if the CI workflow fails (status check visible on PR)
   3. CI tests run in isolation without touching real databases or external services
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 11-01: TBD
+- [ ] 11-01-PLAN.md — GitHub Actions CI workflow (ruff, mypy, pytest) and branch protection
 
 ### Phase 12: Monitoring, Observability, and Live Verification
 **Goal**: Agent errors are tracked, performance is measurable, requests are traceable end-to-end, and real service connections are verified by automated tests
