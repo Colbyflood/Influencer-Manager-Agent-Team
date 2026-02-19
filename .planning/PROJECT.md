@@ -53,7 +53,17 @@ The system can:
 
 ### Active
 
-(None — next milestone requirements defined via `/gsd:new-milestone`)
+**Current Milestone: v1.1 Production Readiness**
+
+**Goal:** Make the v1.0 negotiation agent production-grade — persistent state, reliable error handling, deployment infrastructure, CI/CD, monitoring, and live verification with real services.
+
+**Target capabilities:**
+- Persistent negotiation state that survives restarts/deploys
+- Robust error handling, retries, and graceful degradation
+- Docker-based deployment for cloud VM hosting
+- GitHub Actions CI/CD with automated testing
+- Structured logging, health checks, and monitoring
+- Live verification with real Gmail, Sheets, and Slack
 
 ### Out of Scope
 
@@ -101,4 +111,4 @@ The system can:
 | Deterministic validation gate | No LLM validates LLM output; regex + string matching only | ✓ Good — catches dollar amount errors reliably |
 
 ---
-*Last updated: 2026-02-19 after v1.0 milestone*
+*Last updated: 2026-02-19 after v1.1 milestone start*
