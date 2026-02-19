@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core value:** The agent must negotiate influencer rates accurately using CPM-based logic and reliably communicate the outcome -- every agreed deal must result in a clear, actionable Slack notification to the team.
-**Current focus:** Phase 5: Campaign Ingestion and Operational Readiness -- Complete
+**Current focus:** Phase 6: Runtime Orchestration Wiring -- In Progress
 
 ## Current Position
 
-Phase: 5 of 5 (Campaign Ingestion and Operational Readiness)
-Plan: 4 of 4 in current phase (05-01, 05-02, 05-03, 05-04 complete)
-Status: Complete
-Last activity: 2026-02-19 -- Completed 05-04-PLAN.md (App Entry Point and Audit Wiring)
+Phase: 6 of 6 (Runtime Orchestration Wiring)
+Plan: 1 of 3 in current phase (06-01 complete)
+Status: In Progress
+Last activity: 2026-02-19 -- Completed 06-01-PLAN.md (Runtime Orchestration and Inbound Email Pipeline)
 
-Progress: [##########] 100%
+Progress: [######----] 63%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 18
+- Total plans completed: 19
 - Average duration: 4min
-- Total execution time: 1.20 hours
+- Total execution time: 1.27 hours
 
 **By Phase:**
 
@@ -32,9 +32,10 @@ Progress: [##########] 100%
 | 3 - LLM Pipeline | 4/4 | 16min | 4min |
 | 4 - Slack & HITL | 4/4 | 17min | 4min |
 | 5 - Campaign Ingestion | 4/4 | 21min | 5min |
+| 6 - Runtime Wiring | 1/3 | 4min | 4min |
 
 **Recent Trend:**
-- Last 5 plans: 04-04 (5min), 05-01 (5min), 05-02 (5min), 05-03 (5min), 05-04 (6min)
+- Last 5 plans: 05-01 (5min), 05-02 (5min), 05-03 (5min), 05-04 (6min), 06-01 (4min)
 - Trend: Consistent
 
 *Updated after each plan completion*
@@ -110,6 +111,11 @@ Recent decisions affecting current work:
 - [05-04]: Removed structlog.stdlib.add_logger_name since PrintLoggerFactory lacks .name attribute.
 - [05-04]: Local imports for SlackNotifier/SheetsClient inside initialize_services for graceful degradation.
 - [05-04]: Background task set + done_callback.discard pattern to prevent asyncio task GC (per RUF006).
+- [06-01]: Tasks 1 and 2 committed together since both modify app.py and are interdependent.
+- [06-01]: ThreadStateManager created before Bolt app block so SlackDispatcher can use it independently.
+- [06-01]: In-memory negotiation state dict keyed by thread_id (acknowledged v1 restart limitation).
+- [06-01]: Pass proposed_cpm=0.0 and intent_confidence=1.0 to pre_check since values unknown before classification.
+- [06-01]: Gmail watch renewed every 6 days via asyncio.sleep background task (expires at 7 days).
 
 ### Pending Todos
 
@@ -124,5 +130,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 05-04-PLAN.md (App Entry Point and Audit Wiring) -- All 5 phases complete (18/18 plans done)
-Resume file: .planning/phases/05-campaign-ingestion-and-operational-readiness/05-04-SUMMARY.md
+Stopped at: Completed 06-01-PLAN.md (Runtime Orchestration and Inbound Email Pipeline)
+Resume file: .planning/phases/06-runtime-orchestration-wiring/06-01-SUMMARY.md
