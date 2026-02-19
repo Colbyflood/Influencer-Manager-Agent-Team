@@ -61,11 +61,13 @@ Plans:
   2. The agent composes counter-offer emails that include calculated rates, clear deliverable terms, and appropriate negotiation tone informed by the knowledge base
   3. The knowledge base files are stored in an editable location where the team can update negotiation guidance and best practices without code changes
   4. The end-to-end negotiation loop works: email arrives, intent is classified, pricing engine calculates response rate, LLM composes email, validation gate checks monetary values, email is sent or escalated
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
-- [ ] 03-01: TBD
-- [ ] 03-02: TBD
+- [ ] 03-01-PLAN.md — LLM foundation: Anthropic SDK, Pydantic models, knowledge base files and loader
+- [ ] 03-02-PLAN.md — Intent classification with structured outputs (TDD)
+- [ ] 03-03-PLAN.md — Email composition and deterministic validation gate (TDD)
+- [ ] 03-04-PLAN.md — End-to-end negotiation loop orchestrator
 
 ### Phase 4: Slack and Human-in-the-Loop
 **Goal**: The team receives actionable Slack notifications for escalations and agreements, and can take over any negotiation thread at any time
@@ -105,6 +107,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 |-------|----------------|--------|-----------|
 | 1. Core Domain and Pricing Engine | 1/3 | Complete    | 2026-02-19 |
 | 2. Email and Data Integration | 0/3 | Complete    | 2026-02-19 |
-| 3. LLM Negotiation Pipeline | 0/0 | Not started | - |
+| 3. LLM Negotiation Pipeline | 0/4 | Planned     | - |
 | 4. Slack and Human-in-the-Loop | 0/0 | Not started | - |
 | 5. Campaign Ingestion and Operational Readiness | 0/0 | Not started | - |
