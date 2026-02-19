@@ -43,11 +43,11 @@ Full details: [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
   2. Hitting GET /health returns 200 when the agent process is running
   3. Hitting GET /ready returns 200 only when the audit database is writable and a valid Gmail token is present; returns 503 otherwise
   4. Agent refuses to start and prints a clear error message when Gmail token, Sheets service account, or Slack token is missing or invalid
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 08-01: TBD
-- [ ] 08-02: TBD
+- [ ] 08-01-PLAN.md — Centralized Settings class (pydantic-settings) and startup credential validation
+- [ ] 08-02-PLAN.md — Health/readiness endpoints and tests
 
 ### Phase 9: Persistent Negotiation State
 **Goal**: Active negotiations survive process restarts and container redeployments -- no deals are silently lost
