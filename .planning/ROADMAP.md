@@ -12,7 +12,7 @@ This roadmap delivers an AI-powered agent that negotiates influencer rates via e
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Core Domain and Pricing Engine** - Deterministic pricing logic, negotiation state machine, platform rate cards, and rate boundary enforcement
+- [x] **Phase 1: Core Domain and Pricing Engine** - Deterministic pricing logic, negotiation state machine, platform rate cards, and rate boundary enforcement (completed 2026-02-19)
 - [ ] **Phase 2: Email and Data Integration** - Gmail API send/receive with threading, Google Sheet connection for influencer data, and email parsing
 - [ ] **Phase 3: LLM Negotiation Pipeline** - Intent classification, counter-offer composition, knowledge base integration, and the end-to-end negotiation loop
 - [ ] **Phase 4: Slack and Human-in-the-Loop** - Escalation routing, agreement alerts, human takeover, and configurable trigger rules
@@ -102,7 +102,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Core Domain and Pricing Engine | 1/3 | In Progress | - |
+| 1. Core Domain and Pricing Engine | 1/3 | Complete    | 2026-02-19 |
 | 2. Email and Data Integration | 0/0 | Not started | - |
 | 3. LLM Negotiation Pipeline | 0/0 | Not started | - |
 | 4. Slack and Human-in-the-Loop | 0/0 | Not started | - |
