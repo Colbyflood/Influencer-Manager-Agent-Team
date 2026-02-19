@@ -198,6 +198,51 @@ class TestGetAllInfluencers:
         with pytest.raises(ValueError, match="empty or has no records"):
             client.get_all_influencers()
 
+    def test_engagement_rate_passed_through(self, mock_gc: MagicMock) -> None:
+        """When record has 'Engagement Rate', it is passed to InfluencerRow."""
+        worksheet = MagicMock()
+        worksheet.get_all_records.return_value = [
+            {
+                "Name": "Creator A",
+                "Email": "creatora@email.com",
+                "Platform": "instagram",
+                "Handle": "@creatora",
+                "Average Views": 50000,
+                "Min Rate": 1000.0,
+                "Max Rate": 1500.0,
+                "Engagement Rate": 4.5,
+            },
+        ]
+        spreadsheet = MagicMock()
+        spreadsheet.worksheet.return_value = worksheet
+        mock_gc.open_by_key.return_value = spreadsheet
+
+        client = SheetsClient(gc=mock_gc, spreadsheet_key="key")
+        rows = client.get_all_influencers()
+        assert rows[0].engagement_rate == 4.5
+
+    def test_engagement_rate_none_when_absent(self, mock_gc: MagicMock) -> None:
+        """When record lacks 'Engagement Rate', engagement_rate is None."""
+        worksheet = MagicMock()
+        worksheet.get_all_records.return_value = [
+            {
+                "Name": "Creator A",
+                "Email": "creatora@email.com",
+                "Platform": "instagram",
+                "Handle": "@creatora",
+                "Average Views": 50000,
+                "Min Rate": 1000.0,
+                "Max Rate": 1500.0,
+            },
+        ]
+        spreadsheet = MagicMock()
+        spreadsheet.worksheet.return_value = worksheet
+        mock_gc.open_by_key.return_value = spreadsheet
+
+        client = SheetsClient(gc=mock_gc, spreadsheet_key="key")
+        rows = client.get_all_influencers()
+        assert rows[0].engagement_rate is None
+
     def test_custom_worksheet_name(self, mock_gc: MagicMock) -> None:
         """Passes worksheet_name to spreadsheet.worksheet()."""
         worksheet = MagicMock()

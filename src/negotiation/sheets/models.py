@@ -30,6 +30,7 @@ class InfluencerRow(BaseModel):
     average_views: int
     min_rate: Decimal
     max_rate: Decimal
+    engagement_rate: float | None = None
 
     @field_validator("min_rate", "max_rate", mode="before")
     @classmethod

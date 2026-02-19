@@ -81,6 +81,7 @@ class SheetsClient:
                     average_views=int(record["Average Views"]),
                     min_rate=record["Min Rate"],
                     max_rate=record["Max Rate"],
+                    engagement_rate=record.get("Engagement Rate"),
                 )
             )
 

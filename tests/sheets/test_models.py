@@ -139,3 +139,20 @@ class TestInfluencerRow:
         pay_range = row.to_pay_range()
         assert isinstance(pay_range.min_rate, Decimal)
         assert isinstance(pay_range.max_rate, Decimal)
+
+    # --- engagement_rate ---
+
+    def test_engagement_rate_defaults_to_none(self):
+        """engagement_rate defaults to None when not provided."""
+        row = self._make()
+        assert row.engagement_rate is None
+
+    def test_engagement_rate_accepts_float(self):
+        """engagement_rate accepts a float value."""
+        row = self._make(engagement_rate=4.5)
+        assert row.engagement_rate == 4.5
+
+    def test_engagement_rate_accepts_none_explicitly(self):
+        """engagement_rate accepts None when passed explicitly."""
+        row = self._make(engagement_rate=None)
+        assert row.engagement_rate is None
