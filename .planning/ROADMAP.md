@@ -27,7 +27,7 @@ Full details: [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
 **Milestone Goal:** Make the v1.0 negotiation agent production-grade -- persistent state, deployment infrastructure, CI/CD, monitoring, and live verification with real services.
 
 - [x] **Phase 8: Settings and Health Infrastructure** - Typed configuration, health endpoints, and startup credential validation
-- [ ] **Phase 9: Persistent Negotiation State** - SQLite-backed state persistence with crash recovery
+- [x] **Phase 9: Persistent Negotiation State** - SQLite-backed state persistence with crash recovery
 - [ ] **Phase 10: Docker Packaging and Deployment** - Multi-stage container with volume persistence
 - [ ] **Phase 11: CI/CD Pipeline** - GitHub Actions automated lint, typecheck, and test on every push
 - [ ] **Phase 12: Monitoring, Observability, and Live Verification** - Prometheus metrics, Sentry errors, request tracing, live tests, and Gmail watch renewal
@@ -60,8 +60,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 09-01-PLAN.md — State persistence module (schema, store, serializers) and domain object serialization methods
-- [ ] 09-02-PLAN.md — Wire state store into app.py (initialization, startup recovery, write-on-every-transition)
+- [x] 09-01-PLAN.md — State persistence module (schema, store, serializers) and domain object serialization methods
+- [x] 09-02-PLAN.md — Wire state store into app.py (initialization, startup recovery, write-on-every-transition)
 
 ### Phase 10: Docker Packaging and Deployment
 **Goal**: Agent runs as a Docker container that persists data across restarts and can be deployed to any VM with docker compose up
@@ -124,7 +124,7 @@ Phases execute in numeric order: 8 -> 9 -> 10 -> 11 -> 12
 | 6. Runtime Orchestration Wiring | v1.0 | 3/3 | Complete | 2026-02-19 |
 | 7. Integration Hardening | v1.0 | 2/2 | Complete | 2026-02-19 |
 | 8. Settings and Health Infrastructure | v1.1 | Complete    | 2026-02-19 | 2026-02-19 |
-| 9. Persistent Negotiation State | v1.1 | 0/2 | Not started | - |
+| 9. Persistent Negotiation State | v1.1 | 2/2 | Complete | 2026-02-19 |
 | 10. Docker Packaging and Deployment | v1.1 | 0/2 | Not started | - |
 | 11. CI/CD Pipeline | v1.1 | 0/1 | Not started | - |
 | 12. Monitoring, Observability, and Live Verification | v1.1 | 0/3 | Not started | - |
