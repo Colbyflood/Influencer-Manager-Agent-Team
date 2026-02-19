@@ -35,12 +35,7 @@ def _make_mock_service(
         messages = [{"payload": {"headers": headers}}]
 
     service = MagicMock()
-    (
-        service.users()
-        .threads()
-        .get()
-        .execute.return_value
-    ) = {"messages": messages}
+    (service.users().threads().get().execute.return_value) = {"messages": messages}
     return service
 
 

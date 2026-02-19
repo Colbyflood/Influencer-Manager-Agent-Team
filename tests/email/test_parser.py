@@ -23,9 +23,7 @@ def _make_plain_email(body: str) -> bytes:
     return msg.as_bytes()
 
 
-def _make_multipart_email(
-    *, text_plain: str | None = None, text_html: str | None = None
-) -> bytes:
+def _make_multipart_email(*, text_plain: str | None = None, text_html: str | None = None) -> bytes:
     """Create raw bytes for a multipart email with optional text/plain and text/html."""
     msg = MIMEMultipart("alternative")
     msg["From"] = "influencer@example.com"
@@ -64,16 +62,12 @@ class TestParseMimeMessage:
         assert "Hello, let's discuss rates." in result
 
     def test_multipart_with_text_plain(self) -> None:
-        raw = _make_multipart_email(
-            text_plain="Plain version", text_html="<p>HTML version</p>"
-        )
+        raw = _make_multipart_email(text_plain="Plain version", text_html="<p>HTML version</p>")
         result = parse_mime_message(raw)
         assert result == "Plain version"
 
     def test_multipart_html_only_strips_tags(self) -> None:
-        raw = _make_multipart_email(
-            text_html="<p>Hello <b>world</b></p>"
-        )
+        raw = _make_multipart_email(text_html="<p>Hello <b>world</b></p>")
         result = parse_mime_message(raw)
         assert "Hello" in result
         assert "world" in result

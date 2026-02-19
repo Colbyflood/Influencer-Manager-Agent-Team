@@ -41,9 +41,7 @@ def get_thread_context(service: Any, thread_id: str) -> EmailThreadContext:
     )
 
     latest_msg = thread["messages"][-1]
-    headers = {
-        h["name"]: h["value"] for h in latest_msg["payload"]["headers"]
-    }
+    headers = {h["name"]: h["value"] for h in latest_msg["payload"]["headers"]}
 
     return EmailThreadContext(
         thread_id=thread_id,
