@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "AI-powered influencer rate negotiation agent"
 requires-python = ">=3.12"
 dependencies = [
+    "anthropic>=0.82.0",
     "google-api-python-client>=2.190.0",
     "google-auth>=2.48.0",
     "google-auth-httplib2>=0.3.0",
@@ -21,6 +22,7 @@ dev = [
     "ruff>=0.15",
     "mypy>=1.19",
     "google-api-python-client-stubs>=1.32.0",
+    "pytest-mock>=3.15.1",
 ]
 
 [build-system]
