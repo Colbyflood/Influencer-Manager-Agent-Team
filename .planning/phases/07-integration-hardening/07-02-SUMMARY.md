@@ -68,7 +68,7 @@ Each task was committed atomically:
 
 1. **Task 1: Pass real CPM to pre_check and add audit logging for inbound emails** - `d08b5d0` (feat)
 
-**Plan metadata:** (pending final commit)
+**Plan metadata:** `aedd55c` (docs: complete plan)
 
 ## Files Created/Modified
 - `src/negotiation/app.py` - Added audit_logger.log_email_received call and replaced proposed_cpm=0.0 with float(context.get("next_cpm", 0))
