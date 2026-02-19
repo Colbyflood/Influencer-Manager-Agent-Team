@@ -32,7 +32,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 3 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Project setup, domain types, enums, and Pydantic models
+- [x] 01-01-PLAN.md — Project setup, domain types, enums, and Pydantic models
 - [ ] 01-02-PLAN.md — Pricing engine, rate cards, and boundary enforcement (TDD)
 - [ ] 01-03-PLAN.md — Negotiation state machine with transition validation (TDD)
 
@@ -102,7 +102,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Core Domain and Pricing Engine | 0/3 | Planning complete | - |
+| 1. Core Domain and Pricing Engine | 1/3 | In Progress | - |
 | 2. Email and Data Integration | 0/0 | Not started | - |
 | 3. LLM Negotiation Pipeline | 0/0 | Not started | - |
 | 4. Slack and Human-in-the-Loop | 0/0 | Not started | - |

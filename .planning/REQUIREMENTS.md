@@ -18,7 +18,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [ ] **NEG-01**: Agent reads influencer data from a Google Sheet, locates the row for the influencer being negotiated with, and pulls the proposed pay range based on $20-$30 CPM
 - [ ] **NEG-02**: Agent uses the pre-calculated pay range from the Google Sheet to guide negotiation (starting at $20 CPM floor, moving toward $30 CPM ceiling)
-- [ ] **NEG-03**: Agent supports platform-specific deliverable pricing for Instagram (post, story, reel), TikTok (video, story), and YouTube (dedicated video, integration, short)
+- [x] **NEG-03**: Agent supports platform-specific deliverable pricing for Instagram (post, story, reel), TikTok (video, story), and YouTube (dedicated video, integration, short)
 - [ ] **NEG-04**: Agent tracks negotiation state across multi-turn email conversations (states: initial_offer, awaiting_reply, counter_received, counter_sent, agreed, rejected, escalated, stale)
 - [ ] **NEG-05**: Agent extracts rate proposals and deliverable changes from free-text influencer email replies using LLM
 - [ ] **NEG-06**: Agent composes counter-offer emails with calculated rates and clear deliverable terms
@@ -95,7 +95,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | EMAIL-04 | Phase 2 | Pending |
 | NEG-01 | Phase 2 | Pending |
 | NEG-02 | Phase 1 | Pending |
-| NEG-03 | Phase 1 | Pending |
+| NEG-03 | Phase 1 | Complete |
 | NEG-04 | Phase 1 | Pending |
 | NEG-05 | Phase 3 | Pending |
 | NEG-06 | Phase 3 | Pending |
