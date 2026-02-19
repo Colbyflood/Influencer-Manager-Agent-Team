@@ -18,6 +18,7 @@ import asyncio
 import base64
 import json
 import logging
+import time
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from typing import Any
@@ -42,13 +43,14 @@ from negotiation.resilience.retry import configure_error_notifier
 from negotiation.slack.app import create_slack_app, start_slack_app
 from negotiation.slack.commands import register_commands
 from negotiation.slack.takeover import ThreadStateManager
-from negotiation.state.schema import init_negotiation_state_table
+from negotiation.state.schema import init_gmail_watch_state_table, init_negotiation_state_table
 from negotiation.state.serializers import (
     deserialize_context,
     deserialize_cpm_tracker,
     serialize_cpm_tracker,
 )
 from negotiation.state.store import NegotiationStateStore
+from negotiation.state.watch_store import GmailWatchStore
 from negotiation.state_machine import NegotiationStateMachine
 
 logger = structlog.get_logger()
@@ -142,6 +144,11 @@ def initialize_services(settings: Settings | None = None) -> dict[str, Any]:
     init_negotiation_state_table(audit_conn)
     state_store = NegotiationStateStore(audit_conn)
     services["state_store"] = state_store
+
+    # Initialize Gmail watch state table and store
+    init_gmail_watch_state_table(audit_conn)
+    watch_store = GmailWatchStore(audit_conn)
+    services["watch_store"] = watch_store
 
     # b. Create AuditLogger
     audit_logger = AuditLogger(audit_conn)
@@ -603,6 +610,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
                 async with services["history_lock"]:
                     services["history_id"] = str(watch_result.get("historyId", ""))
                 logger.info("Gmail watch registered", history_id=services["history_id"])
+
+                # Persist watch expiration for restart-resilient renewal
+                watch_store = services.get("watch_store")
+                if watch_store is not None:
+                    expiration_ms = int(watch_result.get("expiration", 0))
+                    history_id_str = str(watch_result.get("historyId", ""))
+                    watch_store.save(expiration_ms, history_id_str)
+                    logger.info("Gmail watch expiration persisted", expiration_ms=expiration_ms)
             except Exception:
                 logger.warning("Failed to register Gmail watch", exc_info=True)
     logger.info("FastAPI application starting")
@@ -846,29 +861,62 @@ async def process_inbound_email(message_id: str, services: dict[str, Any]) -> No
 
 
 async def renew_gmail_watch_periodically(services: dict[str, Any]) -> None:
-    """Renew Gmail watch every 6 days (watch expires at 7 days).
+    """Renew Gmail watch based on persisted expiration timestamp.
+
+    Sleeps until ``(expiration - safety_margin)``, then renews and persists
+    the new expiration.  Survives process restarts by reading persisted
+    expiration on each loop iteration.  If no stored expiration exists
+    (first run), renewal happens immediately.
 
     Args:
         services: The initialized services dict.
     """
-    interval_seconds = 6 * 24 * 3600  # 6 days
     gmail_client = services.get("gmail_client")
     topic = services.get("gmail_pubsub_topic", "")
+    watch_store = services.get("watch_store")
+    settings = services.get("_settings")
+    safety_margin = getattr(settings, "gmail_watch_safety_margin_seconds", 3600)
 
     if not gmail_client or not topic:
         return
 
     while True:
-        await asyncio.sleep(interval_seconds)
+        # Read persisted expiration
+        stored = watch_store.load() if watch_store else None
+        if stored is not None:
+            expiration_ms, _ = stored
+            now_ms = int(time.time() * 1000)
+            sleep_seconds = max(0, (expiration_ms - now_ms) / 1000 - safety_margin)
+        else:
+            sleep_seconds = 0  # No stored expiration -- renew immediately
+
+        if sleep_seconds > 0:
+            logger.info("Gmail watch renewal sleeping", sleep_seconds=int(sleep_seconds))
+            await asyncio.sleep(sleep_seconds)
+
         try:
             result = await asyncio.to_thread(gmail_client.setup_watch, topic)
+            new_expiration_ms = int(result.get("expiration", 0))
+            new_history_id = str(result.get("historyId", ""))
+
+            # Update in-memory history ID
             async with services["history_lock"]:
-                new_history_id = str(result.get("historyId", ""))
                 if new_history_id:
                     services["history_id"] = new_history_id
-            logger.info("Gmail watch renewed", history_id=services.get("history_id"))
+
+            # Persist new expiration
+            if watch_store is not None:
+                watch_store.save(new_expiration_ms, new_history_id)
+
+            logger.info(
+                "Gmail watch renewed",
+                expiration_ms=new_expiration_ms,
+                history_id=new_history_id,
+            )
         except Exception:
             logger.exception("Failed to renew Gmail watch")
+            # On failure, retry in 5 minutes
+            await asyncio.sleep(300)
 
 
 async def run_slack_bot(services: dict[str, Any]) -> None:

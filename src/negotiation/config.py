@@ -66,6 +66,9 @@ class Settings(BaseSettings):
     clickup_api_token: str = ""
     clickup_webhook_secret: str = ""
 
+    # -- Gmail watch renewal ---------------------------------------------------
+    gmail_watch_safety_margin_seconds: int = 3600  # Renew 1 hour before actual expiry
+
     # -- Observability (Phase 12) ----------------------------------------------
     sentry_dsn: str = ""  # Empty = Sentry disabled
     enable_metrics: bool = True  # Toggle Prometheus /metrics
