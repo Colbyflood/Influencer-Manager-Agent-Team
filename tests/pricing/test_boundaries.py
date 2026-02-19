@@ -3,10 +3,10 @@
 from decimal import Decimal
 
 import pytest
+from pydantic import ValidationError
 
 from negotiation.pricing.boundaries import (
     BoundaryResult,
-    PricingResult,
     evaluate_proposed_rate,
 )
 
@@ -141,5 +141,5 @@ class TestPricingResult:
 
     def test_pricing_result_is_frozen(self):
         result = evaluate_proposed_rate(Decimal("1250"), 50000)
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             result.rate = Decimal("9999")  # type: ignore[misc]

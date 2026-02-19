@@ -3,6 +3,7 @@
 from decimal import Decimal
 
 import pytest
+from pydantic import ValidationError
 
 from negotiation.domain.types import DeliverableType
 from negotiation.pricing.rate_cards import (
@@ -25,7 +26,7 @@ class TestRateCard:
 
     def test_rate_card_is_frozen(self):
         card = get_rate_card(DeliverableType.INSTAGRAM_REEL)
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             card.cpm_floor = Decimal("99")  # type: ignore[misc]
 
 
@@ -37,9 +38,7 @@ class TestCalculateDeliverableRate:
         list(DeliverableType),
         ids=[dt.value for dt in DeliverableType],
     )
-    def test_all_deliverable_types_produce_valid_rates(
-        self, deliverable_type: DeliverableType
-    ):
+    def test_all_deliverable_types_produce_valid_rates(self, deliverable_type: DeliverableType):
         """Every deliverable type must return a positive Decimal rate."""
         rate = calculate_deliverable_rate(deliverable_type, 50000)
         assert isinstance(rate, Decimal)
@@ -51,9 +50,7 @@ class TestCalculateDeliverableRate:
         assert rate == Decimal("1000.00")
 
     def test_deliverable_rate_with_custom_cpm(self):
-        rate = calculate_deliverable_rate(
-            DeliverableType.INSTAGRAM_REEL, 50000, cpm=Decimal("25")
-        )
+        rate = calculate_deliverable_rate(DeliverableType.INSTAGRAM_REEL, 50000, cpm=Decimal("25"))
         assert rate == Decimal("1250.00")
 
     def test_deliverable_rate_uses_decimal_arithmetic(self):
