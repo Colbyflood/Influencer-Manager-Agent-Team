@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-19)
 
 **Core value:** The agent must negotiate influencer rates accurately using CPM-based logic and reliably communicate the outcome -- every agreed deal must result in a clear, actionable Slack notification to the team.
-**Current focus:** Phase 9 - State Persistence
+**Current focus:** Phase 10 - Docker Packaging and Deployment
 
 ## Current Position
 
-Phase: 9 of 12 (State Persistence) -- COMPLETE
-Plan: 2 of 2 in current phase -- COMPLETE
-Status: Phase Complete
-Last activity: 2026-02-19 -- Completed 09-02 (state store wiring and integration tests)
+Phase: 10 of 12 (Docker Packaging and Deployment)
+Plan: 1 of 2 in current phase -- COMPLETE
+Status: In Progress
+Last activity: 2026-02-19 -- Completed 10-01 (Docker image build: Dockerfile, .dockerignore, entrypoint.sh)
 
-Progress: [========================......] 82% (27/33 plans across all milestones)
+Progress: [=========================.....] 85% (28/33 plans across all milestones)
 
 ## Performance Metrics
 
@@ -29,7 +29,7 @@ Progress: [========================......] 82% (27/33 plans across all milestone
 |-------|-------|-------|----------|
 | Phase 8 | 2/2 | 10min | 5min |
 | Phase 9 | 2/2 | 8min | 4min |
-| Phase 10 | 0/2 | -- | -- |
+| Phase 10 | 1/2 | 1min | 1min |
 | Phase 11 | 0/1 | -- | -- |
 | Phase 12 | 0/3 | -- | -- |
 
@@ -58,6 +58,9 @@ Recent decisions affecting current work:
 - [09-02]: serialize_context used inside store.save() for transparent Decimal handling
 - [09-02]: Startup recovery populates negotiation_states before request processing
 - [09-02]: State save guarded with if state_store is not None for backward compatibility
+- [10-01]: setpriv over gosu for privilege drop (already in Debian slim, no extra install)
+- [10-01]: HEALTHCHECK kills PID 1 on failure for auto-restart with docker-compose restart policy
+- [10-01]: No USER directive in Dockerfile -- entrypoint runs as root to fix volumes, then drops privileges
 
 ### Pending Todos
 
@@ -71,5 +74,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 09-02-PLAN.md (state store wiring and integration tests) -- Phase 9 complete
+Stopped at: Completed 10-01-PLAN.md (Docker image build: Dockerfile, .dockerignore, entrypoint.sh)
 Resume file: None
