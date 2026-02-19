@@ -11,7 +11,7 @@ Requirements for production readiness. Each maps to roadmap phases.
 
 - [ ] **STATE-01**: Agent persists negotiation state to SQLite on every state transition so no deals are lost on restart
 - [ ] **STATE-02**: Agent recovers non-terminal negotiations from database on startup so in-progress deals resume automatically
-- [ ] **STATE-03**: Agent validates credentials (Gmail token, Sheets SA, Slack token) at startup and fails fast with clear errors
+- [x] **STATE-03**: Agent validates credentials (Gmail token, Sheets SA, Slack token) at startup and fails fast with clear errors
 
 ### Health & Observability
 
@@ -29,7 +29,7 @@ Requirements for production readiness. Each maps to roadmap phases.
 
 ### Configuration & Testing
 
-- [ ] **CONFIG-01**: Agent loads all configuration from environment variables via pydantic-settings with .env file support
+- [x] **CONFIG-01**: Agent loads all configuration from environment variables via pydantic-settings with .env file support
 - [ ] **CONFIG-02**: Agent includes @pytest.mark.live integration tests that verify real Gmail, Sheets, and Slack connections
 - [ ] **CONFIG-03**: Agent persists Gmail watch expiration timestamp and renews relative to actual expiry, not process uptime
 
@@ -64,10 +64,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CONFIG-01 | Phase 8 | Pending |
+| CONFIG-01 | Phase 8 | Complete |
 | OBS-01 | Phase 8 | Pending |
 | OBS-02 | Phase 8 | Pending |
-| STATE-03 | Phase 8 | Pending |
+| STATE-03 | Phase 8 | Complete |
 | STATE-01 | Phase 9 | Pending |
 | STATE-02 | Phase 9 | Pending |
 | DEPLOY-01 | Phase 10 | Pending |
