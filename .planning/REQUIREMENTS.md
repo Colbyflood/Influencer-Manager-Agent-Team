@@ -21,7 +21,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **NEG-03**: Agent supports platform-specific deliverable pricing for Instagram (post, story, reel), TikTok (video, story), and YouTube (dedicated video, integration, short)
 - [x] **NEG-04**: Agent tracks negotiation state across multi-turn email conversations (states: initial_offer, awaiting_reply, counter_received, counter_sent, agreed, rejected, escalated, stale)
 - [ ] **NEG-05**: Agent extracts rate proposals and deliverable changes from free-text influencer email replies using LLM
-- [ ] **NEG-06**: Agent composes counter-offer emails with calculated rates and clear deliverable terms
+- [x] **NEG-06**: Agent composes counter-offer emails with calculated rates and clear deliverable terms
 - [x] **NEG-07**: Agent enforces rate boundaries — escalates when influencer demands exceed $30 CPM threshold
 
 ### Human Integration
@@ -98,7 +98,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | NEG-03 | Phase 1 | Complete |
 | NEG-04 | Phase 1 | Complete |
 | NEG-05 | Phase 3 | Pending |
-| NEG-06 | Phase 3 | Pending |
+| NEG-06 | Phase 3 | Complete |
 | NEG-07 | Phase 1 | Complete |
 | HUMAN-01 | Phase 4 | Pending |
 | HUMAN-02 | Phase 4 | Pending |
