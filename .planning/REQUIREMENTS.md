@@ -1,7 +1,7 @@
 # Requirements: Influencer Negotiation Agent
 
 **Defined:** 2026-02-19
-**Core Value:** The agent must negotiate influencer rates accurately using CPM-based logic and reliably communicate the outcome — every agreed deal must result in a clear, actionable Slack notification to the team.
+**Core Value:** The agent must negotiate influencer rates accurately using CPM-based logic and reliably communicate the outcome -- every agreed deal must result in a clear, actionable Slack notification to the team.
 
 ## v1.1 Requirements
 
@@ -64,26 +64,26 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| STATE-01 | — | Pending |
-| STATE-02 | — | Pending |
-| STATE-03 | — | Pending |
-| OBS-01 | — | Pending |
-| OBS-02 | — | Pending |
-| OBS-03 | — | Pending |
-| OBS-04 | — | Pending |
-| OBS-05 | — | Pending |
-| DEPLOY-01 | — | Pending |
-| DEPLOY-02 | — | Pending |
-| DEPLOY-03 | — | Pending |
-| CONFIG-01 | — | Pending |
-| CONFIG-02 | — | Pending |
-| CONFIG-03 | — | Pending |
+| CONFIG-01 | Phase 8 | Pending |
+| OBS-01 | Phase 8 | Pending |
+| OBS-02 | Phase 8 | Pending |
+| STATE-03 | Phase 8 | Pending |
+| STATE-01 | Phase 9 | Pending |
+| STATE-02 | Phase 9 | Pending |
+| DEPLOY-01 | Phase 10 | Pending |
+| DEPLOY-02 | Phase 10 | Pending |
+| DEPLOY-03 | Phase 11 | Pending |
+| OBS-03 | Phase 12 | Pending |
+| OBS-04 | Phase 12 | Pending |
+| OBS-05 | Phase 12 | Pending |
+| CONFIG-02 | Phase 12 | Pending |
+| CONFIG-03 | Phase 12 | Pending |
 
 **Coverage:**
 - v1.1 requirements: 14 total
-- Mapped to phases: 0
-- Unmapped: 14 ⚠️
+- Mapped to phases: 14
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-19*
-*Last updated: 2026-02-19 after initial definition*
+*Last updated: 2026-02-19 after roadmap creation*
