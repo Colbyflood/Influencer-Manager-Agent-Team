@@ -262,9 +262,7 @@ class TestWireAuditToCampaignIngestion:
             }
 
         wrapped = wire_audit_to_campaign_ingestion(mock_ingest, audit_logger)
-        result = asyncio.get_event_loop().run_until_complete(
-            wrapped("task_10", "token")
-        )
+        result = asyncio.run(wrapped("task_10", "token"))
 
         assert result["campaign"] is campaign_mock
         assert len(result["found_influencers"]) == 3
@@ -291,7 +289,7 @@ class TestWireAuditToCampaignIngestion:
             }
 
         wrapped = wire_audit_to_campaign_ingestion(mock_ingest, audit_logger)
-        asyncio.get_event_loop().run_until_complete(wrapped("task_11", "token"))
+        asyncio.run(wrapped("task_11", "token"))
 
         entries = query_audit_trail(conn, campaign_id="camp_11")
         skips = [e for e in entries if e["event_type"] == "campaign_influencer_skip"]
@@ -316,7 +314,7 @@ class TestWireAuditToCampaignIngestion:
             return sentinel
 
         wrapped = wire_audit_to_campaign_ingestion(mock_ingest, audit_logger)
-        result = asyncio.get_event_loop().run_until_complete(wrapped("task_12", "token"))
+        result = asyncio.run(wrapped("task_12", "token"))
 
         assert result is sentinel
         assert result["extra"] == "preserved"
