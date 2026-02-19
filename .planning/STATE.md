@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-19)
 
 **Core value:** The agent must negotiate influencer rates accurately using CPM-based logic and reliably communicate the outcome -- every agreed deal must result in a clear, actionable Slack notification to the team.
-**Current focus:** Phase 11 - CI/CD Pipeline
+**Current focus:** Phase 12 - Monitoring, Observability, and Live Verification
 
 ## Current Position
 
-Phase: 11 of 12 (CI/CD Pipeline)
-Plan: 0 of 1 in current phase
+Phase: 12 of 12 (Monitoring, Observability, and Live Verification)
+Plan: 0 of 3 in current phase
 Status: In Progress
-Last activity: 2026-02-19 -- Completed 10-02 (Docker Compose with named volume and credential path overrides)
+Last activity: 2026-02-19 -- Completed 11-01 (GitHub Actions CI workflow and branch protection)
 
-Progress: [==========================....] 88% (29/33 plans across all milestones)
+Progress: [============================..] 91% (30/33 plans across all milestones)
 
 ## Performance Metrics
 
@@ -30,7 +30,7 @@ Progress: [==========================....] 88% (29/33 plans across all milestone
 | Phase 8 | 2/2 | 10min | 5min |
 | Phase 9 | 2/2 | 8min | 4min |
 | Phase 10 | 2/2 | 3min | 1.5min |
-| Phase 11 | 0/1 | -- | -- |
+| Phase 11 | 1/1 | 20min | 20min |
 | Phase 12 | 0/3 | -- | -- |
 
 *Updated after each plan completion*
@@ -65,6 +65,9 @@ Recent decisions affecting current work:
 - [10-02]: Explicit AUDIT_DB_PATH override even though default resolves correctly (clarity over implicit CWD dependency)
 - [10-02]: SHEETS_SERVICE_ACCOUNT_PATH override required (default ~/.config path does not exist in container)
 - [10-02]: No user: directive in compose -- entrypoint handles privilege drop after volume chown
+- [11-01]: No hardcoded Python version in CI -- astral-sh/setup-uv reads .python-version automatically
+- [11-01]: ruff format applied to entire codebase (30 files) to pass CI format check from day one
+- [11-01]: Branch protection configured via GitHub Settings UI (most reliable for admin-level operations)
 
 ### Pending Todos
 
@@ -78,5 +81,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 10-02-PLAN.md (Docker Compose with named volume and credential path overrides)
+Stopped at: Completed 11-01-PLAN.md (GitHub Actions CI workflow and branch protection)
 Resume file: None

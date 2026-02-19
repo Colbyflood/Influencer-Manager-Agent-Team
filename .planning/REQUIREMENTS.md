@@ -25,7 +25,7 @@ Requirements for production readiness. Each maps to roadmap phases.
 
 - [x] **DEPLOY-01**: Agent runs in a multi-stage Docker container with non-root user and HEALTHCHECK directive
 - [x] **DEPLOY-02**: Agent persists SQLite database and credential files via Docker named volume
-- [ ] **DEPLOY-03**: GitHub Actions CI runs ruff lint, mypy typecheck, and pytest on every push
+- [x] **DEPLOY-03**: GitHub Actions CI runs ruff lint, mypy typecheck, and pytest on every push
 
 ### Configuration & Testing
 
@@ -72,7 +72,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | STATE-02 | Phase 9 | Complete |
 | DEPLOY-01 | Phase 10 | Complete |
 | DEPLOY-02 | Phase 10 | Complete |
-| DEPLOY-03 | Phase 11 | Pending |
+| DEPLOY-03 | Phase 11 | Complete |
 | OBS-03 | Phase 12 | Pending |
 | OBS-04 | Phase 12 | Pending |
 | OBS-05 | Phase 12 | Pending |

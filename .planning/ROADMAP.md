@@ -29,7 +29,7 @@ Full details: [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
 - [x] **Phase 8: Settings and Health Infrastructure** - Typed configuration, health endpoints, and startup credential validation
 - [x] **Phase 9: Persistent Negotiation State** - SQLite-backed state persistence with crash recovery
 - [x] **Phase 10: Docker Packaging and Deployment** - Multi-stage container with volume persistence (completed 2026-02-19)
-- [ ] **Phase 11: CI/CD Pipeline** - GitHub Actions automated lint, typecheck, and test on every push
+- [x] **Phase 11: CI/CD Pipeline** - GitHub Actions automated lint, typecheck, and test on every push (completed 2026-02-19)
 - [ ] **Phase 12: Monitoring, Observability, and Live Verification** - Prometheus metrics, Sentry errors, request tracing, live tests, and Gmail watch renewal
 
 ## Phase Details
@@ -89,7 +89,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 11-01-PLAN.md — GitHub Actions CI workflow (ruff, mypy, pytest) and branch protection
+- [x] 11-01-PLAN.md — GitHub Actions CI workflow (ruff, mypy, pytest) and branch protection
 
 ### Phase 12: Monitoring, Observability, and Live Verification
 **Goal**: Agent errors are tracked, performance is measurable, requests are traceable end-to-end, and real service connections are verified by automated tests
@@ -126,5 +126,5 @@ Phases execute in numeric order: 8 -> 9 -> 10 -> 11 -> 12
 | 8. Settings and Health Infrastructure | v1.1 | Complete    | 2026-02-19 | 2026-02-19 |
 | 9. Persistent Negotiation State | v1.1 | Complete    | 2026-02-19 | 2026-02-19 |
 | 10. Docker Packaging and Deployment | 2/2 | Complete    | 2026-02-19 | - |
-| 11. CI/CD Pipeline | v1.1 | 0/1 | Not started | - |
+| 11. CI/CD Pipeline | 1/1 | Complete   | 2026-02-19 | - |
 | 12. Monitoring, Observability, and Live Verification | v1.1 | 0/3 | Not started | - |
