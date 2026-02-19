@@ -78,11 +78,13 @@ Plans:
   2. Escalation triggers fire correctly for all configured rules: CPM over threshold, ambiguous intent, hostile tone, legal/contract language, and unusual deliverable requests
   3. When the influencer agrees to a deal, the team receives a Slack alert with the influencer name, agreed rate, platform, deliverables, CPM achieved, and next steps
   4. When a human responds directly in a negotiation email thread, the agent detects this and stops autonomous handling of that thread
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
-- [ ] 04-01: TBD
-- [ ] 04-02: TBD
+- [ ] 04-01-PLAN.md — Dependencies, models (EscalationPayload extension, AgreementPayload), SlackNotifier client, Block Kit builders, YAML trigger config
+- [ ] 04-02-PLAN.md — Escalation trigger engine with YAML config loading, deterministic + LLM-based triggers (TDD)
+- [ ] 04-03-PLAN.md — Human takeover: Gmail thread detection, thread state management, Slack slash commands (/claim, /resume)
+- [ ] 04-04-PLAN.md — SlackDispatcher integration: pre-check gate, escalation/agreement dispatch, negotiation loop wiring
 
 ### Phase 5: Campaign Ingestion and Operational Readiness
 **Goal**: Campaign data flows in automatically from ClickUp, every negotiation action is logged with a queryable audit trail, and the system is ready for production use
@@ -108,5 +110,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 1. Core Domain and Pricing Engine | 1/3 | Complete    | 2026-02-19 |
 | 2. Email and Data Integration | 0/3 | Complete    | 2026-02-19 |
 | 3. LLM Negotiation Pipeline | 1/4 | In Progress | - |
-| 4. Slack and Human-in-the-Loop | 0/0 | Not started | - |
+| 4. Slack and Human-in-the-Loop | 0/4 | Not started | - |
 | 5. Campaign Ingestion and Operational Readiness | 0/0 | Not started | - |
