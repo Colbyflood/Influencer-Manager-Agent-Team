@@ -9,9 +9,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Email Integration
 
-- [ ] **EMAIL-01**: Agent can send emails via Gmail API on behalf of the team
+- [x] **EMAIL-01**: Agent can send emails via Gmail API on behalf of the team
 - [ ] **EMAIL-02**: Agent can receive and process inbound emails via Gmail API with push notifications
-- [ ] **EMAIL-03**: Agent maintains email thread context so influencers see a coherent conversation history
+- [x] **EMAIL-03**: Agent maintains email thread context so influencers see a coherent conversation history
 - [ ] **EMAIL-04**: Agent can parse influencer reply content from email threads (handle MIME, inline replies, forwarding)
 
 ### Negotiation Logic
@@ -34,7 +34,7 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Data & Operations
 
 - [ ] **DATA-01**: Agent accepts campaign data from ClickUp form submissions to understand the specific deliverables, goals, channels needed, and other key details to guide decision making for negotiations
-- [ ] **DATA-02**: Agent connects to a Google Sheet to read influencer outreach data (name, contact info, platform, metrics, pre-calculated pay range)
+- [x] **DATA-02**: Agent connects to a Google Sheet to read influencer outreach data (name, contact info, platform, metrics, pre-calculated pay range)
 - [ ] **DATA-03**: Agent logs every sent/received email with timestamps, negotiation state, and rates used
 - [ ] **DATA-04**: Agent maintains queryable conversation audit trail by influencer, campaign, or date range
 
@@ -89,9 +89,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| EMAIL-01 | Phase 2 | Pending |
+| EMAIL-01 | Phase 2 | Complete |
 | EMAIL-02 | Phase 2 | Pending |
-| EMAIL-03 | Phase 2 | Pending |
+| EMAIL-03 | Phase 2 | Complete |
 | EMAIL-04 | Phase 2 | Pending |
 | NEG-01 | Phase 2 | Pending |
 | NEG-02 | Phase 1 | Complete |
@@ -105,7 +105,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | HUMAN-03 | Phase 4 | Pending |
 | HUMAN-04 | Phase 4 | Pending |
 | DATA-01 | Phase 5 | Pending |
-| DATA-02 | Phase 2 | Pending |
+| DATA-02 | Phase 2 | Complete |
 | DATA-03 | Phase 5 | Pending |
 | DATA-04 | Phase 5 | Pending |
 | KB-01 | Phase 3 | Pending |
