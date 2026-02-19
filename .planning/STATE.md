@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core value:** The agent must negotiate influencer rates accurately using CPM-based logic and reliably communicate the outcome -- every agreed deal must result in a clear, actionable Slack notification to the team.
-**Current focus:** Phase 4: Slack and Human-in-the-Loop -- Complete
+**Current focus:** Phase 5: Campaign Ingestion and Operational Readiness -- In Progress
 
 ## Current Position
 
-Phase: 4 of 5 (Slack and Human-in-the-Loop)
-Plan: 4 of 4 in current phase (04-04 complete)
-Status: Phase Complete
-Last activity: 2026-02-19 -- Completed 04-04-PLAN.md (Slack Dispatch Pipeline)
+Phase: 5 of 5 (Campaign Ingestion and Operational Readiness)
+Plan: 1 of 4 in current phase (05-01 complete)
+Status: In Progress
+Last activity: 2026-02-19 -- Completed 05-01-PLAN.md (Foundation Models)
 
-Progress: [##########] 100%
+Progress: [########--] 83%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 14
+- Total plans completed: 15
 - Average duration: 4min
-- Total execution time: 0.85 hours
+- Total execution time: 0.93 hours
 
 **By Phase:**
 
@@ -31,9 +31,10 @@ Progress: [##########] 100%
 | 2 - Email & Data | 3/3 | 10min | 3min |
 | 3 - LLM Pipeline | 4/4 | 16min | 4min |
 | 4 - Slack & HITL | 4/4 | 17min | 4min |
+| 5 - Campaign Ingestion | 1/4 | 5min | 5min |
 
 **Recent Trend:**
-- Last 5 plans: 03-04 (4min), 04-01 (4min), 04-02 (4min), 04-03 (4min), 04-04 (5min)
+- Last 5 plans: 04-01 (4min), 04-02 (4min), 04-03 (4min), 04-04 (5min), 05-01 (5min)
 - Trend: Consistent
 
 *Updated after each plan completion*
@@ -94,6 +95,11 @@ Recent decisions affecting current work:
 - [04-04]: Separate variable names (esc_payload, agr_payload) in handle_negotiation_result to avoid mypy assignment type conflicts.
 - [04-04]: _suggest_actions uses keyword matching on reason string for action suggestions -- extensible without code changes.
 - [04-04]: Pre-check gate ordering: human takeover (cheapest) -> human reply detection (1 API call) -> trigger evaluation (potentially multiple API calls).
+- [05-01]: Used Decimal("0") start value in sum() for running_average_cpm to satisfy mypy strict return type.
+- [05-01]: Exclusive comparisons for engagement tiers: >5% high, >3% moderate (matches project pattern from 03-02).
+- [05-01]: Budget premium distributed across remaining influencers using savings * agreed_count / remaining_count.
+- [05-01]: Module-level _notifier with configure_error_notifier() avoids circular import with SlackNotifier.
+- [05-01]: SQLite audit store uses datetime.UTC (Python 3.12+) per ruff UP017.
 
 ### Pending Todos
 
@@ -108,5 +114,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 04-04-PLAN.md (Slack Dispatch Pipeline) -- Phase 4 complete
-Resume file: .planning/phases/04-slack-and-human-in-the-loop/04-04-SUMMARY.md
+Stopped at: Completed 05-01-PLAN.md (Foundation Models) -- Phase 5 in progress
+Resume file: .planning/phases/05-campaign-ingestion-and-operational-readiness/05-01-SUMMARY.md
