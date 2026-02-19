@@ -66,6 +66,9 @@ Recent decisions affecting current work:
 - [03-01]: Used anthropic 0.82.0 (latest available) exceeding plan minimum of 0.81.0.
 - [03-01]: Knowledge base files stored at project root knowledge_base/ for non-technical editor access (KB-03).
 - [03-01]: KB loader returns general-only content when platform file is missing (graceful degradation).
+- [03-02]: Added null-safety guard on parsed_output to satisfy mypy strict (RuntimeError if None).
+- [03-02]: Used exclusive comparison (< threshold) so confidence exactly at 0.70 is NOT overridden.
+- [03-02]: max_tokens set to 1024 for intent classification (sufficient for structured output schema).
 - [03-03]: Used type: ignore[union-attr] for Anthropic SDK content block union type in compose_counter_email.
 - [03-03]: Validation gate is 100% deterministic (regex + string matching only) -- no LLM validates LLM output.
 - [03-03]: Missing deliverables produce warnings (not errors) to avoid blocking emails over minor phrasing differences.
