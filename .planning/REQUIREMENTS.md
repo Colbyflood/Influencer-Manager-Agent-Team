@@ -9,8 +9,8 @@ Requirements for production readiness. Each maps to roadmap phases.
 
 ### State Persistence
 
-- [ ] **STATE-01**: Agent persists negotiation state to SQLite on every state transition so no deals are lost on restart
-- [ ] **STATE-02**: Agent recovers non-terminal negotiations from database on startup so in-progress deals resume automatically
+- [x] **STATE-01**: Agent persists negotiation state to SQLite on every state transition so no deals are lost on restart
+- [x] **STATE-02**: Agent recovers non-terminal negotiations from database on startup so in-progress deals resume automatically
 - [x] **STATE-03**: Agent validates credentials (Gmail token, Sheets SA, Slack token) at startup and fails fast with clear errors
 
 ### Health & Observability
@@ -68,8 +68,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | OBS-01 | Phase 8 | Complete |
 | OBS-02 | Phase 8 | Complete |
 | STATE-03 | Phase 8 | Complete |
-| STATE-01 | Phase 9 | Pending |
-| STATE-02 | Phase 9 | Pending |
+| STATE-01 | Phase 9 | Complete |
+| STATE-02 | Phase 9 | Complete |
 | DEPLOY-01 | Phase 10 | Pending |
 | DEPLOY-02 | Phase 10 | Pending |
 | DEPLOY-03 | Phase 11 | Pending |
