@@ -132,7 +132,11 @@ Plans:
   3. `InfluencerRow` includes `engagement_rate` field and `CampaignCPMTracker.get_flexibility()` receives real engagement data for premium calculations
   4. Orphaned wiring functions (`create_audited_email_receive`, `get_pay_range` in pipeline) are either connected or explicitly removed
   5. All 681+ tests pass with no regressions
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 07-01-PLAN.md — Slack null-guard in ingestion, engagement_rate field on InfluencerRow, SheetsClient wiring, orphan decisions
+- [ ] 07-02-PLAN.md — Real CPM in pre_check gate, inbound email audit logging via log_email_received
 
 ## Progress
 
@@ -147,4 +151,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 | 4. Slack and Human-in-the-Loop | 4/4 | Complete    | 2026-02-19 |
 | 5. Campaign Ingestion and Operational Readiness | 4/4 | Complete    | 2026-02-19 |
 | 6. Runtime Orchestration Wiring | 3/3 | Complete    | 2026-02-19 |
-| 7. Integration Hardening | 0/? | Not started | - |
+| 7. Integration Hardening | 0/2 | Not started | - |
