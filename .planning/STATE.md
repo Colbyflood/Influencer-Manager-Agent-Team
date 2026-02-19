@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-19)
 
 **Core value:** The agent must negotiate influencer rates accurately using CPM-based logic and reliably communicate the outcome -- every agreed deal must result in a clear, actionable Slack notification to the team.
-**Current focus:** Phase 10 - Docker Packaging and Deployment
+**Current focus:** Phase 11 - CI/CD Pipeline
 
 ## Current Position
 
-Phase: 10 of 12 (Docker Packaging and Deployment)
-Plan: 1 of 2 in current phase -- COMPLETE
+Phase: 11 of 12 (CI/CD Pipeline)
+Plan: 0 of 1 in current phase
 Status: In Progress
-Last activity: 2026-02-19 -- Completed 10-01 (Docker image build: Dockerfile, .dockerignore, entrypoint.sh)
+Last activity: 2026-02-19 -- Completed 10-02 (Docker Compose with named volume and credential path overrides)
 
-Progress: [=========================.....] 85% (28/33 plans across all milestones)
+Progress: [==========================....] 88% (29/33 plans across all milestones)
 
 ## Performance Metrics
 
@@ -29,7 +29,7 @@ Progress: [=========================.....] 85% (28/33 plans across all milestone
 |-------|-------|-------|----------|
 | Phase 8 | 2/2 | 10min | 5min |
 | Phase 9 | 2/2 | 8min | 4min |
-| Phase 10 | 1/2 | 1min | 1min |
+| Phase 10 | 2/2 | 3min | 1.5min |
 | Phase 11 | 0/1 | -- | -- |
 | Phase 12 | 0/3 | -- | -- |
 
@@ -61,6 +61,10 @@ Recent decisions affecting current work:
 - [10-01]: setpriv over gosu for privilege drop (already in Debian slim, no extra install)
 - [10-01]: HEALTHCHECK kills PID 1 on failure for auto-restart with docker-compose restart policy
 - [10-01]: No USER directive in Dockerfile -- entrypoint runs as root to fix volumes, then drops privileges
+- [10-02]: Single named volume agent_data for both SQLite DB and credentials (simpler backup and management)
+- [10-02]: Explicit AUDIT_DB_PATH override even though default resolves correctly (clarity over implicit CWD dependency)
+- [10-02]: SHEETS_SERVICE_ACCOUNT_PATH override required (default ~/.config path does not exist in container)
+- [10-02]: No user: directive in compose -- entrypoint handles privilege drop after volume chown
 
 ### Pending Todos
 
@@ -74,5 +78,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 10-01-PLAN.md (Docker image build: Dockerfile, .dockerignore, entrypoint.sh)
+Stopped at: Completed 10-02-PLAN.md (Docker Compose with named volume and credential path overrides)
 Resume file: None

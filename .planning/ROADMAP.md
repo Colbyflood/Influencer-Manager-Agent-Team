@@ -28,7 +28,7 @@ Full details: [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
 
 - [x] **Phase 8: Settings and Health Infrastructure** - Typed configuration, health endpoints, and startup credential validation
 - [x] **Phase 9: Persistent Negotiation State** - SQLite-backed state persistence with crash recovery
-- [ ] **Phase 10: Docker Packaging and Deployment** - Multi-stage container with volume persistence
+- [x] **Phase 10: Docker Packaging and Deployment** - Multi-stage container with volume persistence (completed 2026-02-19)
 - [ ] **Phase 11: CI/CD Pipeline** - GitHub Actions automated lint, typecheck, and test on every push
 - [ ] **Phase 12: Monitoring, Observability, and Live Verification** - Prometheus metrics, Sentry errors, request tracing, live tests, and Gmail watch renewal
 
@@ -125,6 +125,6 @@ Phases execute in numeric order: 8 -> 9 -> 10 -> 11 -> 12
 | 7. Integration Hardening | v1.0 | 2/2 | Complete | 2026-02-19 |
 | 8. Settings and Health Infrastructure | v1.1 | Complete    | 2026-02-19 | 2026-02-19 |
 | 9. Persistent Negotiation State | v1.1 | Complete    | 2026-02-19 | 2026-02-19 |
-| 10. Docker Packaging and Deployment | 1/2 | In Progress|  | - |
+| 10. Docker Packaging and Deployment | 2/2 | Complete   | 2026-02-19 | - |
 | 11. CI/CD Pipeline | v1.1 | 0/1 | Not started | - |
 | 12. Monitoring, Observability, and Live Verification | v1.1 | 0/3 | Not started | - |
