@@ -45,11 +45,12 @@ Plans:
   2. When an influencer replies to a negotiation email, the agent receives a notification and can read the reply content, correctly parsing it from MIME/inline/forwarded formats
   3. The agent reads an influencer row from the Google Sheet and retrieves the correct pre-calculated pay range based on their metrics
   4. Email thread history is maintained so influencers see a coherent, continuous conversation
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 02-01: TBD
-- [ ] 02-02: TBD
+- [ ] 02-01-PLAN.md — Dependencies, shared auth module, email and sheets Pydantic models
+- [ ] 02-02-PLAN.md — Gmail send/receive, threading, Pub/Sub watch, MIME parsing
+- [ ] 02-03-PLAN.md — Google Sheets client with influencer lookup and PayRange bridge
 
 ### Phase 3: LLM Negotiation Pipeline
 **Goal**: The agent can understand influencer replies, compose intelligent counter-offers guided by a knowledge base, and execute the core negotiation loop end-to-end
@@ -103,7 +104,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Core Domain and Pricing Engine | 1/3 | Complete    | 2026-02-19 |
-| 2. Email and Data Integration | 0/0 | Not started | - |
+| 2. Email and Data Integration | 0/3 | Planned | - |
 | 3. LLM Negotiation Pipeline | 0/0 | Not started | - |
 | 4. Slack and Human-in-the-Loop | 0/0 | Not started | - |
 | 5. Campaign Ingestion and Operational Readiness | 0/0 | Not started | - |
