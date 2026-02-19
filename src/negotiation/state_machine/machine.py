@@ -78,6 +78,4 @@ class NegotiationStateMachine:
         """
         if self.is_terminal:
             return []
-        return sorted(
-            event for state, event in TRANSITIONS if state == self._state
-        )
+        return sorted(event for state, event in TRANSITIONS if state == self._state)

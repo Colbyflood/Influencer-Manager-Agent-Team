@@ -1,5 +1,7 @@
 """Tests for the negotiation state machine transition map."""
 
+from typing import ClassVar
+
 import pytest
 
 from negotiation.domain.types import NegotiationState
@@ -13,7 +15,7 @@ from negotiation.state_machine.transitions import (
 class TestNegotiationEvent:
     """Tests for the NegotiationEvent enum."""
 
-    EXPECTED_MEMBERS = {
+    EXPECTED_MEMBERS: ClassVar[dict[str, str]] = {
         "SEND_OFFER": "send_offer",
         "RECEIVE_REPLY": "receive_reply",
         "TIMEOUT": "timeout",

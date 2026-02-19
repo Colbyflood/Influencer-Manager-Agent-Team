@@ -36,9 +36,7 @@ ALL_EVENTS: list[str] = [e.value for e in NegotiationEvent]
 # Build the set of valid (state, event) pairs, then for each non-terminal
 # state compute which events are NOT valid.
 # ---------------------------------------------------------------------------
-_VALID_PAIRS: set[tuple[NegotiationState, str]] = {
-    (s, e) for s, e, _ in VALID_TRANSITIONS
-}
+_VALID_PAIRS: set[tuple[NegotiationState, str]] = {(s, e) for s, e, _ in VALID_TRANSITIONS}
 
 TERMINAL_STATES = {NegotiationState.AGREED, NegotiationState.REJECTED}
 
