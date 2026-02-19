@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core value:** The agent must negotiate influencer rates accurately using CPM-based logic and reliably communicate the outcome -- every agreed deal must result in a clear, actionable Slack notification to the team.
-**Current focus:** Phase 3 COMPLETE -- Ready for Phase 4: Slack Escalation
+**Current focus:** Phase 4: Slack and Human-in-the-Loop -- Plan 1 complete
 
 ## Current Position
 
-Phase: 3 of 5 (LLM Negotiation Pipeline) -- COMPLETE
-Plan: 4 of 4 in current phase (03-01, 03-02, 03-03, 03-04 complete)
-Status: Phase Complete
-Last activity: 2026-02-19 -- Completed 03-04-PLAN.md (End-to-End Negotiation Loop)
+Phase: 4 of 5 (Slack and Human-in-the-Loop)
+Plan: 1 of 4 in current phase (04-01 complete)
+Status: In Progress
+Last activity: 2026-02-19 -- Completed 04-01-PLAN.md (Slack Foundation)
 
-Progress: [########░░] 80%
+Progress: [########░░] 85%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 10
+- Total plans completed: 11
 - Average duration: 4min
-- Total execution time: 0.57 hours
+- Total execution time: 0.64 hours
 
 **By Phase:**
 
@@ -30,9 +30,10 @@ Progress: [########░░] 80%
 | 1 - Core Domain | 3/3 | 11min | 4min |
 | 2 - Email & Data | 3/3 | 10min | 3min |
 | 3 - LLM Pipeline | 4/4 | 16min | 4min |
+| 4 - Slack & HITL | 1/4 | 4min | 4min |
 
 **Recent Trend:**
-- Last 5 plans: 02-02 (4min), 03-01 (6min), 03-02 (3min), 03-03 (3min), 03-04 (4min)
+- Last 5 plans: 03-01 (6min), 03-02 (3min), 03-03 (3min), 03-04 (4min), 04-01 (4min)
 - Trend: Consistent
 
 *Updated after each plan completion*
@@ -77,6 +78,9 @@ Recent decisions affecting current work:
 - [03-04]: Round cap check is step 1 (before any LLM calls) to minimize cost on exhausted negotiations.
 - [03-04]: State machine receive_reply triggered before pricing evaluation to correctly track that input was received.
 - [03-04]: Action-dict pattern: return {'action': str, ...context} for branching on escalate/send/accept/reject.
+- [04-01]: Block Kit builders are pure functions (blocks.py) separate from posting logic (client.py) for testability.
+- [04-01]: EscalationPayload Phase 4 fields use empty-string defaults for backward compatibility with Phase 3.
+- [04-01]: SlackNotifier returns message timestamp (ts) for future thread reference.
 
 ### Pending Todos
 
@@ -91,5 +95,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 03-04-PLAN.md (End-to-End Negotiation Loop) -- Phase 3 COMPLETE
-Resume file: .planning/phases/03-llm-negotiation-pipeline/03-04-SUMMARY.md
+Stopped at: Completed 04-01-PLAN.md (Slack Foundation)
+Resume file: .planning/phases/04-slack-and-human-in-the-loop/04-01-SUMMARY.md
