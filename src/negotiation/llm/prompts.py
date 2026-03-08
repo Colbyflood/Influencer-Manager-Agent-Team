@@ -56,6 +56,8 @@ DELIVERABLES: {deliverables_summary}
 NEGOTIATION LEVER:
 {lever_instructions}
 
+{counterparty_context}
+
 CONVERSATION HISTORY:
 {negotiation_history}
 

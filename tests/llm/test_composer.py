@@ -130,6 +130,45 @@ class TestComposeCounterEmail:
         call_kwargs = mock_client.messages.create.call_args
         assert call_kwargs.kwargs["model"] == "claude-haiku-4-5-20250929"
 
+    def test_compose_counter_email_with_counterparty_context(self):
+        """Counterparty context is included in the user prompt sent to the API."""
+        mock_client = _make_mock_client()
+        compose_counter_email(
+            influencer_name="Sarah",
+            their_rate="2000.00",
+            our_rate="1500.00",
+            deliverables_summary="2x Instagram Reels",
+            platform="instagram",
+            negotiation_stage="initial_counter",
+            knowledge_base_content="KB content.",
+            negotiation_history="No prior.",
+            client=mock_client,
+            counterparty_context="COUNTERPARTY CONTEXT: test talent manager tone",
+        )
+        call_kwargs = mock_client.messages.create.call_args
+        messages = call_kwargs.kwargs["messages"]
+        user_content = messages[0]["content"]
+        assert "COUNTERPARTY CONTEXT: test talent manager tone" in user_content
+
+    def test_counterparty_context_default_fallback(self):
+        """Empty counterparty_context defaults to descriptive fallback."""
+        mock_client = _make_mock_client()
+        compose_counter_email(
+            influencer_name="Sarah",
+            their_rate="2000.00",
+            our_rate="1500.00",
+            deliverables_summary="2x Instagram Reels",
+            platform="instagram",
+            negotiation_stage="initial_counter",
+            knowledge_base_content="KB content.",
+            negotiation_history="No prior.",
+            client=mock_client,
+        )
+        call_kwargs = mock_client.messages.create.call_args
+        messages = call_kwargs.kwargs["messages"]
+        user_content = messages[0]["content"]
+        assert "No specific counterparty context." in user_content
+
     def test_cache_control_set_on_system_content(self):
         """System content block includes cache_control for prompt caching."""
         mock_client = _make_mock_client()

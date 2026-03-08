@@ -24,6 +24,7 @@ def compose_counter_email(
     client: Anthropic,
     model: str = COMPOSE_MODEL,
     lever_instructions: str = "",
+    counterparty_context: str = "",
 ) -> ComposedEmail:
     """Compose a counter-offer email using the Claude API.
 
@@ -58,6 +59,7 @@ def compose_counter_email(
         our_rate=our_rate,
         deliverables_summary=deliverables_summary,
         lever_instructions=lever_instructions or "No specific lever -- respond naturally to their proposal.",
+        counterparty_context=counterparty_context or "No specific counterparty context.",
         negotiation_history=negotiation_history,
     )
 

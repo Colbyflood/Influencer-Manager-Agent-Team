@@ -174,6 +174,13 @@ def process_influencer_reply(
         or str(negotiation_context["deliverables_summary"])
     )
 
+    # Step 8.7 - Generate counterparty tone guidance
+    from negotiation.counterparty.tone import get_tone_guidance
+
+    counterparty_type = str(negotiation_context.get("counterparty_type", "direct_influencer"))
+    agency_name = negotiation_context.get("agency_name")
+    tone_guidance = get_tone_guidance(counterparty_type, agency_name)
+
     # Step 9 - Compose counter-offer email
     negotiation_stage = (
         "counter" if classification.intent == NegotiationIntent.COUNTER else "question_response"
@@ -189,6 +196,7 @@ def process_influencer_reply(
         negotiation_history=str(negotiation_context.get("history", "")),
         client=client,
         lever_instructions=lever_result.lever_instructions,
+        counterparty_context=tone_guidance,
     )
 
     # Step 10 - Validate before sending
