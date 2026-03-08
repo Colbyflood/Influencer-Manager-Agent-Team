@@ -42,7 +42,7 @@ Full details: [milestones/v1.1-ROADMAP.md](milestones/v1.1-ROADMAP.md)
 
 - [x] **Phase 13: Campaign Data Model Expansion** - Ingest and parse all 42 ClickUp form fields into a rich campaign model with goals, deliverable scenarios, usage rights, budget constraints, and product leverage (completed 2026-03-08)
 - [x] **Phase 14: Knowledge Base Rewrite** - Replace placeholder knowledge base with real AGM negotiation playbook, strategy docs, and categorized email examples (completed 2026-03-08)
-- [ ] **Phase 15: Negotiation Levers and Strategy** - Implement the full negotiation lever stack: deliverable tiers, usage rights trading, product offers, CPM sharing, cost bounds enforcement, and graceful exits
+- [x] **Phase 15: Negotiation Levers and Strategy** - Implement the full negotiation lever stack: deliverable tiers, usage rights trading, product offers, CPM sharing, cost bounds enforcement, and graceful exits (completed 2026-03-08)
 - [ ] **Phase 16: Counterparty Intelligence** - Detect influencer vs talent manager/agency from email signals and adapt negotiation tone and tracking accordingly
 - [ ] **Phase 17: Email Composition and Style** - Compose emails matching AGM professional style with structured SOW counter-offers, payment terms, and stage-aware example selection
 
@@ -134,6 +134,6 @@ Phases execute in numeric order: 13 and 14 (14 has no dependency on 13), then 15
 | 12. Monitoring, Observability, and Live Verification | v1.1 | 3/3 | Complete | 2026-02-19 |
 | 13. Campaign Data Model Expansion | 3/3 | Complete    | 2026-03-08 | - |
 | 14. Knowledge Base Rewrite | 2/2 | Complete    | 2026-03-08 | - |
-| 15. Negotiation Levers and Strategy | 2/3 | In Progress|  | - |
+| 15. Negotiation Levers and Strategy | 3/3 | Complete   | 2026-03-08 | - |
 | 16. Counterparty Intelligence | v1.2 | 0/? | Not started | - |
 | 17. Email Composition and Style | v1.2 | 0/? | Not started | - |

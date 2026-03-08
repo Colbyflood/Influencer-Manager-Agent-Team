@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-08)
 ## Current Position
 
 Phase: 15 of 17 (Negotiation Levers and Strategy)
-Plan: 2 of 3 in current phase
-Status: In Progress
-Last activity: 2026-03-08 — Completed 15-02-PLAN.md
+Plan: 3 of 3 in current phase
+Status: Phase Complete
+Last activity: 2026-03-08 — Completed 15-03-PLAN.md
 
-Progress: [############################░░] 94% (33/33 plans v1.0+v1.1, 8/4 v1.2)
+Progress: [#############################░] 97% (33/33 plans v1.0+v1.1, 9/4 v1.2)
 
 ## Performance Metrics
 
@@ -54,6 +54,9 @@ All decisions logged in PROJECT.md Key Decisions table.
 - [15-02] lever_instructions parameter placed after model param in composer for keyword-only backward compat
 - [15-02] Test base_context updated with DeliverableScenarios to prevent graceful_exit on default lever context
 - [15-02] Lever ceiling test isolates lever escalation from pricing escalation using rate within CPM bounds
+- [15-03] Campaign sub-models passed as direct references in context dict for lever engine consumption
+- [15-03] Lever state defaults represent opening position: scenario=1, usage_tier=target, all booleans False
+- [15-03] build_opening_context replaces calculate_initial_offer for lever-driven initial outreach
 
 ### Pending Todos
 
@@ -66,5 +69,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-08
-Stopped at: Completed 15-02-PLAN.md (Lever Engine Integration)
+Stopped at: Completed 15-03-PLAN.md (Campaign Context Wiring) - Phase 15 complete
 Resume file: None
