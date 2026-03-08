@@ -52,3 +52,27 @@
 
 ---
 
+
+## v1.2 Real-World Negotiation Intelligence (Shipped: 2026-03-08)
+
+**Phases completed:** 5 phases, 13 plans
+**Tests:** 832+ passing | **Total LOC:** ~23,872 Python
+**Timeline:** 1 day (2026-03-08) | **Requirements:** 26/26 satisfied
+
+**Key accomplishments:**
+- Expanded campaign data model from 8 to 42 ClickUp form fields with 11 Pydantic sub-models (goals, deliverable scenarios, usage rights, budget constraints, product leverage, requirements)
+- Per-campaign CPM Target + Leniency replaces hardcoded $20-$30 range with dynamic pricing boundaries
+- AGM negotiation playbook with 9 categorized email examples and stage-aware example selection via YAML frontmatter
+- Full negotiation lever stack: 8-step deterministic priority chain (cost bounds > deliverable tiers > usage rights > product > syndication > CPM sharing > graceful exit)
+- Counterparty intelligence: signal-based classifier detects influencer vs talent manager/agency, per-thread contact tracking, tone adaptation (transactional vs relationship-driven)
+- AGM-style email composition with SOW formatter (strikethrough rate adjustments), agreement confirmation emails with payment terms and next steps
+
+**Archive:** [v1.2-ROADMAP.md](milestones/v1.2-ROADMAP.md) | [v1.2-REQUIREMENTS.md](milestones/v1.2-REQUIREMENTS.md)
+
+**Known tech debt (v1.2 acknowledged):**
+- `mailparser_reply` dependency missing from environment (pre-existing, causes import errors in orchestration/email tests)
+- LLM output quality for tone adaptation and AGM style not yet validated with real email threads
+- Contact tracker is in-memory (not persisted to SQLite like negotiation state)
+
+---
+

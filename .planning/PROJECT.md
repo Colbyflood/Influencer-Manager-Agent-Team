@@ -2,7 +2,7 @@
 
 ## What This Is
 
-An AI-powered agent that handles influencer rate negotiations via email on behalf of marketing teams. The agent picks up email threads where influencers have already responded to outreach, negotiates deliverable rates using CPM-based pricing logic ($20-$30 CPM range), and alerts the team via Slack when agreements are reached or escalation is needed. It operates in hybrid mode -- autonomously handling routine negotiation while escalating edge cases to humans. The system is production-ready with persistent state, Docker deployment, CI/CD, and full observability.
+An AI-powered agent that handles influencer rate negotiations via email on behalf of marketing teams. The agent picks up email threads where influencers have already responded to outreach, negotiates deliverable rates using CPM-based pricing with per-campaign targets and leniency, and alerts the team via Slack when agreements are reached or escalation is needed. It operates in hybrid mode -- autonomously handling routine negotiation while escalating edge cases to humans. The system uses a full negotiation lever stack (deliverable tiers, usage rights, product offers, CPM sharing), detects counterparty type (influencer vs talent manager), and composes AGM-style emails with structured SOW counter-offers. Production-ready with persistent state, Docker deployment, CI/CD, and full observability.
 
 ## Core Value
 
@@ -10,22 +10,26 @@ The agent must negotiate influencer rates accurately using CPM-based logic and r
 
 ## Current State
 
-**Shipped:** v1.1 Production Readiness (2026-02-19)
-**Codebase:** ~21,721 LOC Python (source + tests)
-**Tests:** 731 passing + 4 live integration tests
+**Shipped:** v1.2 Real-World Negotiation Intelligence (2026-03-08)
+**Codebase:** ~23,872 LOC Python (source + tests)
+**Tests:** 832+ passing + 4 live integration tests
 **Tech stack:** Python 3.12+, FastAPI, Anthropic SDK, Gmail API, Google Sheets API, Slack Bolt, SQLite, Pydantic v2, Docker, GitHub Actions, Prometheus, Sentry, structlog
 
 The system can:
 1. Receive inbound emails via Gmail Pub/Sub and run the full negotiation pipeline
-2. Ingest campaigns from ClickUp and start negotiations for found influencers
-3. Classify intent and compose counter-offers using LLM with knowledge base guidance
-4. Escalate edge cases to Slack with full context (configurable triggers)
-5. Detect agreement and notify the team with actionable alerts
-6. Support human takeover of any thread
-7. Log all actions to a queryable SQLite audit trail (CLI + Slack)
-8. Persist negotiation state to SQLite -- survives restarts with zero data loss
-9. Deploy via `docker compose up` with health checks and auto-restart
-10. Report metrics to Prometheus, errors to Sentry, with request ID tracing
+2. Ingest campaigns from ClickUp with all 42 form fields (goals, deliverables, usage rights, budget, product leverage)
+3. Classify intent and compose AGM-style counter-offers with structured SOW blocks and strikethrough rate adjustments
+4. Negotiate using 8-step lever stack: deliverable tiers, usage rights, product offers, CPM sharing, graceful exits
+5. Detect counterparty type (influencer vs talent manager/agency) and adapt tone accordingly
+6. Track multiple contacts per thread (manager + assistant) without losing negotiation state
+7. Compose agreement confirmation emails with payment terms and next steps
+8. Escalate edge cases to Slack with full context (configurable triggers)
+9. Support human takeover of any thread
+10. Use per-campaign CPM Target + Leniency for dynamic pricing boundaries
+11. Log all actions to a queryable SQLite audit trail (CLI + Slack)
+12. Persist negotiation state to SQLite -- survives restarts with zero data loss
+13. Deploy via `docker compose up` with health checks and auto-restart
+14. Report metrics to Prometheus, errors to Sentry, with request ID tracing
 
 ## Requirements
 
@@ -67,21 +71,36 @@ The system can:
 - ✓ DEPLOY-03: GitHub Actions CI runs ruff lint, mypy typecheck, and pytest on every push -- v1.1
 - ✓ CONFIG-02: Agent includes @pytest.mark.live integration tests that verify real Gmail, Sheets, and Slack connections -- v1.1
 - ✓ CONFIG-03: Agent persists Gmail watch expiration timestamp and renews relative to actual expiry, not process uptime -- v1.1
+- ✓ CAMP-01: Agent ingests all 42 ClickUp form fields including background, goals, deliverables, budget, and campaign requirements -- v1.2
+- ✓ CAMP-02: Agent parses campaign goals and uses them to anchor negotiation approach -- v1.2
+- ✓ CAMP-03: Agent parses deliverable scenarios (3 tiers) as negotiation fallback positions -- v1.2
+- ✓ CAMP-04: Agent parses usage rights targets and minimums with duration tiers -- v1.2
+- ✓ CAMP-05: Agent parses budget constraints including per-influencer cost floor and ceiling -- v1.2
+- ✓ CAMP-06: Agent parses product leverage fields for negotiation incentive -- v1.2
+- ✓ CAMP-07: Agent parses campaign requirements (exclusivity, approval, dates) -- v1.2
+- ✓ CAMP-08: Agent uses CPM Target and Leniency instead of fixed $20-$30 range -- v1.2
+- ✓ NEG-08: Agent opens with more deliverables and lower rate, creating concession room -- v1.2
+- ✓ NEG-09: Agent trades deliverable tiers downward when rate exceeds budget -- v1.2
+- ✓ NEG-10: Agent negotiates usage rights duration downward as cost-reduction lever -- v1.2
+- ✓ NEG-11: Agent offers product/upgrade as additional value at cash ceiling -- v1.2
+- ✓ NEG-12: Agent enforces cost floor and escalates when rate exceeds approval ceiling -- v1.2
+- ✓ NEG-13: Agent selectively shares CPM target to justify budget constraints -- v1.2
+- ✓ NEG-14: Agent proposes content syndication as added value -- v1.2
+- ✓ NEG-15: Agent initiates polite exit preserving relationship when deal doesn't work -- v1.2
+- ✓ KB-04: Knowledge base includes AGM negotiation playbook with levers and strategy -- v1.2
+- ✓ KB-05: Knowledge base includes 9 real email examples covering key scenarios -- v1.2
+- ✓ KB-06: Agent selects relevant examples based on negotiation stage -- v1.2
+- ✓ CPI-01: Agent detects influencer vs talent manager/agency from email signals -- v1.2
+- ✓ CPI-02: Agent tracks agency name and multiple contacts per thread -- v1.2
+- ✓ CPI-03: Agent adjusts tone for talent managers vs direct influencers -- v1.2
+- ✓ CPI-04: Agent handles multi-person threads without losing context -- v1.2
+- ✓ EMAIL-05: Agent composes emails with AGM partnership-first style -- v1.2
+- ✓ EMAIL-06: Agent formats counter-offers with SOW structure and strikethrough rates -- v1.2
+- ✓ EMAIL-07: Agent includes payment terms and next steps in agreement emails -- v1.2
 
 ### Active
 
-**Current Milestone: v1.2 Real-World Negotiation Intelligence**
-
-**Goal:** Align the agent with real-world campaign data, negotiation strategy, and counterparty awareness so it can handle actual AGM negotiations using the full ClickUp form fields and proven tactics.
-
-**Target features:**
-- Expanded campaign data model (42 form fields vs current 8)
-- Real negotiation levers: deliverable scenarios, usage rights tiers, product leverage, per-influencer cost bounds, CPM target + leniency
-- Knowledge base rewrite with real strategy docs and email examples
-- Email composition matching real AGM negotiation style
-- Counterparty detection (influencer vs talent manager/agency)
-- Agency relationship tracking with multi-contact threads
-- Strategy adaptation based on counterparty type
+(No active milestone -- all v1.2 requirements shipped)
 
 ### Out of Scope
 
@@ -109,6 +128,7 @@ The system can:
 - This is the first agent in a planned team of collaborative agents covering the full influencer marketing pipeline
 - v1.0 shipped with 691 tests, 22/22 requirements satisfied, all E2E flows verified
 - v1.1 added 40 more tests (731 total + 4 live), 14/14 production requirements satisfied
+- v1.2 added 100+ tests (832+ total), 26/26 negotiation intelligence requirements satisfied
 - Deployment target is a single VM with Docker Compose
 
 ## Constraints
@@ -142,6 +162,12 @@ The system can:
 | setpriv for privilege drop in Docker | Already in Debian slim, no extra install (vs gosu) | ✓ Good -- simpler than USER directive |
 | Native pytest markers for live tests | No custom CLI options; `addopts` excludes by default | ✓ Good -- `pytest -m live` overrides cleanly |
 | Singleton row pattern for watch state | Simpler than key-value table for single Gmail watch | ✓ Good -- CHECK(id=1) constraint enforces it |
+| Nested frozen Pydantic sub-models for campaign | Type-safe, immutable, Decimal for monetary values | ✓ Good -- 11 sub-models, all optional for backward compat |
+| Config-driven ClickUp field parsing | YAML mapping with field_types avoids hardcoded type logic | ✓ Good -- 45 fields parsed from single config file |
+| Deterministic lever engine (no LLM in lever selection) | Predictable priority chain, testable, no hallucination risk | ✓ Good -- 8-step chain handles all NEG-08 through NEG-15 |
+| Signal-based counterparty classification | Composable signals with confidence scoring vs binary rules | ✓ Good -- handles ambiguous cases with default fallback |
+| SOW formatter as deterministic module | LLM embeds pre-formatted SOW blocks as-is, no reformulation | ✓ Good -- strikethrough rates, deliverable bullets |
+| Tone guidance in user prompt (not system prompt) | Varies per-request without invalidating cached system prompt | ✓ Good -- backward compatible default |
 
 ---
-*Last updated: 2026-03-08 after v1.2 milestone start*
+*Last updated: 2026-03-08 after v1.2 milestone completion*
