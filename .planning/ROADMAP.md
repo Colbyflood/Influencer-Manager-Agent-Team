@@ -44,7 +44,7 @@ Full details: [milestones/v1.1-ROADMAP.md](milestones/v1.1-ROADMAP.md)
 - [x] **Phase 14: Knowledge Base Rewrite** - Replace placeholder knowledge base with real AGM negotiation playbook, strategy docs, and categorized email examples (completed 2026-03-08)
 - [x] **Phase 15: Negotiation Levers and Strategy** - Implement the full negotiation lever stack: deliverable tiers, usage rights trading, product offers, CPM sharing, cost bounds enforcement, and graceful exits (completed 2026-03-08)
 - [x] **Phase 16: Counterparty Intelligence** - Detect influencer vs talent manager/agency from email signals and adapt negotiation tone and tracking accordingly (completed 2026-03-08)
-- [ ] **Phase 17: Email Composition and Style** - Compose emails matching AGM professional style with structured SOW counter-offers, payment terms, and stage-aware example selection
+- [x] **Phase 17: Email Composition and Style** - Compose emails matching AGM professional style with structured SOW counter-offers, payment terms, and stage-aware example selection (completed 2026-03-08)
 
 ## Phase Details
 
@@ -143,4 +143,4 @@ Phases execute in numeric order: 13 and 14 (14 has no dependency on 13), then 15
 | 14. Knowledge Base Rewrite | 2/2 | Complete    | 2026-03-08 | - |
 | 15. Negotiation Levers and Strategy | 3/3 | Complete    | 2026-03-08 | - |
 | 16. Counterparty Intelligence | 3/3 | Complete    | 2026-03-08 | - |
-| 17. Email Composition and Style | 1/2 | In Progress|  | - |
+| 17. Email Composition and Style | 2/2 | Complete   | 2026-03-08 | - |

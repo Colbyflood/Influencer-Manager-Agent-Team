@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-08)
 ## Current Position
 
 Phase: 17 of 17 (Email Composition and Style)
-Plan: 1 of 2 in current phase
-Status: In Progress
-Last activity: 2026-03-08 — Completed 17-01-PLAN.md
+Plan: 2 of 2 in current phase
+Status: Complete
+Last activity: 2026-03-08 — Completed 17-02-PLAN.md
 
-Progress: [##############################] 99% (33/33 plans v1.0+v1.1, 13/4 v1.2)
+Progress: [##############################] 100% (33/33 plans v1.0+v1.1, 4/4 v1.2)
 
 ## Performance Metrics
 
@@ -69,6 +69,9 @@ All decisions logged in PROJECT.md Key Decisions table.
 - [16-03] Default tone is direct_influencer for backward compatibility when counterparty_type is missing/empty/None
 - [17-01] Non-numeric rate values handled gracefully in _format_currency (return as-is) for backward compatibility
 - [17-01] SOW block built deterministically in Python and embedded verbatim in prompt to prevent LLM reformulation
+- [17-02] Agreement emails use format_sow_block with agreed rate directly (no strikethrough) for clean term presentation
+- [17-02] Validation fallback on agreement: accept anyway but include validation_warnings for human review
+- [17-02] Usage rights hallucination check skipped for agreement emails since they legitimately reference agreed usage terms
 
 ### Pending Todos
 
@@ -81,5 +84,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-08
-Stopped at: Completed 17-01-PLAN.md (AGM Style & SOW Formatter)
+Stopped at: Completed 17-02-PLAN.md (Agreement Confirmation Email Composer)
 Resume file: None

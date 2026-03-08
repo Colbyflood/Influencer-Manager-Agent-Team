@@ -46,7 +46,7 @@ Requirements for v1.2 Real-World Negotiation Intelligence. Each maps to roadmap 
 
 - [x] **EMAIL-05**: Agent composes emails with professional but warm tone matching AGM style (partnership-first, acknowledge creator value, concise)
 - [x] **EMAIL-06**: Agent formats counter-offers with clear SOW structure (deliverable list, usage terms, rate with strikethrough adjustments) matching real email format
-- [ ] **EMAIL-07**: Agent includes payment terms and next steps in agreement confirmation emails
+- [x] **EMAIL-07**: Agent includes payment terms and next steps in agreement confirmation emails
 
 ## Future Requirements
 
@@ -100,7 +100,7 @@ Requirements for v1.2 Real-World Negotiation Intelligence. Each maps to roadmap 
 | KB-06 | Phase 14 | Complete |
 | EMAIL-05 | Phase 17 | Complete |
 | EMAIL-06 | Phase 17 | Complete |
-| EMAIL-07 | Phase 17 | Pending |
+| EMAIL-07 | Phase 17 | Complete |
 
 **Coverage:**
 - v1.2 requirements: 26 total
