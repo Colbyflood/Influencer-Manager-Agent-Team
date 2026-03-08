@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-08)
 ## Current Position
 
 Phase: 13 of 17 (Campaign Data Model Expansion)
-Plan: 0 of ? in current phase
-Status: Ready to plan
-Last activity: 2026-03-08 — Roadmap created for v1.2
+Plan: 1 of 3 in current phase
+Status: Executing
+Last activity: 2026-03-08 — Completed 13-01-PLAN.md
 
-Progress: [########################░░░░░░] 78% (33/33 plans v1.0+v1.1, 0/? v1.2)
+Progress: [########################░░░░░░] 80% (33/33 plans v1.0+v1.1, 1/3 v1.2)
 
 ## Performance Metrics
 
@@ -34,6 +34,10 @@ Progress: [########################░░░░░░] 78% (33/33 plans v1.0+v1.
 
 All decisions logged in PROJECT.md Key Decisions table.
 
+- [13-01] Used StrEnum ordering for UsageRightsDuration comparison instead of numeric weights
+- [13-01] Made all new sub-model fields optional on Campaign for backward compatibility
+- [13-01] Removed must_have_at_least_one_influencer validator for pre-assignment campaign creation
+
 ### Pending Todos
 
 None.
@@ -45,5 +49,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-08
-Stopped at: Roadmap created for v1.2 milestone, ready to plan Phase 13
+Stopped at: Completed 13-01-PLAN.md (Campaign Data Model Expansion)
 Resume file: None
