@@ -86,7 +86,11 @@ Plans:
   3. Agent offers product/upgrade as additional value when cash rate is at ceiling, and can propose content syndication (cross-posting) as added value instead of unique per-platform deliverables
   4. Agent enforces per-influencer cost floor (never offers below minimum) and escalates to human when rate exceeds max-without-approval ceiling
   5. Agent initiates a polite exit preserving the relationship when deal economics don't work, and can selectively share CPM target with motivated influencers to justify constraints
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 15-01-PLAN.md -- Lever engine models and deterministic selection logic (TDD)
+- [ ] 15-02-PLAN.md -- Wire lever engine into negotiation loop, composer, and prompts
+- [ ] 15-03-PLAN.md -- Pass campaign data through context builder and lever-driven initial outreach
 
 ### Phase 16: Counterparty Intelligence
 **Goal**: Agent identifies who it is negotiating with and adapts its approach -- transactional and data-backed for talent managers, relationship-driven for direct influencers
@@ -130,6 +134,6 @@ Phases execute in numeric order: 13 and 14 (14 has no dependency on 13), then 15
 | 12. Monitoring, Observability, and Live Verification | v1.1 | 3/3 | Complete | 2026-02-19 |
 | 13. Campaign Data Model Expansion | 3/3 | Complete    | 2026-03-08 | - |
 | 14. Knowledge Base Rewrite | 2/2 | Complete    | 2026-03-08 | - |
-| 15. Negotiation Levers and Strategy | v1.2 | 0/? | Not started | - |
+| 15. Negotiation Levers and Strategy | v1.2 | 0/3 | Not started | - |
 | 16. Counterparty Intelligence | v1.2 | 0/? | Not started | - |
 | 17. Email Composition and Style | v1.2 | 0/? | Not started | - |
