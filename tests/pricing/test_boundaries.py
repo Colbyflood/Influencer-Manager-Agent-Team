@@ -136,6 +136,58 @@ class TestEvaluateProposedRate:
         assert result.boundary == BoundaryResult.SUSPICIOUSLY_LOW
 
 
+class TestCampaignAwareBoundaries:
+    """Tests for boundary evaluation with campaign-derived CPM bounds."""
+
+    def test_dynamic_ceiling_from_campaign(self):
+        """With CPM target $25 and 20% leniency (ceiling=$30), $28 CPM is WITHIN_RANGE."""
+        # 28 CPM * 50 (50000/1000) = $1400 rate
+        result = evaluate_proposed_rate(
+            Decimal("1400"),
+            50000,
+            cpm_floor=Decimal("25"),
+            cpm_ceiling=Decimal("30"),
+        )
+        assert result.boundary == BoundaryResult.WITHIN_RANGE
+        assert result.cpm == Decimal("28.00")
+
+    def test_dynamic_ceiling_exceeds(self):
+        """With CPM target $25 and 20% leniency (ceiling=$30), $35 CPM EXCEEDS_CEILING."""
+        # 35 CPM * 50 = $1750 rate
+        result = evaluate_proposed_rate(
+            Decimal("1750"),
+            50000,
+            cpm_floor=Decimal("25"),
+            cpm_ceiling=Decimal("30"),
+        )
+        assert result.boundary == BoundaryResult.EXCEEDS_CEILING
+        assert result.should_escalate is True
+
+    def test_tight_leniency_narrow_range(self):
+        """With CPM target $25 and 0% leniency (ceiling=$25), $26 CPM EXCEEDS_CEILING."""
+        # 26 CPM * 50 = $1300 rate
+        result = evaluate_proposed_rate(
+            Decimal("1300"),
+            50000,
+            cpm_floor=Decimal("25"),
+            cpm_ceiling=Decimal("25"),
+        )
+        assert result.boundary == BoundaryResult.EXCEEDS_CEILING
+        assert result.should_escalate is True
+
+    def test_generous_leniency_wide_range(self):
+        """With CPM target $20 and 100% leniency (ceiling=$40), $35 CPM is WITHIN_RANGE."""
+        # 35 CPM * 50 = $1750 rate
+        result = evaluate_proposed_rate(
+            Decimal("1750"),
+            50000,
+            cpm_floor=Decimal("20"),
+            cpm_ceiling=Decimal("40"),
+        )
+        assert result.boundary == BoundaryResult.WITHIN_RANGE
+        assert result.should_escalate is False
+
+
 class TestPricingResult:
     """Tests for the PricingResult model."""
 

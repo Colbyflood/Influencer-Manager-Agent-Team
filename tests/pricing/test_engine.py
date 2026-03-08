@@ -6,9 +6,12 @@ import pytest
 
 from negotiation.domain.errors import PricingError
 from negotiation.pricing.engine import (
+    CPM_CEILING,
+    CPM_FLOOR,
     calculate_cpm_from_rate,
     calculate_initial_offer,
     calculate_rate,
+    derive_cpm_bounds,
 )
 
 
@@ -129,3 +132,49 @@ class TestCalculateCpmFromRate:
         result = calculate_cpm_from_rate(Decimal("1000"), 50000)
         assert result == Decimal("20.00")
         assert result.as_tuple().exponent == -2
+
+
+class TestDeriveCpmBounds:
+    """Tests for campaign-aware CPM bound derivation."""
+
+    def test_with_target_and_leniency(self):
+        """CPM target $25, leniency 20% -> floor=$25, ceiling=$30."""
+        floor, ceiling = derive_cpm_bounds(Decimal("25"), Decimal("20"))
+        assert floor == Decimal("25.00")
+        assert ceiling == Decimal("30.00")
+
+    def test_with_target_no_leniency(self):
+        """CPM target $25, leniency None -> floor=$25, ceiling=$25 (no room)."""
+        floor, ceiling = derive_cpm_bounds(Decimal("25"), None)
+        assert floor == Decimal("25.00")
+        assert ceiling == Decimal("25.00")
+
+    def test_with_target_zero_leniency(self):
+        """CPM target $30, leniency 0% -> floor=$30, ceiling=$30."""
+        floor, ceiling = derive_cpm_bounds(Decimal("30"), Decimal("0"))
+        assert floor == Decimal("30.00")
+        assert ceiling == Decimal("30.00")
+
+    def test_with_target_100_leniency(self):
+        """CPM target $20, leniency 100% -> floor=$20, ceiling=$40."""
+        floor, ceiling = derive_cpm_bounds(Decimal("20"), Decimal("100"))
+        assert floor == Decimal("20.00")
+        assert ceiling == Decimal("40.00")
+
+    def test_no_target_falls_back_to_defaults(self):
+        """target None, leniency None -> module defaults ($20/$30)."""
+        floor, ceiling = derive_cpm_bounds(None, None)
+        assert floor == CPM_FLOOR
+        assert ceiling == CPM_CEILING
+
+    def test_no_target_with_leniency_ignored(self):
+        """target None, leniency 50% -> defaults (leniency ignored without target)."""
+        floor, ceiling = derive_cpm_bounds(None, Decimal("50"))
+        assert floor == CPM_FLOOR
+        assert ceiling == CPM_CEILING
+
+    def test_decimal_precision(self):
+        """Verify output is 2 decimal places."""
+        floor, ceiling = derive_cpm_bounds(Decimal("25"), Decimal("20"))
+        assert floor.as_tuple().exponent == -2
+        assert ceiling.as_tuple().exponent == -2
