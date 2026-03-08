@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-08)
 ## Current Position
 
 Phase: 16 of 17 (Counterparty Intelligence)
-Plan: 2 of 3 in current phase
+Plan: 3 of 3 in current phase
 Status: In Progress
-Last activity: 2026-03-08 — Completed 16-01-PLAN.md
+Last activity: 2026-03-08 — Completed 16-03-PLAN.md
 
-Progress: [#############################░] 97% (33/33 plans v1.0+v1.1, 10/4 v1.2)
+Progress: [##############################] 98% (33/33 plans v1.0+v1.1, 12/4 v1.2)
 
 ## Performance Metrics
 
@@ -61,6 +61,8 @@ All decisions logged in PROJECT.md Key Decisions table.
 - [16-01] 13 known agency domains and 11 personal domains in lookup tables
 - [16-01] Confidence thresholds: 0.9 for 2+ signals, 0.8 for strong signal, 0.6 for weak, 0.5 default
 - [16-01] Signature scanning limited to last 10 lines of email body
+- [16-03] Tone guidance injected in user prompt (not system prompt) to vary per-request without invalidating cached system prompt
+- [16-03] Default tone is direct_influencer for backward compatibility when counterparty_type is missing/empty/None
 
 ### Pending Todos
 
@@ -73,5 +75,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-08
-Stopped at: Completed 16-01-PLAN.md (Counterparty Detection Classifier)
+Stopped at: Completed 16-03-PLAN.md (Tone Adjustment)
 Resume file: None

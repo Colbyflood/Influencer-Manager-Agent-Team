@@ -139,5 +139,5 @@ Phases execute in numeric order: 13 and 14 (14 has no dependency on 13), then 15
 | 13. Campaign Data Model Expansion | 3/3 | Complete    | 2026-03-08 | - |
 | 14. Knowledge Base Rewrite | 2/2 | Complete    | 2026-03-08 | - |
 | 15. Negotiation Levers and Strategy | 3/3 | Complete    | 2026-03-08 | - |
-| 16. Counterparty Intelligence | 1/3 | In Progress|  | - |
+| 16. Counterparty Intelligence | 2/3 | In Progress|  | - |
 | 17. Email Composition and Style | v1.2 | 0/? | Not started | - |

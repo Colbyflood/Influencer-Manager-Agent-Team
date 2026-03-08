@@ -33,7 +33,7 @@ Requirements for v1.2 Real-World Negotiation Intelligence. Each maps to roadmap 
 
 - [x] **CPI-01**: Agent detects whether email counterparty is an influencer or talent manager/agency based on email signatures, domain, and thread context
 - [ ] **CPI-02**: Agent tracks agency name and multiple contacts per negotiation thread (e.g. manager + assistant)
-- [ ] **CPI-03**: Agent adjusts negotiation tone for talent managers (more transactional, data-backed arguments) vs direct influencers (more relationship-driven, creative alignment)
+- [x] **CPI-03**: Agent adjusts negotiation tone for talent managers (more transactional, data-backed arguments) vs direct influencers (more relationship-driven, creative alignment)
 - [ ] **CPI-04**: Agent handles multi-person threads where manager loops in assistant or influencer without losing negotiation context
 
 ### Knowledge Base
@@ -93,7 +93,7 @@ Requirements for v1.2 Real-World Negotiation Intelligence. Each maps to roadmap 
 | NEG-15 | Phase 15 | Complete |
 | CPI-01 | Phase 16 | Complete |
 | CPI-02 | Phase 16 | Pending |
-| CPI-03 | Phase 16 | Pending |
+| CPI-03 | Phase 16 | Complete |
 | CPI-04 | Phase 16 | Pending |
 | KB-04 | Phase 14 | Complete |
 | KB-05 | Phase 14 | Complete |
