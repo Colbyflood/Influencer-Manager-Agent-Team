@@ -21,8 +21,8 @@ Requirements for v1.2 Real-World Negotiation Intelligence. Each maps to roadmap 
 ### Negotiation Logic
 
 - [ ] **NEG-08**: Agent opens with more deliverables and lower rate than budget allows, creating room to concede during negotiation
-- [ ] **NEG-09**: Agent trades deliverable tiers downward (scenario 1 → 2 → 3) when influencer rate exceeds budget, preserving core content
-- [ ] **NEG-10**: Agent negotiates usage rights duration downward (target → minimum) as a cost-reduction lever
+- [ ] **NEG-09**: Agent trades deliverable tiers downward (scenario 1 -> 2 -> 3) when influencer rate exceeds budget, preserving core content
+- [ ] **NEG-10**: Agent negotiates usage rights duration downward (target -> minimum) as a cost-reduction lever
 - [ ] **NEG-11**: Agent offers product/upgrade as additional value when cash rate is at ceiling but influencer hasn't accepted
 - [ ] **NEG-12**: Agent enforces per-influencer cost floor (never offers below minimum) and escalates to human when rate exceeds max without approval
 - [ ] **NEG-13**: Agent can selectively share CPM target with motivated influencers to justify budget constraints
@@ -75,38 +75,38 @@ Requirements for v1.2 Real-World Negotiation Intelligence. Each maps to roadmap 
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CAMP-01 | Pending | Pending |
-| CAMP-02 | Pending | Pending |
-| CAMP-03 | Pending | Pending |
-| CAMP-04 | Pending | Pending |
-| CAMP-05 | Pending | Pending |
-| CAMP-06 | Pending | Pending |
-| CAMP-07 | Pending | Pending |
-| CAMP-08 | Pending | Pending |
-| NEG-08 | Pending | Pending |
-| NEG-09 | Pending | Pending |
-| NEG-10 | Pending | Pending |
-| NEG-11 | Pending | Pending |
-| NEG-12 | Pending | Pending |
-| NEG-13 | Pending | Pending |
-| NEG-14 | Pending | Pending |
-| NEG-15 | Pending | Pending |
-| CPI-01 | Pending | Pending |
-| CPI-02 | Pending | Pending |
-| CPI-03 | Pending | Pending |
-| CPI-04 | Pending | Pending |
-| KB-04 | Pending | Pending |
-| KB-05 | Pending | Pending |
-| KB-06 | Pending | Pending |
-| EMAIL-05 | Pending | Pending |
-| EMAIL-06 | Pending | Pending |
-| EMAIL-07 | Pending | Pending |
+| CAMP-01 | Phase 13 | Pending |
+| CAMP-02 | Phase 13 | Pending |
+| CAMP-03 | Phase 13 | Pending |
+| CAMP-04 | Phase 13 | Pending |
+| CAMP-05 | Phase 13 | Pending |
+| CAMP-06 | Phase 13 | Pending |
+| CAMP-07 | Phase 13 | Pending |
+| CAMP-08 | Phase 13 | Pending |
+| NEG-08 | Phase 15 | Pending |
+| NEG-09 | Phase 15 | Pending |
+| NEG-10 | Phase 15 | Pending |
+| NEG-11 | Phase 15 | Pending |
+| NEG-12 | Phase 15 | Pending |
+| NEG-13 | Phase 15 | Pending |
+| NEG-14 | Phase 15 | Pending |
+| NEG-15 | Phase 15 | Pending |
+| CPI-01 | Phase 16 | Pending |
+| CPI-02 | Phase 16 | Pending |
+| CPI-03 | Phase 16 | Pending |
+| CPI-04 | Phase 16 | Pending |
+| KB-04 | Phase 14 | Pending |
+| KB-05 | Phase 14 | Pending |
+| KB-06 | Phase 14 | Pending |
+| EMAIL-05 | Phase 17 | Pending |
+| EMAIL-06 | Phase 17 | Pending |
+| EMAIL-07 | Phase 17 | Pending |
 
 **Coverage:**
 - v1.2 requirements: 26 total
-- Mapped to phases: 0
-- Unmapped: 26 (pending roadmap creation)
+- Mapped to phases: 26
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-08*
-*Last updated: 2026-03-08 after initial definition*
+*Last updated: 2026-03-08 after roadmap creation*
