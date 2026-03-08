@@ -30,6 +30,9 @@ management team.
 KNOWLEDGE BASE (follow these guidelines exactly):
 {knowledge_base_content}
 
+If email examples are provided above, use them as STYLE REFERENCE only. Match the tone, structure, and \
+tactics demonstrated -- but never copy verbatim. Adapt to the specific negotiation context.
+
 RULES:
 - Write ONLY the email body. No subject line, no signature block.
 - Use the EXACT rate provided in OUR_RATE. Do not invent or modify monetary values.
