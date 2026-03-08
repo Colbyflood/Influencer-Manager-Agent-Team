@@ -20,14 +20,14 @@ Requirements for v1.2 Real-World Negotiation Intelligence. Each maps to roadmap 
 
 ### Negotiation Logic
 
-- [ ] **NEG-08**: Agent opens with more deliverables and lower rate than budget allows, creating room to concede during negotiation
-- [ ] **NEG-09**: Agent trades deliverable tiers downward (scenario 1 -> 2 -> 3) when influencer rate exceeds budget, preserving core content
-- [ ] **NEG-10**: Agent negotiates usage rights duration downward (target -> minimum) as a cost-reduction lever
-- [ ] **NEG-11**: Agent offers product/upgrade as additional value when cash rate is at ceiling but influencer hasn't accepted
-- [ ] **NEG-12**: Agent enforces per-influencer cost floor (never offers below minimum) and escalates to human when rate exceeds max without approval
-- [ ] **NEG-13**: Agent can selectively share CPM target with motivated influencers to justify budget constraints
-- [ ] **NEG-14**: Agent proposes content syndication (cross-posting IG to TikTok) as added value rather than unique deliverables per platform
-- [ ] **NEG-15**: Agent initiates polite exit when deal economics don't work, preserving relationship for future campaigns
+- [x] **NEG-08**: Agent opens with more deliverables and lower rate than budget allows, creating room to concede during negotiation
+- [x] **NEG-09**: Agent trades deliverable tiers downward (scenario 1 -> 2 -> 3) when influencer rate exceeds budget, preserving core content
+- [x] **NEG-10**: Agent negotiates usage rights duration downward (target -> minimum) as a cost-reduction lever
+- [x] **NEG-11**: Agent offers product/upgrade as additional value when cash rate is at ceiling but influencer hasn't accepted
+- [x] **NEG-12**: Agent enforces per-influencer cost floor (never offers below minimum) and escalates to human when rate exceeds max without approval
+- [x] **NEG-13**: Agent can selectively share CPM target with motivated influencers to justify budget constraints
+- [x] **NEG-14**: Agent proposes content syndication (cross-posting IG to TikTok) as added value rather than unique deliverables per platform
+- [x] **NEG-15**: Agent initiates polite exit when deal economics don't work, preserving relationship for future campaigns
 
 ### Counterparty Intelligence
 
@@ -83,14 +83,14 @@ Requirements for v1.2 Real-World Negotiation Intelligence. Each maps to roadmap 
 | CAMP-06 | Phase 13 | Complete |
 | CAMP-07 | Phase 13 | Complete |
 | CAMP-08 | Phase 13 | Complete |
-| NEG-08 | Phase 15 | Pending |
-| NEG-09 | Phase 15 | Pending |
-| NEG-10 | Phase 15 | Pending |
-| NEG-11 | Phase 15 | Pending |
-| NEG-12 | Phase 15 | Pending |
-| NEG-13 | Phase 15 | Pending |
-| NEG-14 | Phase 15 | Pending |
-| NEG-15 | Phase 15 | Pending |
+| NEG-08 | Phase 15 | Complete |
+| NEG-09 | Phase 15 | Complete |
+| NEG-10 | Phase 15 | Complete |
+| NEG-11 | Phase 15 | Complete |
+| NEG-12 | Phase 15 | Complete |
+| NEG-13 | Phase 15 | Complete |
+| NEG-14 | Phase 15 | Complete |
+| NEG-15 | Phase 15 | Complete |
 | CPI-01 | Phase 16 | Pending |
 | CPI-02 | Phase 16 | Pending |
 | CPI-03 | Phase 16 | Pending |

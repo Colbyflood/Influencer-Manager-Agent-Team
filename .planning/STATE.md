@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-08)
 
 **Core value:** The agent must negotiate influencer rates accurately using CPM-based logic and reliably communicate the outcome -- every agreed deal must result in a clear, actionable Slack notification to the team.
-**Current focus:** Phase 14 - Knowledge Base Rewrite (v1.2)
+**Current focus:** Phase 15 - Negotiation Levers and Strategy (v1.2)
 
 ## Current Position
 
-Phase: 14 of 17 (Knowledge Base Rewrite)
-Plan: 2 of 2 in current phase (COMPLETE)
-Status: Phase Complete
-Last activity: 2026-03-08 — Completed 14-02-PLAN.md
+Phase: 15 of 17 (Negotiation Levers and Strategy)
+Plan: 1 of 3 in current phase
+Status: In Progress
+Last activity: 2026-03-08 — Completed 15-01-PLAN.md
 
-Progress: [############################░░] 91% (33/33 plans v1.0+v1.1, 6/4 v1.2)
+Progress: [############################░░] 93% (33/33 plans v1.0+v1.1, 7/4 v1.2)
 
 ## Performance Metrics
 
@@ -48,6 +48,9 @@ All decisions logged in PROJECT.md Key Decisions table.
 - [14-02] Used yaml.safe_load with manual fallback for YAML frontmatter parsing
 - [14-02] Platform-agnostic examples always included regardless of platform filter
 - [14-02] Stage filtering via list membership check on example frontmatter stages array
+- [15-01] Lever priority: floor > ceiling > deliverables > usage rights > product > syndication > CPM share > exit
+- [15-01] build_opening_context uses budget_constraints.cpm_target for floor, falls back to cpm_range.min_cpm
+- [15-01] Rate recalculation for deliverable trades keeps current rate (CPM is views-based)
 
 ### Pending Todos
 
@@ -60,5 +63,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-08
-Stopped at: Completed 14-02-PLAN.md (Stage-Aware Example Selection)
+Stopped at: Completed 15-01-PLAN.md (Lever Engine)
 Resume file: None
