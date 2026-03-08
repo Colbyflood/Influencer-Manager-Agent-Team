@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-08)
 
 **Core value:** The agent must negotiate influencer rates accurately using CPM-based logic and reliably communicate the outcome -- every agreed deal must result in a clear, actionable Slack notification to the team.
-**Current focus:** Phase 13 - Campaign Data Model Expansion (v1.2)
+**Current focus:** Phase 14 - Knowledge Base Rewrite (v1.2)
 
 ## Current Position
 
-Phase: 13 of 17 (Campaign Data Model Expansion)
-Plan: 3 of 3 in current phase
+Phase: 14 of 17 (Knowledge Base Rewrite)
+Plan: 1 of 2 in current phase
 Status: Executing
-Last activity: 2026-03-08 — Completed 13-03-PLAN.md
+Last activity: 2026-03-08 — Completed 14-01-PLAN.md
 
-Progress: [##########################░░░░] 86% (33/33 plans v1.0+v1.1, 3/3 v1.2)
+Progress: [###########################░░░] 89% (33/33 plans v1.0+v1.1, 4/4 v1.2)
 
 ## Performance Metrics
 
@@ -42,6 +42,9 @@ All decisions logged in PROJECT.md Key Decisions table.
 - [13-02] load_field_mapping returns tuple (mapping, types) for single YAML read
 - [13-03] derive_cpm_bounds returns CPM_FLOOR/CPM_CEILING defaults when campaign has no budget_constraints (backward compat)
 - [13-03] Leniency defaults to 0% when cpm_target is provided but cpm_leniency_pct is None
+- [14-01] Aligned tone stages to NegotiationState enum values (initial_offer, counter_received, counter_sent, agreed, escalated)
+- [14-01] Lever preference order: deliverable tiers > usage rights > product > CPM sharing
+- [14-01] Email examples use null platform for platform-agnostic scenarios
 
 ### Pending Todos
 
@@ -54,5 +57,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-08
-Stopped at: Completed 13-03-PLAN.md (Campaign-Aware CPM Pricing)
+Stopped at: Completed 14-01-PLAN.md (Knowledge Base Content Rewrite)
 Resume file: None

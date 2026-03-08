@@ -129,7 +129,7 @@ Phases execute in numeric order: 13 and 14 (14 has no dependency on 13), then 15
 | 11. CI/CD Pipeline | v1.1 | 1/1 | Complete | 2026-02-19 |
 | 12. Monitoring, Observability, and Live Verification | v1.1 | 3/3 | Complete | 2026-02-19 |
 | 13. Campaign Data Model Expansion | 3/3 | Complete    | 2026-03-08 | - |
-| 14. Knowledge Base Rewrite | v1.2 | 0/2 | Not started | - |
+| 14. Knowledge Base Rewrite | 1/2 | In Progress|  | - |
 | 15. Negotiation Levers and Strategy | v1.2 | 0/? | Not started | - |
 | 16. Counterparty Intelligence | v1.2 | 0/? | Not started | - |
 | 17. Email Composition and Style | v1.2 | 0/? | Not started | - |
