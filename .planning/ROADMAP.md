@@ -115,7 +115,10 @@ Plans:
   1. Agent composes emails with professional but warm tone matching AGM style: partnership-first language, acknowledgment of creator value, concise structure
   2. Agent formats counter-offers with clear SOW structure including deliverable list, usage terms, and rate with strikethrough adjustments matching real AGM email format
   3. Agent includes payment terms and explicit next steps in agreement confirmation emails
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 17-01-PLAN.md -- AGM style prompts, SOW formatter, and strikethrough rate formatting
+- [ ] 17-02-PLAN.md -- Agreement confirmation composer with payment terms and next steps
 
 ## Progress
 
@@ -140,4 +143,4 @@ Phases execute in numeric order: 13 and 14 (14 has no dependency on 13), then 15
 | 14. Knowledge Base Rewrite | 2/2 | Complete    | 2026-03-08 | - |
 | 15. Negotiation Levers and Strategy | 3/3 | Complete    | 2026-03-08 | - |
 | 16. Counterparty Intelligence | 3/3 | Complete    | 2026-03-08 | - |
-| 17. Email Composition and Style | v1.2 | 0/? | Not started | - |
+| 17. Email Composition and Style | v1.2 | 0/2 | Not started | - |
