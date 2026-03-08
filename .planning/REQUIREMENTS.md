@@ -16,7 +16,7 @@ Requirements for v1.2 Real-World Negotiation Intelligence. Each maps to roadmap 
 - [x] **CAMP-05**: Agent parses budget constraints including per-influencer min cost floor, max cost without human approval, and campaign budget
 - [x] **CAMP-06**: Agent parses product leverage fields (product available, description, monetary value) for use as negotiation incentive
 - [x] **CAMP-07**: Agent parses campaign requirements (exclusivity terms, content approval, revision rounds, raw footage, delivery/publish dates)
-- [ ] **CAMP-08**: Agent uses CPM Target and CPM Leniency percentage instead of fixed $20-$30 CPM range
+- [x] **CAMP-08**: Agent uses CPM Target and CPM Leniency percentage instead of fixed $20-$30 CPM range
 
 ### Negotiation Logic
 
@@ -82,7 +82,7 @@ Requirements for v1.2 Real-World Negotiation Intelligence. Each maps to roadmap 
 | CAMP-05 | Phase 13 | Complete |
 | CAMP-06 | Phase 13 | Complete |
 | CAMP-07 | Phase 13 | Complete |
-| CAMP-08 | Phase 13 | Pending |
+| CAMP-08 | Phase 13 | Complete |
 | NEG-08 | Phase 15 | Pending |
 | NEG-09 | Phase 15 | Pending |
 | NEG-10 | Phase 15 | Pending |
