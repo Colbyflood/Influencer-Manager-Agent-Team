@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-08)
 
 **Core value:** The agent must negotiate influencer rates accurately using CPM-based logic and reliably communicate the outcome -- every agreed deal must result in a clear, actionable Slack notification to the team.
-**Current focus:** Phase 15 - Negotiation Levers and Strategy (v1.2)
+**Current focus:** Phase 16 - Counterparty Intelligence (v1.2)
 
 ## Current Position
 
-Phase: 15 of 17 (Negotiation Levers and Strategy)
-Plan: 3 of 3 in current phase
-Status: Phase Complete
-Last activity: 2026-03-08 — Completed 15-03-PLAN.md
+Phase: 16 of 17 (Counterparty Intelligence)
+Plan: 2 of 3 in current phase
+Status: In Progress
+Last activity: 2026-03-08 — Completed 16-01-PLAN.md
 
-Progress: [#############################░] 97% (33/33 plans v1.0+v1.1, 9/4 v1.2)
+Progress: [#############################░] 97% (33/33 plans v1.0+v1.1, 10/4 v1.2)
 
 ## Performance Metrics
 
@@ -57,6 +57,10 @@ All decisions logged in PROJECT.md Key Decisions table.
 - [15-03] Campaign sub-models passed as direct references in context dict for lever engine consumption
 - [15-03] Lever state defaults represent opening position: scenario=1, usage_tier=target, all booleans False
 - [15-03] build_opening_context replaces calculate_initial_offer for lever-driven initial outreach
+- [16-01] Signal-based classification with strength weighting (0.0-1.0) for composable detection
+- [16-01] 13 known agency domains and 11 personal domains in lookup tables
+- [16-01] Confidence thresholds: 0.9 for 2+ signals, 0.8 for strong signal, 0.6 for weak, 0.5 default
+- [16-01] Signature scanning limited to last 10 lines of email body
 
 ### Pending Todos
 
@@ -69,5 +73,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-08
-Stopped at: Completed 15-03-PLAN.md (Campaign Context Wiring) - Phase 15 complete
+Stopped at: Completed 16-01-PLAN.md (Counterparty Detection Classifier)
 Resume file: None
