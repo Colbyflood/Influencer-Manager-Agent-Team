@@ -19,6 +19,7 @@ from negotiation.llm.models import (
     IntentClassification,
     NegotiationIntent,
 )
+from negotiation.llm.composer import compose_agreement_email as compose_agreement_email_real
 from negotiation.llm.composer import compose_counter_email as compose_counter_email_real
 from negotiation.llm.negotiation_loop import process_influencer_reply
 from negotiation.state_machine import NegotiationStateMachine
@@ -185,7 +186,14 @@ def test_accept_transitions_to_agreed(
         summary="Influencer agrees to the deal.",
         key_concerns=[],
     )
-    _configure_mock_client(mock_client, classification)
+    # Configure both parse (classify) and create (compose agreement email)
+    agreement_email = (
+        "Hi Jane Creator,\n\n"
+        "We're thrilled to confirm our partnership!\n\n"
+        "Payment will be processed within 30 days.\n\n"
+        "Best regards"
+    )
+    _configure_mock_client(mock_client, classification, compose_text=agreement_email)
 
     result = process_influencer_reply(
         email_body="Sounds great, let's do it!",
@@ -197,6 +205,7 @@ def test_accept_transitions_to_agreed(
 
     assert result["action"] == "accept"
     assert result["classification"] == classification
+    assert "email_body" in result
     assert state_machine.state == NegotiationState.AGREED
     assert state_machine.is_terminal
 
@@ -591,3 +600,112 @@ def test_lever_instructions_passed_to_composer(
         assert "lever_instructions" in call_kwargs
         assert len(call_kwargs["lever_instructions"]) > 0
         assert result["lever"] is not None
+
+
+# ---------------------------------------------------------------------------
+# Test: Accept intent returns email_body
+# ---------------------------------------------------------------------------
+
+
+def test_accept_returns_email_body(
+    mock_client: MagicMock,
+    base_context: dict[str, Any],
+    state_machine: NegotiationStateMachine,
+) -> None:
+    """ACCEPT intent now returns an email_body key in the result dict."""
+    # State machine must be in COUNTER_RECEIVED for accept to work
+    state_machine.trigger("receive_reply")
+    assert state_machine.state == NegotiationState.COUNTER_RECEIVED
+
+    classification = IntentClassification(
+        intent=NegotiationIntent.ACCEPT,
+        confidence=0.95,
+        proposed_rate=None,
+        proposed_deliverables=[],
+        summary="Influencer agrees to the deal.",
+        key_concerns=[],
+    )
+    _configure_mock_client(mock_client, classification)
+
+    # Configure compose response for agreement email
+    agreement_email = (
+        "Hi Jane Creator,\n\n"
+        "We're thrilled to confirm our partnership! Here are the agreed terms:\n\n"
+        "- 1 Instagram Reel\n"
+        "- Rate: $2,500.00\n\n"
+        "Payment will be processed within 30 days of content going live.\n\n"
+        "Next steps:\n"
+        "1. We'll send the SOW for your review and signature\n"
+        "2. Content brief and brand guidelines to follow\n"
+        "3. Payment timeline confirmation\n\n"
+        "Best regards"
+    )
+    mock_client.messages.create.return_value = _make_compose_response(agreement_email)
+
+    result = process_influencer_reply(
+        email_body="Sounds great, let's do it!",
+        negotiation_context=base_context,
+        state_machine=state_machine,
+        client=mock_client,
+        round_count=1,
+    )
+
+    assert result["action"] == "accept"
+    assert "email_body" in result
+    assert result["email_body"] == agreement_email
+    assert state_machine.state == NegotiationState.AGREED
+
+
+# ---------------------------------------------------------------------------
+# Test: Accept branch calls compose_agreement_email
+# ---------------------------------------------------------------------------
+
+
+def test_accept_calls_compose_agreement_email(
+    mock_client: MagicMock,
+    base_context: dict[str, Any],
+    state_machine: NegotiationStateMachine,
+) -> None:
+    """Accept branch calls compose_agreement_email (mock check)."""
+    state_machine.trigger("receive_reply")
+    assert state_machine.state == NegotiationState.COUNTER_RECEIVED
+
+    classification = IntentClassification(
+        intent=NegotiationIntent.ACCEPT,
+        confidence=0.95,
+        proposed_rate=None,
+        proposed_deliverables=[],
+        summary="Influencer agrees.",
+        key_concerns=[],
+    )
+    _configure_mock_client(mock_client, classification)
+
+    agreement_email = (
+        "Hi Jane Creator,\n\n"
+        "We're excited to confirm our deal! Payment processed within 30 days.\n\n"
+        "Best regards"
+    )
+
+    with patch(
+        "negotiation.llm.negotiation_loop.compose_agreement_email",
+    ) as mock_agreement_compose:
+        from negotiation.llm.models import ComposedEmail
+
+        mock_agreement_compose.return_value = ComposedEmail(
+            email_body=agreement_email,
+            model_used="test-model",
+            input_tokens=500,
+            output_tokens=200,
+        )
+
+        result = process_influencer_reply(
+            email_body="Let's do it!",
+            negotiation_context=base_context,
+            state_machine=state_machine,
+            client=mock_client,
+            round_count=1,
+        )
+
+        mock_agreement_compose.assert_called_once()
+        assert result["action"] == "accept"
+        assert result["email_body"] == agreement_email

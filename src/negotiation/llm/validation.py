@@ -51,6 +51,7 @@ def validate_composed_email(
     expected_deliverables: list[str],
     influencer_name: str,
     forbidden_phrases: list[str] | None = None,
+    is_agreement: bool = False,
 ) -> ValidationResult:
     """Validate a composed email using deterministic checks (no LLM).
 
@@ -69,6 +70,9 @@ def validate_composed_email(
         influencer_name: Name of the influencer (for context).
         forbidden_phrases: Optional list of phrases that should not appear
             in the email. Case-insensitive matching.
+        is_agreement: When True, enables agreement-aware validation:
+            skips usage rights hallucination check (legitimate in agreements)
+            and warns if no payment-related terms are found.
 
     Returns:
         ValidationResult with passed=True only if no error-severity failures.
@@ -108,6 +112,12 @@ def validate_composed_email(
 
     # Check 3: Hallucinated commitments
     for pattern in _HALLUCINATION_PATTERNS:
+        # Skip usage rights check for agreement emails (legitimately reference agreed terms)
+        if is_agreement and pattern.pattern in (
+            r"\busage\s+rights?\b",
+            r"\brights?\s+extension\b",
+        ):
+            continue
         match = pattern.search(email_body)
         if match:
             failures.append(
@@ -115,6 +125,20 @@ def validate_composed_email(
                     check="hallucinated_commitment",
                     reason=(f"Email contains unauthorized commitment: '{match.group()}'"),
                     severity="error",
+                )
+            )
+
+    # Check 3b: Agreement-specific -- payment terms presence
+    if is_agreement:
+        _payment_pattern = re.compile(
+            r"\b(?:payment|paid|processed|invoice|compensat)", re.IGNORECASE
+        )
+        if not _payment_pattern.search(email_body):
+            failures.append(
+                ValidationFailure(
+                    check="payment_terms_missing",
+                    reason="Agreement email should mention payment terms",
+                    severity="warning",
                 )
             )
 

@@ -268,3 +268,72 @@ class TestValidateComposedEmail:
             influencer_name="Sarah",
         )
         assert result.email_body == email
+
+
+class TestAgreementModeValidation:
+    """Tests for is_agreement=True validation mode."""
+
+    def test_agreement_mode_skips_usage_rights_hallucination(self):
+        """Usage rights in agreement email does not trigger error when is_agreement=True."""
+        email = (
+            "Hi Sarah,\n\n"
+            "We're thrilled to confirm our partnership! Here are the agreed terms:\n\n"
+            "- 2x Instagram Reels\n"
+            "- Usage rights: 12 months paid amplification\n"
+            "- Rate: $1,500.00\n\n"
+            "Payment will be processed within 30 days of content going live.\n\n"
+            "Best regards"
+        )
+        result = validate_composed_email(
+            email_body=email,
+            expected_rate=Decimal("1500.00"),
+            expected_deliverables=["instagram_reel"],
+            influencer_name="Sarah",
+            is_agreement=True,
+        )
+        assert result.passed is True
+        error_checks = [f.check for f in result.failures if f.severity == "error"]
+        assert "hallucinated_commitment" not in error_checks
+
+    def test_agreement_mode_warns_on_missing_payment_terms(self):
+        """Warning when no payment language present in agreement email."""
+        email = (
+            "Hi Sarah,\n\n"
+            "We're thrilled to confirm our partnership! Here are the agreed terms:\n\n"
+            "- 2x Instagram Reels\n"
+            "- Rate: $1,500.00\n\n"
+            "Looking forward to working together!\n\n"
+            "Best regards"
+        )
+        result = validate_composed_email(
+            email_body=email,
+            expected_rate=Decimal("1500.00"),
+            expected_deliverables=["instagram_reel"],
+            influencer_name="Sarah",
+            is_agreement=True,
+        )
+        # Should pass (warning only) but have payment_terms_missing warning
+        assert result.passed is True
+        warning_checks = [f.check for f in result.failures if f.severity == "warning"]
+        assert "payment_terms_missing" in warning_checks
+
+    def test_agreement_mode_passes_with_payment_terms(self):
+        """No warning when payment-related language appears in agreement email."""
+        email = (
+            "Hi Sarah,\n\n"
+            "We're thrilled to confirm our partnership! Here are the agreed terms:\n\n"
+            "- 2x Instagram Reels\n"
+            "- Rate: $1,500.00\n\n"
+            "Payment will be processed within 30 days of content going live.\n\n"
+            "Best regards"
+        )
+        result = validate_composed_email(
+            email_body=email,
+            expected_rate=Decimal("1500.00"),
+            expected_deliverables=["instagram_reel"],
+            influencer_name="Sarah",
+            is_agreement=True,
+        )
+        assert result.passed is True
+        warning_checks = [f.check for f in result.failures if f.severity == "warning"]
+        assert "payment_terms_missing" not in warning_checks

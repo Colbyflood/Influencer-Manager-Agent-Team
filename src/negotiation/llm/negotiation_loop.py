@@ -14,7 +14,7 @@ from typing import Any
 from anthropic import Anthropic
 
 from negotiation.llm.client import DEFAULT_MAX_ROUNDS
-from negotiation.llm.composer import compose_counter_email
+from negotiation.llm.composer import compose_agreement_email, compose_counter_email
 from negotiation.llm.intent import classify_intent
 from negotiation.llm.knowledge_base import load_knowledge_base
 from negotiation.llm.models import EscalationPayload, NegotiationIntent
@@ -83,10 +83,76 @@ def process_influencer_reply(
             "classification": classification,
         }
 
-    # Step 5 - Handle ACCEPT
+    # Step 5 - Handle ACCEPT -- compose agreement confirmation email
     if classification.intent == NegotiationIntent.ACCEPT:
         state_machine.trigger("accept")
-        return {"action": "accept", "classification": classification}
+
+        # Load knowledge base with stage="agreed"
+        kb_content_agreed = load_knowledge_base(
+            str(negotiation_context["platform"]),
+            stage="agreed",
+        )
+
+        # Get counterparty tone guidance
+        from negotiation.counterparty.tone import get_tone_guidance as _get_tone_accept
+
+        counterparty_type_accept = str(
+            negotiation_context.get("counterparty_type", "direct_influencer")
+        )
+        agency_name_accept = negotiation_context.get("agency_name")
+        tone_guidance_accept = _get_tone_accept(counterparty_type_accept, agency_name_accept)
+
+        # Determine agreed rate
+        agreed_rate = str(
+            negotiation_context.get(
+                "last_offered_rate",
+                str(
+                    calculate_rate(
+                        int(negotiation_context["average_views"]),
+                        Decimal(str(negotiation_context["next_cpm"])),
+                    )
+                ),
+            )
+        )
+
+        # Compose agreement confirmation email
+        composed_agreement = compose_agreement_email(
+            influencer_name=str(negotiation_context["influencer_name"]),
+            agreed_rate=agreed_rate,
+            deliverables_summary=str(negotiation_context["deliverables_summary"]),
+            usage_rights_summary=negotiation_context.get("usage_rights_summary"),
+            platform=str(negotiation_context["platform"]),
+            payment_terms=str(
+                negotiation_context.get("payment_terms", "within 30 days of content going live")
+            ),
+            knowledge_base_content=kb_content_agreed,
+            negotiation_history=str(negotiation_context.get("history", "")),
+            client=client,
+            counterparty_context=tone_guidance_accept,
+        )
+
+        # Validate the agreement email
+        agreement_validation = validate_composed_email(
+            email_body=composed_agreement.email_body,
+            expected_rate=Decimal(agreed_rate),
+            expected_deliverables=list(negotiation_context["deliverable_types"]),
+            influencer_name=str(negotiation_context["influencer_name"]),
+            is_agreement=True,
+        )
+
+        if agreement_validation.passed:
+            return {
+                "action": "accept",
+                "classification": classification,
+                "email_body": composed_agreement.email_body,
+            }
+        # Accept anyway but flag warnings for human review
+        return {
+            "action": "accept",
+            "classification": classification,
+            "email_body": composed_agreement.email_body,
+            "validation_warnings": agreement_validation.failures,
+        }
 
     # Step 6 - Handle REJECT
     if classification.intent == NegotiationIntent.REJECT:
