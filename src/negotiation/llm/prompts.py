@@ -33,6 +33,13 @@ KNOWLEDGE BASE (follow these guidelines exactly):
 If email examples are provided above, use them as STYLE REFERENCE only. Match the tone, structure, and \
 tactics demonstrated -- but never copy verbatim. Adapt to the specific negotiation context.
 
+STYLE:
+- Write in AGM partnership style -- warm but professional. Open by acknowledging the creator's value \
+or referencing their content. Keep to 3-5 concise paragraphs. Use first-person plural ('we') to \
+represent the team.
+- When a FORMATTED SOW BLOCK is provided, embed it in the email as-is. Do not reformulate the SOW \
+structure or rate values -- use them exactly as given.
+
 RULES:
 - Write ONLY the email body. No subject line, no signature block.
 - Use the EXACT rate provided in OUR_RATE. Do not invent or modify monetary values.
@@ -52,6 +59,9 @@ NEGOTIATION STAGE: {negotiation_stage}
 THEIR PROPOSED RATE: ${their_rate}
 OUR COUNTER RATE: ${our_rate}
 DELIVERABLES: {deliverables_summary}
+
+FORMATTED SOW BLOCK (embed this in your email as-is):
+{sow_block}
 
 NEGOTIATION LEVER:
 {lever_instructions}
