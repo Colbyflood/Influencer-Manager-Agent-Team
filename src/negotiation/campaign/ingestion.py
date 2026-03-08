@@ -22,7 +22,22 @@ import httpx
 import structlog
 import yaml  # type: ignore[import-untyped]
 
-from negotiation.campaign.models import Campaign, CampaignCPMRange, CampaignInfluencer
+from negotiation.campaign.models import (
+    BudgetConstraints,
+    Campaign,
+    CampaignBackground,
+    CampaignCPMRange,
+    CampaignGoals,
+    CampaignInfluencer,
+    CampaignRequirements,
+    DeliverableScenarios,
+    DistributionInfo,
+    OptimizeFor,
+    ProductLeverage,
+    UsageRights,
+    UsageRightsDuration,
+    UsageRightsSet,
+)
 from negotiation.domain.types import Platform
 from negotiation.resilience.retry import resilient_api_call
 
@@ -32,19 +47,23 @@ logger = structlog.get_logger()
 _DEFAULT_CONFIG_PATH = Path("config/campaign_fields.yaml")
 
 
-def load_field_mapping(config_path: Path | None = None) -> dict[str, str]:
-    """Load the ClickUp custom field to Campaign model field mapping.
+def load_field_mapping(
+    config_path: Path | None = None,
+) -> tuple[dict[str, str], dict[str, list[str]]]:
+    """Load the ClickUp custom field to Campaign model field mapping and types.
 
     Reads the YAML configuration that maps ClickUp form field names to
-    Campaign model attribute names. Follows the same pattern as
-    ``escalation_triggers.yaml`` loading.
+    Campaign model attribute names. Also returns field type hints for
+    type-aware parsing.
 
     Args:
         config_path: Path to the YAML config file. Defaults to
             ``config/campaign_fields.yaml``.
 
     Returns:
-        A dict mapping ClickUp field names to model field names.
+        A tuple of (field_mapping, field_types) where field_mapping maps
+        ClickUp field names to model field names, and field_types maps
+        type categories to lists of ClickUp field names.
 
     Raises:
         FileNotFoundError: If the config file does not exist.
@@ -56,7 +75,70 @@ def load_field_mapping(config_path: Path | None = None) -> dict[str, str]:
     with path.open() as f:
         config = yaml.safe_load(f)
 
-    return dict(config.get("field_mapping", {}))
+    field_mapping = dict(config.get("field_mapping", {}))
+    field_types: dict[str, list[str]] = dict(config.get("field_types", {}))
+    return field_mapping, field_types
+
+
+# Mapping from ClickUp select label to UsageRightsDuration enum
+_DURATION_LABEL_MAP: dict[str, UsageRightsDuration] = {
+    "30 Days": UsageRightsDuration.days_30,
+    "60 Days": UsageRightsDuration.days_60,
+    "90 Days": UsageRightsDuration.days_90,
+    "6 Months": UsageRightsDuration.months_6,
+    "1 Year": UsageRightsDuration.year_1,
+    "Perpetual": UsageRightsDuration.perpetual,
+    "Not required": UsageRightsDuration.not_required,
+}
+
+
+def parse_boolean(value: Any) -> bool:
+    """Convert ClickUp Yes/No and boolean representations to Python bool.
+
+    Handles: True/False booleans, "Yes"/"No" strings (case-insensitive),
+    and ClickUp select objects with ``{"name": "Yes"}``.
+    """
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, dict):
+        value = value.get("name", "")
+    if isinstance(value, str):
+        return value.strip().lower() in ("yes", "true", "1")
+    return bool(value)
+
+
+def parse_duration_select(value: Any) -> UsageRightsDuration:
+    """Map a ClickUp select value to a UsageRightsDuration enum.
+
+    Handles both string labels and ClickUp select objects
+    ``{"name": "90 Days", "id": "..."}``.
+    """
+    if isinstance(value, dict):
+        label = value.get("name", "")
+    else:
+        label = str(value)
+    return _DURATION_LABEL_MAP.get(label, UsageRightsDuration.not_required)
+
+
+def parse_select(value: Any) -> str:
+    """Extract the selected option name from a ClickUp select/dropdown field.
+
+    ClickUp select fields return ``{"name": "Option", "id": "123"}``
+    or sometimes an integer index.
+    """
+    if isinstance(value, dict):
+        return str(value.get("name", ""))
+    return str(value)
+
+
+def parse_multi_select(value: Any) -> list[str]:
+    """Extract option names from a ClickUp multi-select/labels field.
+
+    ClickUp multi-select fields return ``[{"name": "A"}, {"name": "B"}]``.
+    """
+    if isinstance(value, list):
+        return [str(item.get("name", "")) if isinstance(item, dict) else str(item) for item in value]
+    return [str(value)]
 
 
 @resilient_api_call("clickup")
@@ -90,6 +172,7 @@ async def fetch_clickup_task(task_id: str, api_token: str) -> dict[str, Any]:
 def parse_custom_fields(
     task_data: dict[str, Any],
     field_mapping: dict[str, str],
+    field_types: dict[str, list[str]] | None = None,
 ) -> dict[str, Any]:
     """Extract custom field values from ClickUp task data.
 
@@ -98,16 +181,31 @@ def parse_custom_fields(
     research pitfall 3: numbers may arrive as strings, dates as Unix
     milliseconds.
 
+    Uses ``field_types`` from the YAML config to apply type-specific parsing
+    for select, multi_select, boolean, date_range, and duration_select fields.
+
     Args:
         task_data: The full task dict from the ClickUp API.
         field_mapping: Mapping of ClickUp field names to model field names.
+        field_types: Optional mapping of type categories to lists of ClickUp
+            field names. Used for type-aware parsing of select, multi_select,
+            boolean, date_range, and duration_select fields.
 
     Returns:
         A dict mapping Campaign model field names to their extracted values.
         Fields not found in the task data are omitted (not set to None).
     """
+    if field_types is None:
+        field_types = {}
+
     custom_fields: list[dict[str, Any]] = task_data.get("custom_fields", [])
     parsed: dict[str, Any] = {}
+
+    # Build reverse lookup: ClickUp field name -> type category
+    type_lookup: dict[str, str] = {}
+    for type_category, field_names in field_types.items():
+        for fname in field_names:
+            type_lookup[fname] = type_category
 
     # Build a lookup from ClickUp field name -> custom field object
     field_lookup: dict[str, dict[str, Any]] = {}
@@ -126,23 +224,88 @@ def parse_custom_fields(
         if value is None:
             continue
 
-        # Type-aware casting for ClickUp quirks
+        # Determine the type category from config or fall back to ClickUp type
+        config_type = type_lookup.get(clickup_name, "")
         field_type = field_data.get("type", "")
-        if field_type == "number" and isinstance(value, str):
-            # ClickUp sometimes sends numbers as strings
-            with contextlib.suppress(ValueError):
-                value = float(value)
-        elif field_type == "date" and isinstance(value, (int, str)):
-            # ClickUp dates are Unix milliseconds
-            try:
-                ts_ms = int(value)
-                value = datetime.fromtimestamp(ts_ms / 1000, tz=UTC).isoformat()
-            except (ValueError, OverflowError):
-                pass
+
+        # Type-aware casting based on config field_types
+        if config_type == "duration_select":
+            value = parse_duration_select(value)
+        elif config_type == "select":
+            # Check if this is a boolean-like select (Yes/No fields)
+            select_name = parse_select(value)
+            if select_name.lower() in ("yes", "no"):
+                value = parse_boolean(value)
+            else:
+                value = select_name
+        elif config_type == "multi_select":
+            value = parse_multi_select(value)
+        elif config_type == "number":
+            if isinstance(value, str):
+                with contextlib.suppress(ValueError):
+                    value = float(value)
+        elif config_type == "date_range":
+            # ClickUp date range: {start: unix_ms, end: unix_ms} or single date
+            if isinstance(value, dict):
+                start_ms = value.get("start")
+                end_ms = value.get("end")
+                parts = []
+                for ms in (start_ms, end_ms):
+                    if ms is not None:
+                        try:
+                            parts.append(
+                                datetime.fromtimestamp(int(ms) / 1000, tz=UTC).isoformat()
+                            )
+                        except (ValueError, OverflowError):
+                            pass
+                value = " to ".join(parts) if parts else str(value)
+            elif isinstance(value, (int, str)):
+                try:
+                    ts_ms = int(value)
+                    value = datetime.fromtimestamp(ts_ms / 1000, tz=UTC).isoformat()
+                except (ValueError, OverflowError):
+                    pass
+        else:
+            # Fallback to original ClickUp type-based parsing
+            if field_type == "number" and isinstance(value, str):
+                with contextlib.suppress(ValueError):
+                    value = float(value)
+            elif field_type == "date" and isinstance(value, (int, str)):
+                try:
+                    ts_ms = int(value)
+                    value = datetime.fromtimestamp(ts_ms / 1000, tz=UTC).isoformat()
+                except (ValueError, OverflowError):
+                    pass
 
         parsed[model_name] = value
 
     return parsed
+
+
+def _resolve_dot_paths(flat: dict[str, Any]) -> dict[str, Any]:
+    """Resolve dot-separated keys in a flat dict into a nested dict structure.
+
+    Given ``{"goals.primary_goal": "X", "budget_constraints.cpm_target": 25}``,
+    produces ``{"goals": {"primary_goal": "X"}, "budget_constraints": {"cpm_target": 25}}``.
+
+    Keys without dots are kept at the top level.
+
+    Args:
+        flat: A flat dict potentially containing dot-separated keys.
+
+    Returns:
+        A nested dict with dot paths resolved.
+    """
+    nested: dict[str, Any] = {}
+    for key, value in flat.items():
+        parts = key.split(".")
+        target = nested
+        for part in parts[:-1]:
+            if part not in target or not isinstance(target[part], dict):
+                target[part] = {}
+            target = target[part]
+        target[parts[-1]] = value
+    return nested
 
 
 def parse_influencer_list(
@@ -167,12 +330,134 @@ def parse_influencer_list(
     return [name.strip() for name in names if name.strip()]
 
 
+def _decimal_from_field(value: Any, default: str = "0") -> Decimal:
+    """Convert a parsed field value to Decimal via string to avoid float rejection."""
+    if value is None:
+        return Decimal(default)
+    return Decimal(str(value))
+
+
+def _build_usage_rights(nested: dict[str, Any]) -> UsageRights | None:
+    """Build UsageRights from nested dict with target/minimum sub-dicts."""
+    ur_data = nested.get("usage_rights")
+    if not ur_data or not isinstance(ur_data, dict):
+        return None
+
+    target_data = ur_data.get("target", {})
+    minimum_data = ur_data.get("minimum", {})
+
+    # If no actual duration values, skip
+    if not target_data and not minimum_data:
+        return None
+
+    target = UsageRightsSet(**target_data)
+    minimum = UsageRightsSet(**minimum_data)
+    return UsageRights(target=target, minimum=minimum)
+
+
+def _build_budget_constraints(nested: dict[str, Any]) -> BudgetConstraints | None:
+    """Build BudgetConstraints from nested dict, converting Decimal fields."""
+    bc_data = nested.get("budget_constraints")
+    if not bc_data or not isinstance(bc_data, dict):
+        return None
+
+    # Convert monetary fields to Decimal via string
+    decimal_fields = (
+        "campaign_budget",
+        "min_cost_per_influencer",
+        "max_cost_without_approval",
+        "cpm_target",
+        "cpm_leniency_pct",
+    )
+    converted = dict(bc_data)
+    for field_name in decimal_fields:
+        if field_name in converted and converted[field_name] is not None:
+            converted[field_name] = Decimal(str(converted[field_name]))
+
+    # Convert target_influencer_count to int
+    if "target_influencer_count" in converted and converted["target_influencer_count"] is not None:
+        converted["target_influencer_count"] = int(converted["target_influencer_count"])
+
+    # campaign_budget is required; use top-level budget as fallback
+    if "campaign_budget" not in converted:
+        top_budget = nested.get("budget", "0")
+        converted["campaign_budget"] = Decimal(str(top_budget))
+
+    return BudgetConstraints(**converted)
+
+
+def _build_product_leverage(nested: dict[str, Any]) -> ProductLeverage | None:
+    """Build ProductLeverage from nested dict."""
+    pl_data = nested.get("product_leverage")
+    if not pl_data or not isinstance(pl_data, dict):
+        return None
+    converted = dict(pl_data)
+    if "product_monetary_value" in converted and converted["product_monetary_value"] is not None:
+        converted["product_monetary_value"] = Decimal(str(converted["product_monetary_value"]))
+    return ProductLeverage(**converted)
+
+
+def _build_deliverable_scenarios(
+    nested: dict[str, Any], target_deliverables_str: str,
+) -> DeliverableScenarios | None:
+    """Build DeliverableScenarios from nested dict."""
+    ds_data = nested.get("deliverables")
+    if not ds_data or not isinstance(ds_data, dict):
+        return None
+    converted = dict(ds_data)
+
+    # target_deliverables comes as a top-level field (list or string)
+    td = nested.get("target_deliverables", target_deliverables_str)
+    if isinstance(td, list):
+        converted["target_deliverables"] = td
+    elif isinstance(td, str):
+        converted["target_deliverables"] = [s.strip() for s in td.split(",") if s.strip()]
+    else:
+        converted["target_deliverables"] = [str(td)]
+
+    return DeliverableScenarios(**converted)
+
+
+def _build_campaign_goals(nested: dict[str, Any]) -> CampaignGoals | None:
+    """Build CampaignGoals from nested dict."""
+    goals_data = nested.get("goals")
+    if not goals_data or not isinstance(goals_data, dict):
+        return None
+    if "primary_goal" not in goals_data:
+        return None
+    converted = dict(goals_data)
+    # Map optimize_for string to enum
+    if "optimize_for" in converted and isinstance(converted["optimize_for"], str):
+        opt_str = converted["optimize_for"].lower().replace(" ", "_")
+        try:
+            converted["optimize_for"] = OptimizeFor(opt_str)
+        except ValueError:
+            converted["optimize_for"] = OptimizeFor.balance
+    return CampaignGoals(**converted)
+
+
+def _build_requirements(nested: dict[str, Any]) -> CampaignRequirements | None:
+    """Build CampaignRequirements from nested dict."""
+    req_data = nested.get("requirements")
+    if not req_data or not isinstance(req_data, dict):
+        return None
+    converted = dict(req_data)
+    # Convert revision_rounds to int
+    if "revision_rounds" in converted and converted["revision_rounds"] is not None:
+        converted["revision_rounds"] = int(converted["revision_rounds"])
+    return CampaignRequirements(**converted)
+
+
 def build_campaign(task_id: str, parsed_fields: dict[str, Any]) -> Campaign:
     """Construct a Campaign model from parsed ClickUp custom fields.
 
+    Resolves dot-path keys into nested dicts, then constructs all sub-models.
     Converts budget/CPM values to Decimal (string path to avoid float
     rejection). Builds CampaignInfluencer list from parsed influencer names
     with the campaign's platform.
+
+    Backward compatible: if only the original 8 fields are provided,
+    all sub-model fields default to None.
 
     Args:
         task_id: The ClickUp task ID (becomes campaign_id).
@@ -181,12 +466,15 @@ def build_campaign(task_id: str, parsed_fields: dict[str, Any]) -> Campaign:
     Returns:
         A validated Campaign Pydantic model.
     """
+    # Resolve dot-path keys into nested structure
+    nested = _resolve_dot_paths(parsed_fields)
+
     # Parse influencer names from raw text
-    influencers_raw = str(parsed_fields.get("influencers_raw", ""))
+    influencers_raw = str(nested.get("influencers_raw", ""))
     influencer_names = parse_influencer_list(influencers_raw)
 
     # Determine platform
-    platform_str = str(parsed_fields.get("platform", "instagram")).lower()
+    platform_str = str(nested.get("platform", "instagram")).lower()
     try:
         platform = Platform(platform_str)
     except ValueError:
@@ -196,20 +484,52 @@ def build_campaign(task_id: str, parsed_fields: dict[str, Any]) -> Campaign:
     influencers = [CampaignInfluencer(name=name, platform=platform) for name in influencer_names]
 
     # Convert monetary values to Decimal via string to avoid float rejection
-    budget = Decimal(str(parsed_fields.get("budget", "0")))
-    cpm_min = Decimal(str(parsed_fields.get("cpm_min", "0")))
-    cpm_max = Decimal(str(parsed_fields.get("cpm_max", "0")))
+    budget = _decimal_from_field(nested.get("budget"))
+    cpm_min = _decimal_from_field(nested.get("cpm_min"))
+    cpm_max = _decimal_from_field(nested.get("cpm_max"))
+
+    # Determine target_deliverables (may be list from multi_select or string)
+    td_raw = nested.get("target_deliverables", "TBD")
+    if isinstance(td_raw, list):
+        target_deliverables_str = ", ".join(td_raw)
+    else:
+        target_deliverables_str = str(td_raw)
+
+    # Client name may be nested under background or at top level
+    client_name = str(nested.get("client_name", "Unknown"))
+
+    # Build sub-models (all return None if data insufficient)
+    background_data = nested.get("background")
+    background = CampaignBackground(**background_data) if isinstance(background_data, dict) and background_data else None
+
+    goals = _build_campaign_goals(nested)
+    deliverables = _build_deliverable_scenarios(nested, target_deliverables_str)
+    usage_rights = _build_usage_rights(nested)
+    budget_constraints = _build_budget_constraints(nested)
+    product_leverage = _build_product_leverage(nested)
+    requirements = _build_requirements(nested)
+
+    distribution_data = nested.get("distribution")
+    distribution = DistributionInfo(**distribution_data) if isinstance(distribution_data, dict) and distribution_data else None
 
     return Campaign(
         campaign_id=task_id,
-        client_name=str(parsed_fields.get("client_name", "Unknown")),
+        client_name=client_name,
         budget=budget,
-        target_deliverables=str(parsed_fields.get("target_deliverables", "TBD")),
+        target_deliverables=target_deliverables_str,
         influencers=influencers,
         cpm_range=CampaignCPMRange(min_cpm=cpm_min, max_cpm=cpm_max),
         platform=platform,
-        timeline=str(parsed_fields.get("timeline", "TBD")),
+        timeline=str(nested.get("timeline", "TBD")),
         created_at=datetime.now(tz=UTC).isoformat(),
+        background=background,
+        goals=goals,
+        deliverables=deliverables,
+        usage_rights=usage_rights,
+        budget_constraints=budget_constraints,
+        product_leverage=product_leverage,
+        requirements=requirements,
+        distribution=distribution,
     )
 
 
@@ -247,14 +567,14 @@ async def ingest_campaign(
     """
     logger.info("Starting campaign ingestion", task_id=task_id)
 
-    # Step 1: Load field mapping
-    field_mapping = load_field_mapping(config_path)
+    # Step 1: Load field mapping and field types
+    field_mapping, field_types = load_field_mapping(config_path)
 
     # Step 2: Fetch full task from ClickUp API
     task_data = await fetch_clickup_task(task_id, api_token)
 
-    # Step 3: Parse custom fields
-    parsed_fields = parse_custom_fields(task_data, field_mapping)
+    # Step 3: Parse custom fields with type-aware casting
+    parsed_fields = parse_custom_fields(task_data, field_mapping, field_types)
 
     # Step 4: Build Campaign model
     campaign = build_campaign(task_id, parsed_fields)

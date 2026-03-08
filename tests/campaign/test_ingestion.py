@@ -98,8 +98,9 @@ class TestLoadFieldMapping:
             tmp_path,
             'field_mapping:\n  "Client Name": "client_name"\n  "Budget": "budget"\n',
         )
-        result = load_field_mapping(config_path)
-        assert result == {"Client Name": "client_name", "Budget": "budget"}
+        mapping, types = load_field_mapping(config_path)
+        assert mapping == {"Client Name": "client_name", "Budget": "budget"}
+        assert types == {}
 
     def test_missing_file_raises_error(self, tmp_path: Path) -> None:
         with pytest.raises(FileNotFoundError, match="Campaign fields config not found"):
@@ -107,8 +108,9 @@ class TestLoadFieldMapping:
 
     def test_empty_field_mapping_returns_empty_dict(self, tmp_path: Path) -> None:
         config_path = _write_config(tmp_path, "other_key: value\n")
-        result = load_field_mapping(config_path)
-        assert result == {}
+        mapping, types = load_field_mapping(config_path)
+        assert mapping == {}
+        assert types == {}
 
     def test_loads_full_config(self, tmp_path: Path) -> None:
         config_path = _write_config(
@@ -121,9 +123,10 @@ class TestLoadFieldMapping:
                 "influencer_list_format: comma_separated\n"
             ),
         )
-        result = load_field_mapping(config_path)
-        assert len(result) == 3
-        assert result["Influencer List"] == "influencers_raw"
+        mapping, types = load_field_mapping(config_path)
+        assert len(mapping) == 3
+        assert mapping["Influencer List"] == "influencers_raw"
+        assert types == {}
 
 
 # --- parse_custom_fields tests ---
