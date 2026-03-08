@@ -37,6 +37,9 @@ All decisions logged in PROJECT.md Key Decisions table.
 - [13-01] Used StrEnum ordering for UsageRightsDuration comparison instead of numeric weights
 - [13-01] Made all new sub-model fields optional on Campaign for backward compatibility
 - [13-01] Removed must_have_at_least_one_influencer validator for pre-assignment campaign creation
+- [13-02] Used config-driven field_types for type-aware ClickUp field parsing
+- [13-02] Boolean select fields auto-detected within select handler via case-insensitive Yes/No check
+- [13-02] load_field_mapping returns tuple (mapping, types) for single YAML read
 - [13-03] derive_cpm_bounds returns CPM_FLOOR/CPM_CEILING defaults when campaign has no budget_constraints (backward compat)
 - [13-03] Leniency defaults to 0% when cpm_target is provided but cpm_leniency_pct is None
 
