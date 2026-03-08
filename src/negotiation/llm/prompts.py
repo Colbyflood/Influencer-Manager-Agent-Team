@@ -41,6 +41,7 @@ RULES:
 - Do not reference other influencers or their rates.
 - Keep the email concise -- 3-5 paragraphs maximum.
 - Address the influencer by their first name.
+- Follow the NEGOTIATION LEVER instructions exactly. They specify which tactic to use (e.g., adjusting deliverables, offering product, sharing CPM data). Incorporate the lever naturally into the email.
 """
 
 EMAIL_COMPOSITION_USER_PROMPT = """Compose a counter-offer email for this negotiation:
@@ -51,6 +52,9 @@ NEGOTIATION STAGE: {negotiation_stage}
 THEIR PROPOSED RATE: ${their_rate}
 OUR COUNTER RATE: ${our_rate}
 DELIVERABLES: {deliverables_summary}
+
+NEGOTIATION LEVER:
+{lever_instructions}
 
 CONVERSATION HISTORY:
 {negotiation_history}
