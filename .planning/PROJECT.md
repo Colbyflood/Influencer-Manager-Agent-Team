@@ -70,7 +70,18 @@ The system can:
 
 ### Active
 
-(No active requirements -- define with `/gsd:new-milestone`)
+**Current Milestone: v1.2 Real-World Negotiation Intelligence**
+
+**Goal:** Align the agent with real-world campaign data, negotiation strategy, and counterparty awareness so it can handle actual AGM negotiations using the full ClickUp form fields and proven tactics.
+
+**Target features:**
+- Expanded campaign data model (42 form fields vs current 8)
+- Real negotiation levers: deliverable scenarios, usage rights tiers, product leverage, per-influencer cost bounds, CPM target + leniency
+- Knowledge base rewrite with real strategy docs and email examples
+- Email composition matching real AGM negotiation style
+- Counterparty detection (influencer vs talent manager/agency)
+- Agency relationship tracking with multi-contact threads
+- Strategy adaptation based on counterparty type
 
 ### Out of Scope
 
@@ -92,8 +103,9 @@ The system can:
 - Team currently uses Instantly for cold email outreach, then manually handles negotiation replies
 - Influencer metrics (avg views from 9 recent posts) are pre-loaded into campaign data, not pulled live
 - Campaign information is input via ClickUp forms with key details per client project
-- CPM pricing model: start negotiations at $20 CPM, willing to move up toward $30 CPM per influencer
-- $30 CPM is the per-influencer escalation threshold; future agent will manage campaign-level CPM averaging
+- CPM pricing model: configurable per campaign via CPM Target + CPM Leniency (e.g. $30 target, 40% leniency)
+- Per-influencer cost bounds: minimum offer floor, maximum without human approval ceiling
+- Negotiations happen with both influencers directly and talent managers/agencies — strategy differs
 - This is the first agent in a planned team of collaborative agents covering the full influencer marketing pipeline
 - v1.0 shipped with 691 tests, 22/22 requirements satisfied, all E2E flows verified
 - v1.1 added 40 more tests (731 total + 4 live), 14/14 production requirements satisfied
@@ -132,4 +144,4 @@ The system can:
 | Singleton row pattern for watch state | Simpler than key-value table for single Gmail watch | ✓ Good -- CHECK(id=1) constraint enforces it |
 
 ---
-*Last updated: 2026-02-19 after v1.1 milestone completion*
+*Last updated: 2026-03-08 after v1.2 milestone start*
