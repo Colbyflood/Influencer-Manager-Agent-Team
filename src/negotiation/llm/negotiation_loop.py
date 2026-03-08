@@ -67,7 +67,10 @@ def process_influencer_reply(
         }
 
     # Step 2 - Load knowledge base
-    kb_content = load_knowledge_base(str(negotiation_context["platform"]))
+    kb_content = load_knowledge_base(
+        str(negotiation_context["platform"]),
+        stage=str(negotiation_context.get("negotiation_stage", "")),
+    )
 
     # Step 3 - Classify intent
     classification = classify_intent(email_body, str(negotiation_context), client)

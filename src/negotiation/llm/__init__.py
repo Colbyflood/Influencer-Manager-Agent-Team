@@ -15,7 +15,11 @@ from negotiation.llm.client import (
 )
 from negotiation.llm.composer import compose_counter_email
 from negotiation.llm.intent import classify_intent
-from negotiation.llm.knowledge_base import list_available_platforms, load_knowledge_base
+from negotiation.llm.knowledge_base import (
+    list_available_platforms,
+    load_examples_for_stage,
+    load_knowledge_base,
+)
 from negotiation.llm.models import (
     AgreementPayload,
     ComposedEmail,
@@ -46,6 +50,7 @@ __all__ = [
     "compose_counter_email",
     "get_anthropic_client",
     "list_available_platforms",
+    "load_examples_for_stage",
     "load_knowledge_base",
     "process_influencer_reply",
     "validate_composed_email",

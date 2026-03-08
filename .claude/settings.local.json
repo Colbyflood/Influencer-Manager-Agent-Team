@@ -16,7 +16,9 @@
       "Bash(# Check that there are no env file dependencies needed that would break CI grep -rn \"\"load_dotenv\\\\|dotenv_path\"\" \"\"/Users/colbyflood/Influencer Manager Agent Team/Influencer-Manager-Agent-Team/src/\"\" --include=\"\"*.py\"\")",
       "Bash(# Attempt to check branch protection via gh cli gh api repos/Colbyflood/Influencer-Manager-Agent-Team/branches/main/protection)",
       "Bash(gh api:*)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:forms.clickup.com)",
+      "Skill(gsd:new-milestone)"
     ]
   }
 }

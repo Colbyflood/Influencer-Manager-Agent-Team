@@ -512,7 +512,8 @@ async def start_negotiations_for_campaign(
             kb_content = load_knowledge_base(
                 str(sheet_data.platform)
                 if hasattr(sheet_data, "platform")
-                else str(campaign.platform)
+                else str(campaign.platform),
+                stage="initial_offer",
             )
 
             composed = compose_counter_email(
