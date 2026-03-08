@@ -61,6 +61,10 @@ All decisions logged in PROJECT.md Key Decisions table.
 - [16-01] 13 known agency domains and 11 personal domains in lookup tables
 - [16-01] Confidence thresholds: 0.9 for 2+ signals, 0.8 for strong signal, 0.6 for weak, 0.5 default
 - [16-01] Signature scanning limited to last 10 lines of email body
+- [16-02] ThreadContactRegistry uses mutable dataclass internally, ThreadContact uses frozen Pydantic for immutable public API
+- [16-02] Email keys always lowercased for case-insensitive contact deduplication
+- [16-02] Thread type auto-upgrades from direct_influencer to talent_manager when any manager detected
+- [16-02] detect_human_reply known_contacts defaults to None for full backward compatibility
 - [16-03] Tone guidance injected in user prompt (not system prompt) to vary per-request without invalidating cached system prompt
 - [16-03] Default tone is direct_influencer for backward compatibility when counterparty_type is missing/empty/None
 
@@ -75,5 +79,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-08
-Stopped at: Completed 16-03-PLAN.md (Tone Adjustment)
+Stopped at: Completed 16-02-PLAN.md (Contact Tracking and Pipeline Integration)
 Resume file: None
