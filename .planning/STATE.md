@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-08)
 
 **Core value:** The agent must negotiate influencer rates accurately using CPM-based logic and reliably communicate the outcome -- every agreed deal must result in a clear, actionable Slack notification to the team.
-**Current focus:** Phase 16 - Counterparty Intelligence (v1.2)
+**Current focus:** Phase 17 - Email Composition and Style (v1.2)
 
 ## Current Position
 
-Phase: 16 of 17 (Counterparty Intelligence)
-Plan: 3 of 3 in current phase
+Phase: 17 of 17 (Email Composition and Style)
+Plan: 1 of 2 in current phase
 Status: In Progress
-Last activity: 2026-03-08 — Completed 16-03-PLAN.md
+Last activity: 2026-03-08 — Completed 17-01-PLAN.md
 
-Progress: [##############################] 98% (33/33 plans v1.0+v1.1, 12/4 v1.2)
+Progress: [##############################] 99% (33/33 plans v1.0+v1.1, 13/4 v1.2)
 
 ## Performance Metrics
 
@@ -67,6 +67,8 @@ All decisions logged in PROJECT.md Key Decisions table.
 - [16-02] detect_human_reply known_contacts defaults to None for full backward compatibility
 - [16-03] Tone guidance injected in user prompt (not system prompt) to vary per-request without invalidating cached system prompt
 - [16-03] Default tone is direct_influencer for backward compatibility when counterparty_type is missing/empty/None
+- [17-01] Non-numeric rate values handled gracefully in _format_currency (return as-is) for backward compatibility
+- [17-01] SOW block built deterministically in Python and embedded verbatim in prompt to prevent LLM reformulation
 
 ### Pending Todos
 
@@ -79,5 +81,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-08
-Stopped at: Completed 16-02-PLAN.md (Contact Tracking and Pipeline Integration)
+Stopped at: Completed 17-01-PLAN.md (AGM Style & SOW Formatter)
 Resume file: None
