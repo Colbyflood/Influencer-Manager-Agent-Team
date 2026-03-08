@@ -15,13 +15,16 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from negotiation.campaign.ingestion import (
+    _resolve_dot_paths,
     build_campaign,
     ingest_campaign,
     load_field_mapping,
+    parse_boolean,
     parse_custom_fields,
+    parse_duration_select,
     parse_influencer_list,
 )
-from negotiation.campaign.models import Campaign
+from negotiation.campaign.models import Campaign, UsageRightsDuration
 from negotiation.domain.types import Platform
 from negotiation.sheets.models import InfluencerRow
 
@@ -632,3 +635,492 @@ class TestIngestCampaign:
         assert result["found_influencers"][0]["name"] == "Alice Johnson"
         assert len(result["missing_influencers"]) == 1
         assert result["missing_influencers"][0] == "Ghost Influencer"
+
+
+# --- Expanded ingestion tests (42-field) ---
+
+
+# Full field mapping matching campaign_fields.yaml
+_FULL_FIELD_MAPPING: dict[str, str] = {
+    "Client Name": "client_name",
+    "Client Website": "background.client_website",
+    "Campaign Manager": "background.campaign_manager",
+    "Payment Methods": "background.payment_methods",
+    "Payment Terms": "background.payment_terms",
+    "Campaign Type / Primary Goal": "goals.primary_goal",
+    "Secondary Goal": "goals.secondary_goal",
+    "Business Context": "goals.business_context",
+    "Optimize For": "goals.optimize_for",
+    "CPM Target": "budget_constraints.cpm_target",
+    "CPM Leniency": "budget_constraints.cpm_leniency_pct",
+    "Platform Distribution": "distribution.platform_distribution",
+    "Market Distribution": "distribution.market_distribution",
+    "Influencer Size Distribution": "distribution.influencer_size_distribution",
+    "Target Deliverables": "target_deliverables",
+    "Content Syndication": "deliverables.content_syndication",
+    "Minimum Deliverables Scenario 1": "deliverables.scenario_1",
+    "Minimum Deliverables Scenario 2": "deliverables.scenario_2",
+    "Minimum Deliverables Scenario 3": "deliverables.scenario_3",
+    "Usage Rights - Target for: Paid Usage": "usage_rights.target.paid_usage",
+    "Usage Rights - Target for: Whitelisting": "usage_rights.target.whitelisting",
+    "Usage Rights - Target for: Organic/Owned": "usage_rights.target.organic_owned",
+    "Usage Rights - Minimum for: Paid Usage": "usage_rights.minimum.paid_usage",
+    "Usage Rights - Minimum for: Whitelisting": "usage_rights.minimum.whitelisting",
+    "Usage Rights - Minimum for: Organic/Owned": "usage_rights.minimum.organic_owned",
+    "Campaign Budget": "budget",
+    "Target Number of Influencers": "budget_constraints.target_influencer_count",
+    "Target Cost per Influencer range": "budget_constraints.target_cost_range",
+    "Min Cost per Influencer": "budget_constraints.min_cost_per_influencer",
+    "Max Cost without Human Approval": "budget_constraints.max_cost_without_approval",
+    "Product as Lever": "product_leverage.product_available",
+    "Product Description": "product_leverage.product_description",
+    "Product Monetary Value": "product_leverage.product_monetary_value",
+    "Category Exclusivity Required": "requirements.exclusivity_required",
+    "Exclusivity Term": "requirements.exclusivity_term",
+    "Exclusivity Description": "requirements.exclusivity_description",
+    "Content Posted Organically": "requirements.content_posted_organically",
+    "Content Approval Required": "requirements.content_approval_required",
+    "Revision Rounds": "requirements.revision_rounds",
+    "Raw Footage Required": "requirements.raw_footage_required",
+    "Content Delivery Date": "requirements.content_delivery_date",
+    "Content Publish Date": "requirements.content_publish_date",
+    "Influencer List": "influencers_raw",
+    "Platform": "platform",
+    "Timeline": "timeline",
+}
+
+_FULL_FIELD_TYPES: dict[str, list[str]] = {
+    "number": [
+        "CPM Target", "CPM Leniency", "Campaign Budget",
+        "Target Number of Influencers", "Min Cost per Influencer",
+        "Max Cost without Human Approval", "Product Monetary Value",
+        "Revision Rounds",
+    ],
+    "date_range": ["Content Delivery Date", "Content Publish Date"],
+    "select": [
+        "Campaign Type / Primary Goal", "Secondary Goal", "Optimize For",
+        "Payment Terms", "Content Syndication", "Exclusivity Term",
+        "Raw Footage Required", "Content Approval Required",
+        "Category Exclusivity Required", "Content Posted Organically",
+        "Product as Lever",
+    ],
+    "multi_select": ["Payment Methods", "Target Deliverables"],
+    "duration_select": [
+        "Usage Rights - Target for: Paid Usage",
+        "Usage Rights - Target for: Whitelisting",
+        "Usage Rights - Target for: Organic/Owned",
+        "Usage Rights - Minimum for: Paid Usage",
+        "Usage Rights - Minimum for: Whitelisting",
+        "Usage Rights - Minimum for: Organic/Owned",
+    ],
+}
+
+
+def _build_full_clickup_task() -> dict[str, Any]:
+    """Build a mock ClickUp task with all 42+ custom fields in ClickUp format."""
+    return {
+        "id": "task_full_42",
+        "name": "Full Campaign Task",
+        "custom_fields": [
+            # Background
+            {"name": "Client Name", "type": "text", "value": "Acme Corp"},
+            {"name": "Client Website", "type": "url", "value": "https://acme.com"},
+            {"name": "Campaign Manager", "type": "text", "value": "Jane Doe"},
+            {"name": "Payment Methods", "type": "labels", "value": [{"name": "Wire"}, {"name": "PayPal"}]},
+            {"name": "Payment Terms", "type": "drop_down", "value": {"name": "Net 30", "id": "pt1"}},
+            # Goals
+            {"name": "Campaign Type / Primary Goal", "type": "drop_down", "value": {"name": "Organic Social Performance", "id": "g1"}},
+            {"name": "Secondary Goal", "type": "drop_down", "value": {"name": "Brand Awareness", "id": "g2"}},
+            {"name": "Business Context", "type": "text", "value": "Q1 product launch"},
+            {"name": "Optimize For", "type": "drop_down", "value": {"name": "CPM", "id": "o1"}},
+            # Budget / CPM
+            {"name": "CPM Target", "type": "number", "value": "25"},
+            {"name": "CPM Leniency", "type": "number", "value": "10"},
+            # Distribution
+            {"name": "Platform Distribution", "type": "text", "value": "60% TikTok, 40% IG"},
+            {"name": "Market Distribution", "type": "text", "value": "US 80%, UK 20%"},
+            {"name": "Influencer Size Distribution", "type": "text", "value": "50% Macro, 50% Micro"},
+            # Deliverables
+            {"name": "Target Deliverables", "type": "labels", "value": [{"name": "TikTok"}, {"name": "Instagram Reel"}]},
+            {"name": "Content Syndication", "type": "drop_down", "value": {"name": "Yes", "id": "cs1"}},
+            {"name": "Minimum Deliverables Scenario 1", "type": "text", "value": "1x TikTok"},
+            {"name": "Minimum Deliverables Scenario 2", "type": "text", "value": "1x TikTok + 1x IG Reel"},
+            {"name": "Minimum Deliverables Scenario 3", "type": "text", "value": "2x TikTok + 1x IG Reel"},
+            # Usage Rights
+            {"name": "Usage Rights - Target for: Paid Usage", "type": "drop_down", "value": {"name": "90 Days", "id": "ur1"}},
+            {"name": "Usage Rights - Target for: Whitelisting", "type": "drop_down", "value": {"name": "60 Days", "id": "ur2"}},
+            {"name": "Usage Rights - Target for: Organic/Owned", "type": "drop_down", "value": {"name": "Perpetual", "id": "ur3"}},
+            {"name": "Usage Rights - Minimum for: Paid Usage", "type": "drop_down", "value": {"name": "30 Days", "id": "ur4"}},
+            {"name": "Usage Rights - Minimum for: Whitelisting", "type": "drop_down", "value": {"name": "30 Days", "id": "ur5"}},
+            {"name": "Usage Rights - Minimum for: Organic/Owned", "type": "drop_down", "value": {"name": "90 Days", "id": "ur6"}},
+            # Budget
+            {"name": "Campaign Budget", "type": "number", "value": "50000"},
+            {"name": "Target Number of Influencers", "type": "number", "value": "10"},
+            {"name": "Target Cost per Influencer range", "type": "text", "value": "$3000-$7000"},
+            {"name": "Min Cost per Influencer", "type": "number", "value": "2000"},
+            {"name": "Max Cost without Human Approval", "type": "number", "value": "5000"},
+            # Product Leverage
+            {"name": "Product as Lever", "type": "drop_down", "value": {"name": "Yes", "id": "pl1"}},
+            {"name": "Product Description", "type": "text", "value": "Premium skincare set"},
+            {"name": "Product Monetary Value", "type": "number", "value": "150"},
+            # Requirements
+            {"name": "Category Exclusivity Required", "type": "drop_down", "value": {"name": "Yes", "id": "ex1"}},
+            {"name": "Exclusivity Term", "type": "drop_down", "value": {"name": "30 Days", "id": "et1"}},
+            {"name": "Exclusivity Description", "type": "text", "value": "No competing skincare brands"},
+            {"name": "Content Posted Organically", "type": "drop_down", "value": {"name": "Yes", "id": "cp1"}},
+            {"name": "Content Approval Required", "type": "drop_down", "value": {"name": "Yes", "id": "ca1"}},
+            {"name": "Revision Rounds", "type": "number", "value": "2"},
+            {"name": "Raw Footage Required", "type": "drop_down", "value": {"name": "Yes", "id": "rf1"}},
+            {"name": "Content Delivery Date", "type": "date", "value": {"start": 1700000000000, "end": 1702000000000}},
+            {"name": "Content Publish Date", "type": "date", "value": {"start": 1703000000000, "end": 1705000000000}},
+            # Influencer / Platform / Timeline
+            {"name": "Influencer List", "type": "text", "value": "Alice, Bob, Charlie"},
+            {"name": "Platform", "type": "text", "value": "tiktok"},
+            {"name": "Timeline", "type": "text", "value": "Q1 2026"},
+        ],
+    }
+
+
+class TestParseCustomFieldsExpanded:
+    """Tests for expanded parse_custom_fields with all ClickUp field types."""
+
+    def test_parses_all_42_fields(self) -> None:
+        """All 42 fields parsed correctly into flat dict with dot-path keys."""
+        task_data = _build_full_clickup_task()
+        result = parse_custom_fields(task_data, _FULL_FIELD_MAPPING, _FULL_FIELD_TYPES)
+
+        # Text fields
+        assert result["client_name"] == "Acme Corp"
+        assert result["background.client_website"] == "https://acme.com"
+        assert result["background.campaign_manager"] == "Jane Doe"
+
+        # Multi-select
+        assert result["background.payment_methods"] == ["Wire", "PayPal"]
+        assert result["target_deliverables"] == ["TikTok", "Instagram Reel"]
+
+        # Select fields (string extraction)
+        assert result["goals.primary_goal"] == "Organic Social Performance"
+        assert result["goals.secondary_goal"] == "Brand Awareness"
+        assert result["background.payment_terms"] == "Net 30"
+
+        # Select -> enum string
+        assert result["goals.optimize_for"] == "CPM"
+
+        # Number fields
+        assert result["budget_constraints.cpm_target"] == 25.0
+        assert result["budget_constraints.cpm_leniency_pct"] == 10.0
+        assert result["budget"] == 50000.0
+
+        # Boolean select fields (Yes/No)
+        assert result["deliverables.content_syndication"] is True
+        assert result["product_leverage.product_available"] is True
+        assert result["requirements.exclusivity_required"] is True
+        assert result["requirements.content_posted_organically"] is True
+        assert result["requirements.content_approval_required"] is True
+
+        # Duration select fields
+        assert result["usage_rights.target.paid_usage"] == UsageRightsDuration.days_90
+        assert result["usage_rights.target.whitelisting"] == UsageRightsDuration.days_60
+        assert result["usage_rights.target.organic_owned"] == UsageRightsDuration.perpetual
+        assert result["usage_rights.minimum.paid_usage"] == UsageRightsDuration.days_30
+
+        # Date range
+        assert "to" in result["requirements.content_delivery_date"]
+        assert "to" in result["requirements.content_publish_date"]
+
+    def test_select_field_as_object(self) -> None:
+        """ClickUp select field with value as {name, id} object."""
+        task_data: dict[str, Any] = {
+            "custom_fields": [
+                {"name": "Optimize For", "type": "drop_down", "value": {"name": "CPM", "id": "123"}},
+            ],
+        }
+        mapping = {"Optimize For": "goals.optimize_for"}
+        types = {"select": ["Optimize For"]}
+        result = parse_custom_fields(task_data, mapping, types)
+        assert result["goals.optimize_for"] == "CPM"
+
+    def test_multi_select_extracts_names(self) -> None:
+        """ClickUp multi-select field extracts list of option names."""
+        task_data: dict[str, Any] = {
+            "custom_fields": [
+                {"name": "Payment Methods", "type": "labels", "value": [{"name": "Wire"}, {"name": "ACH"}]},
+            ],
+        }
+        mapping = {"Payment Methods": "background.payment_methods"}
+        types = {"multi_select": ["Payment Methods"]}
+        result = parse_custom_fields(task_data, mapping, types)
+        assert result["background.payment_methods"] == ["Wire", "ACH"]
+
+
+class TestDotPathResolution:
+    """Tests for _resolve_dot_paths helper."""
+
+    def test_single_level_keys_stay_flat(self) -> None:
+        flat = {"client_name": "Acme", "budget": 5000}
+        result = _resolve_dot_paths(flat)
+        assert result == {"client_name": "Acme", "budget": 5000}
+
+    def test_two_level_paths(self) -> None:
+        flat = {
+            "goals.primary_goal": "Performance",
+            "goals.secondary_goal": "Awareness",
+            "budget_constraints.cpm_target": 25,
+        }
+        result = _resolve_dot_paths(flat)
+        assert result == {
+            "goals": {"primary_goal": "Performance", "secondary_goal": "Awareness"},
+            "budget_constraints": {"cpm_target": 25},
+        }
+
+    def test_three_level_paths(self) -> None:
+        flat = {
+            "usage_rights.target.paid_usage": UsageRightsDuration.days_90,
+            "usage_rights.target.whitelisting": UsageRightsDuration.days_60,
+            "usage_rights.minimum.paid_usage": UsageRightsDuration.days_30,
+        }
+        result = _resolve_dot_paths(flat)
+        assert result["usage_rights"]["target"]["paid_usage"] == UsageRightsDuration.days_90
+        assert result["usage_rights"]["target"]["whitelisting"] == UsageRightsDuration.days_60
+        assert result["usage_rights"]["minimum"]["paid_usage"] == UsageRightsDuration.days_30
+
+    def test_mixed_flat_and_nested(self) -> None:
+        flat = {
+            "client_name": "Acme",
+            "goals.primary_goal": "X",
+            "usage_rights.target.paid_usage": UsageRightsDuration.days_30,
+        }
+        result = _resolve_dot_paths(flat)
+        assert result["client_name"] == "Acme"
+        assert result["goals"]["primary_goal"] == "X"
+        assert result["usage_rights"]["target"]["paid_usage"] == UsageRightsDuration.days_30
+
+    def test_empty_dict(self) -> None:
+        assert _resolve_dot_paths({}) == {}
+
+
+class TestBuildCampaignExpanded:
+    """Tests for build_campaign with full 42-field parsed data."""
+
+    def _make_full_parsed_fields(self) -> dict[str, Any]:
+        """Return a parsed_fields dict with all 42 fields using dot-path keys."""
+        return {
+            "client_name": "Acme Corp",
+            "background.client_website": "https://acme.com",
+            "background.campaign_manager": "Jane Doe",
+            "background.payment_methods": ["Wire", "PayPal"],
+            "background.payment_terms": "Net 30",
+            "goals.primary_goal": "Organic Social Performance",
+            "goals.secondary_goal": "Brand Awareness",
+            "goals.business_context": "Q1 product launch",
+            "goals.optimize_for": "cpm",
+            "budget_constraints.cpm_target": 25,
+            "budget_constraints.cpm_leniency_pct": 10,
+            "distribution.platform_distribution": "60% TikTok, 40% IG",
+            "distribution.market_distribution": "US 80%, UK 20%",
+            "distribution.influencer_size_distribution": "50% Macro, 50% Micro",
+            "target_deliverables": ["TikTok", "Instagram Reel"],
+            "deliverables.content_syndication": True,
+            "deliverables.scenario_1": "1x TikTok",
+            "deliverables.scenario_2": "1x TikTok + 1x IG Reel",
+            "deliverables.scenario_3": "2x TikTok + 1x IG Reel",
+            "usage_rights.target.paid_usage": UsageRightsDuration.days_90,
+            "usage_rights.target.whitelisting": UsageRightsDuration.days_60,
+            "usage_rights.target.organic_owned": UsageRightsDuration.perpetual,
+            "usage_rights.minimum.paid_usage": UsageRightsDuration.days_30,
+            "usage_rights.minimum.whitelisting": UsageRightsDuration.days_30,
+            "usage_rights.minimum.organic_owned": UsageRightsDuration.days_90,
+            "budget": 50000,
+            "budget_constraints.target_influencer_count": 10,
+            "budget_constraints.target_cost_range": "$3000-$7000",
+            "budget_constraints.min_cost_per_influencer": 2000,
+            "budget_constraints.max_cost_without_approval": 5000,
+            "product_leverage.product_available": True,
+            "product_leverage.product_description": "Premium skincare set",
+            "product_leverage.product_monetary_value": 150,
+            "requirements.exclusivity_required": True,
+            "requirements.exclusivity_term": "30 Days",
+            "requirements.exclusivity_description": "No competing skincare brands",
+            "requirements.content_posted_organically": True,
+            "requirements.content_approval_required": True,
+            "requirements.revision_rounds": 2,
+            "requirements.raw_footage_required": "Yes",
+            "requirements.content_delivery_date": "2023-11-14T22:13:20+00:00 to 2023-12-08T01:46:40+00:00",
+            "requirements.content_publish_date": "2023-12-19T15:33:20+00:00 to 2024-01-11T19:06:40+00:00",
+            "influencers_raw": "Alice, Bob, Charlie",
+            "platform": "tiktok",
+            "timeline": "Q1 2026",
+        }
+
+    def test_all_sub_models_constructed(self) -> None:
+        """build_campaign with all 42 fields produces all sub-models."""
+        parsed = self._make_full_parsed_fields()
+        campaign = build_campaign("task_full", parsed)
+
+        assert isinstance(campaign, Campaign)
+        assert campaign.campaign_id == "task_full"
+        assert campaign.client_name == "Acme Corp"
+        assert campaign.platform == Platform.TIKTOK
+
+        # Sub-models present
+        assert campaign.background is not None
+        assert campaign.background.client_website == "https://acme.com"
+        assert campaign.background.campaign_manager == "Jane Doe"
+        assert campaign.background.payment_methods == ["Wire", "PayPal"]
+
+        assert campaign.goals is not None
+        assert campaign.goals.primary_goal == "Organic Social Performance"
+        assert campaign.goals.secondary_goal == "Brand Awareness"
+
+        assert campaign.deliverables is not None
+        assert campaign.deliverables.content_syndication is True
+        assert campaign.deliverables.scenario_1 == "1x TikTok"
+        assert campaign.deliverables.scenario_2 == "1x TikTok + 1x IG Reel"
+        assert campaign.deliverables.scenario_3 == "2x TikTok + 1x IG Reel"
+        assert "TikTok" in campaign.deliverables.target_deliverables
+
+        assert campaign.usage_rights is not None
+        assert campaign.usage_rights.target.paid_usage == UsageRightsDuration.days_90
+        assert campaign.usage_rights.minimum.paid_usage == UsageRightsDuration.days_30
+
+        assert campaign.budget_constraints is not None
+        assert campaign.budget_constraints.campaign_budget == Decimal("50000")
+        assert campaign.budget_constraints.cpm_target == Decimal("25")
+        assert campaign.budget_constraints.target_influencer_count == 10
+
+        assert campaign.product_leverage is not None
+        assert campaign.product_leverage.product_available is True
+        assert campaign.product_leverage.product_monetary_value == Decimal("150")
+
+        assert campaign.requirements is not None
+        assert campaign.requirements.exclusivity_required is True
+        assert campaign.requirements.revision_rounds == 2
+
+        assert campaign.distribution is not None
+        assert "TikTok" in campaign.distribution.platform_distribution
+
+    def test_backward_compatible_fields_populated(self) -> None:
+        """Backward-compatible fields (budget, target_deliverables, cpm_range) populated."""
+        parsed = self._make_full_parsed_fields()
+        campaign = build_campaign("task_full", parsed)
+
+        assert campaign.budget == Decimal("50000")
+        assert "TikTok" in campaign.target_deliverables
+        assert campaign.cpm_range.min_cpm == Decimal("0")  # not in parsed
+        assert len(campaign.influencers) == 3
+
+    def test_original_8_fields_only_backward_compat(self) -> None:
+        """Build with only original 8 fields -- sub-models should be None."""
+        parsed: dict[str, Any] = {
+            "client_name": "Old Client",
+            "budget": 5000,
+            "target_deliverables": "2 posts",
+            "influencers_raw": "Alice",
+            "cpm_min": 10,
+            "cpm_max": 25,
+            "platform": "instagram",
+            "timeline": "March 2026",
+        }
+        campaign = build_campaign("task_old", parsed)
+
+        assert isinstance(campaign, Campaign)
+        assert campaign.client_name == "Old Client"
+        assert campaign.budget == Decimal("5000")
+        assert campaign.platform == Platform.INSTAGRAM
+
+        # All sub-models should be None
+        assert campaign.background is None
+        assert campaign.goals is None
+        assert campaign.deliverables is None
+        assert campaign.usage_rights is None
+        assert campaign.budget_constraints is None
+        assert campaign.product_leverage is None
+        assert campaign.requirements is None
+        assert campaign.distribution is None
+
+
+class TestBooleanParsing:
+    """Tests for parse_boolean helper."""
+
+    def test_yes_string(self) -> None:
+        assert parse_boolean("Yes") is True
+
+    def test_no_string(self) -> None:
+        assert parse_boolean("No") is False
+
+    def test_bool_true(self) -> None:
+        assert parse_boolean(True) is True
+
+    def test_bool_false(self) -> None:
+        assert parse_boolean(False) is False
+
+    def test_yes_case_insensitive(self) -> None:
+        assert parse_boolean("yes") is True
+        assert parse_boolean("YES") is True
+
+    def test_no_case_insensitive(self) -> None:
+        assert parse_boolean("no") is False
+
+    def test_clickup_select_object_yes(self) -> None:
+        assert parse_boolean({"name": "Yes", "id": "123"}) is True
+
+    def test_clickup_select_object_no(self) -> None:
+        assert parse_boolean({"name": "No", "id": "456"}) is False
+
+
+class TestDurationSelectParsing:
+    """Tests for parse_duration_select helper."""
+
+    def test_30_days(self) -> None:
+        assert parse_duration_select("30 Days") == UsageRightsDuration.days_30
+
+    def test_60_days(self) -> None:
+        assert parse_duration_select("60 Days") == UsageRightsDuration.days_60
+
+    def test_90_days(self) -> None:
+        assert parse_duration_select("90 Days") == UsageRightsDuration.days_90
+
+    def test_6_months(self) -> None:
+        assert parse_duration_select("6 Months") == UsageRightsDuration.months_6
+
+    def test_1_year(self) -> None:
+        assert parse_duration_select("1 Year") == UsageRightsDuration.year_1
+
+    def test_perpetual(self) -> None:
+        assert parse_duration_select("Perpetual") == UsageRightsDuration.perpetual
+
+    def test_not_required(self) -> None:
+        assert parse_duration_select("Not required") == UsageRightsDuration.not_required
+
+    def test_clickup_select_object(self) -> None:
+        assert parse_duration_select({"name": "90 Days", "id": "x"}) == UsageRightsDuration.days_90
+
+    def test_unknown_defaults_to_not_required(self) -> None:
+        assert parse_duration_select("Unknown Value") == UsageRightsDuration.not_required
+
+
+class TestLoadFieldMappingWithTypes:
+    """Tests for load_field_mapping returning field_types."""
+
+    def test_returns_field_types(self, tmp_path: Path) -> None:
+        config_path = _write_config(
+            tmp_path,
+            (
+                "field_mapping:\n"
+                '  "Client Name": "client_name"\n'
+                "field_types:\n"
+                '  number: ["CPM Target"]\n'
+                '  select: ["Optimize For"]\n'
+            ),
+        )
+        mapping, types = load_field_mapping(config_path)
+        assert mapping == {"Client Name": "client_name"}
+        assert types == {"number": ["CPM Target"], "select": ["Optimize For"]}
+
+    def test_missing_field_types_returns_empty(self, tmp_path: Path) -> None:
+        config_path = _write_config(
+            tmp_path,
+            'field_mapping:\n  "Client Name": "client_name"\n',
+        )
+        mapping, types = load_field_mapping(config_path)
+        assert types == {}
