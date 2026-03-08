@@ -499,9 +499,9 @@ async def start_negotiations_for_campaign(
     # Instantiate CampaignCPMTracker for this campaign
     from negotiation.campaign.cpm_tracker import CampaignCPMTracker
     from negotiation.email.models import OutboundEmail
+    from negotiation.levers.engine import build_opening_context
     from negotiation.llm.composer import compose_counter_email
     from negotiation.llm.knowledge_base import load_knowledge_base
-    from negotiation.pricing import calculate_initial_offer
 
     # Derive CPM bounds from campaign data if available
     from negotiation.pricing.engine import derive_cpm_bounds
@@ -522,14 +522,14 @@ async def start_negotiations_for_campaign(
         sheet_data = influencer_data["sheet_data"]  # InfluencerRow
 
         try:
-            # Calculate initial offer using campaign-derived CPM floor
-            initial_rate = calculate_initial_offer(int(sheet_data.average_views), cpm_floor=cpm_floor)
+            # Use lever engine for opening position (NEG-08: open high on deliverables, low on rate)
+            average_views = int(sheet_data.average_views)
+            opening_rate, opening_deliverables = build_opening_context(campaign, average_views)
 
             # Create state machine
             state_machine = NegotiationStateMachine()
 
-            # Compose initial outreach email
-            # Reuse compose_counter_email with negotiation_stage="initial_outreach"
+            # Compose initial outreach email with lever-driven opening
             kb_content = load_knowledge_base(
                 str(sheet_data.platform)
                 if hasattr(sheet_data, "platform")
@@ -537,11 +537,17 @@ async def start_negotiations_for_campaign(
                 stage="initial_offer",
             )
 
+            lever_instructions = (
+                "Opening offer: request the full deliverable package (scenario 1) "
+                "at our best rate. Frame this as an exciting partnership opportunity "
+                "with comprehensive content coverage."
+            )
+
             composed = compose_counter_email(
                 influencer_name=name,
                 their_rate="not yet discussed",
-                our_rate=str(initial_rate),
-                deliverables_summary=campaign.target_deliverables,
+                our_rate=str(opening_rate),
+                deliverables_summary=opening_deliverables,
                 platform=str(sheet_data.platform)
                 if hasattr(sheet_data, "platform")
                 else str(campaign.platform),
@@ -549,6 +555,7 @@ async def start_negotiations_for_campaign(
                 knowledge_base_content=kb_content,
                 negotiation_history="",
                 client=anthropic_client,
+                lever_instructions=lever_instructions,
             )
 
             # Send as a new email (not a reply -- new thread)
@@ -608,14 +615,14 @@ async def start_negotiations_for_campaign(
                     thread_id=thread_id,
                     email_body=composed.email_body,
                     negotiation_state="initial_offer",
-                    rates_used=str(initial_rate),
+                    rates_used=str(opening_rate),
                 )
 
             logger.info(
                 "Initial outreach sent",
                 influencer=name,
                 thread_id=thread_id,
-                initial_rate=str(initial_rate),
+                initial_rate=str(opening_rate),
                 campaign=campaign.client_name,
             )
 

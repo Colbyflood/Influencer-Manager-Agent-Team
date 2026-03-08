@@ -148,6 +148,17 @@ class TestBuildNegotiationContext:
             "client_name",
             "campaign_id",
             "history",
+            # Campaign sub-models for lever engine (Plan 15-03)
+            "deliverable_scenarios",
+            "usage_rights",
+            "budget_constraints",
+            "product_leverage",
+            # Lever state defaults
+            "current_scenario",
+            "current_usage_tier",
+            "product_offered",
+            "syndication_proposed",
+            "cpm_shared",
         }
         assert set(context.keys()) == expected_keys
         assert context["influencer_name"] == "Jane"

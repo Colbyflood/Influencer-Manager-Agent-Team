@@ -11,12 +11,17 @@ import structlog
 from fastapi import FastAPI
 from pydantic import SecretStr
 
-from negotiation.app import configure_logging, create_app, initialize_services
+from negotiation.app import build_negotiation_context, configure_logging, create_app, initialize_services
 from negotiation.campaign.cpm_tracker import CampaignCPMTracker
 from negotiation.campaign.models import (
+    BudgetConstraints,
     Campaign,
     CampaignCPMRange,
     CampaignInfluencer,
+    DeliverableScenarios,
+    ProductLeverage,
+    UsageRights,
+    UsageRightsSet,
 )
 from negotiation.config import Settings
 from negotiation.domain.types import NegotiationState, Platform
@@ -629,3 +634,134 @@ class TestStatePersistence:
         from negotiation.audit.store import close_audit_db
 
         close_audit_db(services["audit_conn"])
+
+
+class TestBuildNegotiationContextLeverData:
+    """Tests for campaign sub-model and lever state data in build_negotiation_context."""
+
+    def _make_sheet_data(self):
+        """Build a mock sheet_data (InfluencerRow) for testing."""
+        mock = MagicMock()
+        mock.platform = "instagram"
+        mock.average_views = 50000
+        mock.engagement_rate = 4.5
+        mock.email = "influencer@example.com"
+        return mock
+
+    def _make_campaign_with_sub_models(self) -> Campaign:
+        """Build a Campaign with all lever sub-models populated."""
+        return Campaign(
+            campaign_id="camp-lever",
+            client_name="LeverCorp",
+            budget=Decimal("10000"),
+            target_deliverables="2 Instagram Reels + 3 Stories",
+            influencers=[],
+            cpm_range=CampaignCPMRange(min_cpm=Decimal("20"), max_cpm=Decimal("40")),
+            platform=Platform.INSTAGRAM,
+            timeline="4 weeks",
+            created_at="2026-03-01T00:00:00Z",
+            deliverables=DeliverableScenarios(
+                target_deliverables=["2 Reels", "3 Stories"],
+                scenario_1="2 Reels + 3 Stories + 1 Post",
+                scenario_2="2 Reels + 1 Story",
+                scenario_3="1 Reel",
+            ),
+            usage_rights=UsageRights(
+                target=UsageRightsSet(paid_usage="days_60", whitelisting="days_30"),
+                minimum=UsageRightsSet(paid_usage="days_30"),
+            ),
+            budget_constraints=BudgetConstraints(
+                campaign_budget=Decimal("10000"),
+                cpm_target=Decimal("25"),
+                cpm_leniency_pct=Decimal("10"),
+                min_cost_per_influencer=Decimal("500"),
+                max_cost_without_approval=Decimal("3000"),
+            ),
+            product_leverage=ProductLeverage(
+                product_available=True,
+                product_description="Skincare kit",
+                product_monetary_value=Decimal("150"),
+            ),
+        )
+
+    def test_build_negotiation_context_includes_campaign_lever_data(self) -> None:
+        """Context includes all campaign sub-models and lever state defaults."""
+        campaign = self._make_campaign_with_sub_models()
+        sheet_data = self._make_sheet_data()
+
+        ctx = build_negotiation_context(
+            influencer_name="TestInfluencer",
+            influencer_email="test@example.com",
+            sheet_data=sheet_data,
+            campaign=campaign,
+            thread_id="thread-lever-test",
+        )
+
+        # Campaign sub-models present
+        assert ctx["deliverable_scenarios"] is campaign.deliverables
+        assert ctx["usage_rights"] is campaign.usage_rights
+        assert ctx["budget_constraints"] is campaign.budget_constraints
+        assert ctx["product_leverage"] is campaign.product_leverage
+
+        # Lever state defaults
+        assert ctx["current_scenario"] == 1
+        assert ctx["current_usage_tier"] == "target"
+        assert ctx["product_offered"] is False
+        assert ctx["syndication_proposed"] is False
+        assert ctx["cpm_shared"] is False
+
+    def test_build_negotiation_context_handles_none_sub_models(self) -> None:
+        """Context still has lever keys with None values when campaign has no sub-models."""
+        campaign = _make_campaign()  # minimal campaign, no sub-models
+        sheet_data = self._make_sheet_data()
+
+        ctx = build_negotiation_context(
+            influencer_name="TestInfluencer",
+            influencer_email="test@example.com",
+            sheet_data=sheet_data,
+            campaign=campaign,
+            thread_id="thread-none-test",
+        )
+
+        # Sub-model keys present but None
+        assert "deliverable_scenarios" in ctx
+        assert ctx["deliverable_scenarios"] is None
+        assert "usage_rights" in ctx
+        assert ctx["usage_rights"] is None
+        assert "budget_constraints" in ctx
+        assert ctx["budget_constraints"] is None
+        assert "product_leverage" in ctx
+        assert ctx["product_leverage"] is None
+
+        # Lever state defaults still have correct values
+        assert ctx["current_scenario"] == 1
+        assert ctx["current_usage_tier"] == "target"
+        assert ctx["product_offered"] is False
+        assert ctx["syndication_proposed"] is False
+        assert ctx["cpm_shared"] is False
+
+    def test_existing_context_keys_preserved_with_lever_data(self) -> None:
+        """Original context keys still present alongside new lever data."""
+        campaign = self._make_campaign_with_sub_models()
+        sheet_data = self._make_sheet_data()
+
+        ctx = build_negotiation_context(
+            influencer_name="Alice",
+            influencer_email="alice@example.com",
+            sheet_data=sheet_data,
+            campaign=campaign,
+            thread_id="thread-compat",
+        )
+
+        # Original keys
+        assert ctx["influencer_name"] == "Alice"
+        assert ctx["influencer_email"] == "alice@example.com"
+        assert ctx["thread_id"] == "thread-compat"
+        assert ctx["platform"] == "instagram"
+        assert ctx["average_views"] == 50000
+        assert ctx["client_name"] == "LeverCorp"
+        assert ctx["campaign_id"] == "camp-lever"
+        assert ctx["history"] == ""
+        assert "next_cpm" in ctx
+        assert "deliverables_summary" in ctx
+        assert "deliverable_types" in ctx
