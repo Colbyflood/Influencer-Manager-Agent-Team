@@ -71,7 +71,10 @@ Plans:
   1. Knowledge base contains a negotiation playbook documenting AGM standards, available levers (deliverable tiers, usage rights, product, CPM sharing), and budget maximization strategy
   2. Knowledge base contains at least 6 real email examples covering: positive close, escalation, walk-away, bundled rate, CPM mention, and misalignment exit scenarios
   3. Agent selects relevant email examples as style reference based on current negotiation stage and scenario (e.g., counter-offer stage gets bundled rate example, not close example)
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 14-01-PLAN.md -- Rewrite KB with AGM negotiation playbook and categorized email examples
+- [ ] 14-02-PLAN.md -- Add stage-aware example selection to KB loader and wire into callers
 
 ### Phase 15: Negotiation Levers and Strategy
 **Goal**: Agent negotiates using the full lever stack -- opening high, trading deliverables and usage rights downward, offering product value, enforcing cost bounds, and exiting gracefully when deals don't work
@@ -126,7 +129,7 @@ Phases execute in numeric order: 13 and 14 (14 has no dependency on 13), then 15
 | 11. CI/CD Pipeline | v1.1 | 1/1 | Complete | 2026-02-19 |
 | 12. Monitoring, Observability, and Live Verification | v1.1 | 3/3 | Complete | 2026-02-19 |
 | 13. Campaign Data Model Expansion | 3/3 | Complete    | 2026-03-08 | - |
-| 14. Knowledge Base Rewrite | v1.2 | 0/? | Not started | - |
+| 14. Knowledge Base Rewrite | v1.2 | 0/2 | Not started | - |
 | 15. Negotiation Levers and Strategy | v1.2 | 0/? | Not started | - |
 | 16. Counterparty Intelligence | v1.2 | 0/? | Not started | - |
 | 17. Email Composition and Style | v1.2 | 0/? | Not started | - |
