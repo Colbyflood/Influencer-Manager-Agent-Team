@@ -101,7 +101,11 @@ Plans:
   2. Agent tracks agency name and multiple contacts per negotiation thread (e.g., manager + assistant) without losing negotiation state
   3. Agent uses a more transactional, data-backed tone with talent managers and a more relationship-driven, creative-alignment tone with direct influencers
   4. Agent handles multi-person threads where a manager loops in an assistant or the influencer without losing context or restarting negotiation
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 16-01-PLAN.md -- Counterparty detection models and classifier (TDD)
+- [ ] 16-02-PLAN.md -- Contact tracking and multi-person thread wiring into app pipeline
+- [ ] 16-03-PLAN.md -- Tone adjustment module wired into composer and negotiation loop
 
 ### Phase 17: Email Composition and Style
 **Goal**: Agent composes emails that look and feel like real AGM negotiation emails -- professional but warm, with structured SOW counter-offers and clear next steps
@@ -135,5 +139,5 @@ Phases execute in numeric order: 13 and 14 (14 has no dependency on 13), then 15
 | 13. Campaign Data Model Expansion | 3/3 | Complete    | 2026-03-08 | - |
 | 14. Knowledge Base Rewrite | 2/2 | Complete    | 2026-03-08 | - |
 | 15. Negotiation Levers and Strategy | 3/3 | Complete    | 2026-03-08 | - |
-| 16. Counterparty Intelligence | v1.2 | 0/? | Not started | - |
+| 16. Counterparty Intelligence | v1.2 | 0/3 | Not started | - |
 | 17. Email Composition and Style | v1.2 | 0/? | Not started | - |
