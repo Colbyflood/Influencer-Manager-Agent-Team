@@ -1,14 +1,71 @@
-# Maps ClickUp custom field names to Campaign model fields
-# Update these to match your ClickUp form's custom field names
+# Maps ALL 42 ClickUp custom field names to Campaign model field paths
+# Organized by ClickUp form section
+
 field_mapping:
+  # Background section (5 fields)
   "Client Name": "client_name"
-  "Budget": "budget"
+  "Client Website": "background.client_website"
+  "Campaign Manager": "background.campaign_manager"
+  "Payment Methods": "background.payment_methods"
+  "Payment Terms": "background.payment_terms"
+
+  # Goals section (6 fields)
+  "Campaign Type / Primary Goal": "goals.primary_goal"
+  "Secondary Goal": "goals.secondary_goal"
+  "Business Context": "goals.business_context"
+  "Optimize For": "goals.optimize_for"
+  "CPM Target": "budget_constraints.cpm_target"
+  "CPM Leniency": "budget_constraints.cpm_leniency_pct"
+
+  # Deliverables & Usage Requirements section (15 fields)
+  "Platform Distribution": "distribution.platform_distribution"
+  "Market Distribution": "distribution.market_distribution"
+  "Influencer Size Distribution": "distribution.influencer_size_distribution"
   "Target Deliverables": "target_deliverables"
+  "Content Syndication": "deliverables.content_syndication"
+  "Minimum Deliverables Scenario 1": "deliverables.scenario_1"
+  "Minimum Deliverables Scenario 2": "deliverables.scenario_2"
+  "Minimum Deliverables Scenario 3": "deliverables.scenario_3"
+  "Usage Rights - Target for: Paid Usage": "usage_rights.target.paid_usage"
+  "Usage Rights - Target for: Whitelisting": "usage_rights.target.whitelisting"
+  "Usage Rights - Target for: Organic/Owned": "usage_rights.target.organic_owned"
+  "Usage Rights - Minimum for: Paid Usage": "usage_rights.minimum.paid_usage"
+  "Usage Rights - Minimum for: Whitelisting": "usage_rights.minimum.whitelisting"
+  "Usage Rights - Minimum for: Organic/Owned": "usage_rights.minimum.organic_owned"
+
+  # Budget Considerations section (7 fields)
+  "Campaign Budget": "budget"
+  "Target Number of Influencers": "budget_constraints.target_influencer_count"
+  "Target Cost per Influencer range": "budget_constraints.target_cost_range"
+  "Min Cost per Influencer": "budget_constraints.min_cost_per_influencer"
+  "Max Cost without Human Approval": "budget_constraints.max_cost_without_approval"
+  "Product as Lever": "product_leverage.product_available"
+  "Product Description": "product_leverage.product_description"
+  "Product Monetary Value": "product_leverage.product_monetary_value"
+
+  # Other Campaign Requirements section (10 fields)
+  "Category Exclusivity Required": "requirements.exclusivity_required"
+  "Exclusivity Term": "requirements.exclusivity_term"
+  "Exclusivity Description": "requirements.exclusivity_description"
+  "Content Posted Organically": "requirements.content_posted_organically"
+  "Content Approval Required": "requirements.content_approval_required"
+  "Revision Rounds": "requirements.revision_rounds"
+  "Raw Footage Required": "requirements.raw_footage_required"
+  "Content Delivery Date": "requirements.content_delivery_date"
+  "Content Publish Date": "requirements.content_publish_date"
+
+  # Influencer list (kept from original - parsed separately via Google Sheet)
   "Influencer List": "influencers_raw"
-  "CPM Min": "cpm_min"
-  "CPM Max": "cpm_max"
   "Platform": "platform"
   "Timeline": "timeline"
 
 # How the influencer list is formatted in ClickUp
-influencer_list_format: "comma_separated"  # or "newline_separated"
+influencer_list_format: "comma_separated"
+
+# ClickUp field type hints for parsing
+field_types:
+  number: ["CPM Target", "CPM Leniency", "Campaign Budget", "Target Number of Influencers", "Min Cost per Influencer", "Max Cost without Human Approval", "Product Monetary Value", "Revision Rounds"]
+  date_range: ["Content Delivery Date", "Content Publish Date"]
+  select: ["Campaign Type / Primary Goal", "Secondary Goal", "Optimize For", "Payment Terms", "Content Syndication", "Exclusivity Term", "Raw Footage Required", "Content Approval Required", "Category Exclusivity Required", "Content Posted Organically", "Product as Lever"]
+  multi_select: ["Payment Methods", "Target Deliverables"]
+  duration_select: ["Usage Rights - Target for: Paid Usage", "Usage Rights - Target for: Whitelisting", "Usage Rights - Target for: Organic/Owned", "Usage Rights - Minimum for: Paid Usage", "Usage Rights - Minimum for: Whitelisting", "Usage Rights - Minimum for: Organic/Owned"]
