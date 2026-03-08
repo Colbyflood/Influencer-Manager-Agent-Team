@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-08)
 ## Current Position
 
 Phase: 15 of 17 (Negotiation Levers and Strategy)
-Plan: 1 of 3 in current phase
+Plan: 2 of 3 in current phase
 Status: In Progress
-Last activity: 2026-03-08 — Completed 15-01-PLAN.md
+Last activity: 2026-03-08 — Completed 15-02-PLAN.md
 
-Progress: [############################░░] 93% (33/33 plans v1.0+v1.1, 7/4 v1.2)
+Progress: [############################░░] 94% (33/33 plans v1.0+v1.1, 8/4 v1.2)
 
 ## Performance Metrics
 
@@ -51,6 +51,9 @@ All decisions logged in PROJECT.md Key Decisions table.
 - [15-01] Lever priority: floor > ceiling > deliverables > usage rights > product > syndication > CPM share > exit
 - [15-01] build_opening_context uses budget_constraints.cpm_target for floor, falls back to cpm_range.min_cpm
 - [15-01] Rate recalculation for deliverable trades keeps current rate (CPM is views-based)
+- [15-02] lever_instructions parameter placed after model param in composer for keyword-only backward compat
+- [15-02] Test base_context updated with DeliverableScenarios to prevent graceful_exit on default lever context
+- [15-02] Lever ceiling test isolates lever escalation from pricing escalation using rate within CPM bounds
 
 ### Pending Todos
 
@@ -63,5 +66,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-08
-Stopped at: Completed 15-01-PLAN.md (Lever Engine)
+Stopped at: Completed 15-02-PLAN.md (Lever Engine Integration)
 Resume file: None
