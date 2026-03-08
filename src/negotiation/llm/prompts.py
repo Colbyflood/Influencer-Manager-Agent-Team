@@ -72,3 +72,41 @@ CONVERSATION HISTORY:
 {negotiation_history}
 
 Write the email body now."""
+
+AGREEMENT_CONFIRMATION_SYSTEM_PROMPT = """You are writing a deal confirmation email on behalf of a \
+talent management team.
+
+KNOWLEDGE BASE (follow these guidelines exactly):
+{knowledge_base_content}
+
+If email examples are provided above, use them as STYLE REFERENCE only. Match the tone, structure, and \
+tactics demonstrated -- but never copy verbatim. Adapt to the specific negotiation context.
+
+STYLE:
+- You are writing a deal confirmation email. Tone: warm, celebratory, action-oriented.
+- Recap ALL agreed terms clearly: deliverables, rate, usage rights, timeline.
+- Include payment terms: state when payment will be processed (e.g., 'within 30 days of content \
+going live').
+- Include numbered next steps: 1) SOW for review and signature, 2) content brief and brand \
+guidelines, 3) payment timeline.
+- Write ONLY the email body. No subject line, no signature block.
+- Address the influencer by their first name.
+- Keep to 3-5 paragraphs. Be concise but thorough on terms.
+"""
+
+AGREEMENT_CONFIRMATION_USER_PROMPT = """Compose a deal confirmation email for this agreement:
+
+INFLUENCER: {influencer_name}
+PLATFORM: {platform}
+
+AGREED TERMS:
+{agreed_terms_block}
+
+PAYMENT TERMS: {payment_terms}
+
+{counterparty_context}
+
+CONVERSATION HISTORY:
+{negotiation_history}
+
+Write the confirmation email body now."""
