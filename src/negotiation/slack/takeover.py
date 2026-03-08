@@ -17,12 +17,13 @@ def detect_human_reply(
     thread_id: str,
     agent_email: str,
     influencer_email: str,
+    known_contacts: set[str] | None = None,
 ) -> bool:
     """Detect whether a human (non-agent, non-influencer) has replied in a thread.
 
     Fetches the Gmail thread metadata and inspects the ``From`` header of
-    each message.  If any message was sent by someone other than the agent
-    or the influencer, returns ``True``.
+    each message.  If any message was sent by someone other than the agent,
+    the influencer, or any known thread contacts, returns ``True``.
 
     Uses :func:`email.utils.parseaddr` (stdlib) for robust email address
     extraction from both ``"Name <email>"`` and plain ``"email"`` formats.
@@ -32,6 +33,9 @@ def detect_human_reply(
         thread_id: The Gmail thread ID to inspect.
         agent_email: The email address used by the agent.
         influencer_email: The influencer's email address.
+        known_contacts: Optional set of additional known email addresses
+            (e.g., from the contact tracker) that should not trigger
+            human takeover detection.  Default ``None`` for backward compat.
 
     Returns:
         ``True`` if a human reply was detected, ``False`` otherwise.
@@ -44,6 +48,8 @@ def detect_human_reply(
     )
 
     known_senders = {agent_email.lower(), influencer_email.lower()}
+    if known_contacts is not None:
+        known_senders.update(e.lower() for e in known_contacts)
 
     for message in thread.get("messages", []):
         headers = message.get("payload", {}).get("headers", [])

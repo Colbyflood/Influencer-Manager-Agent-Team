@@ -5,5 +5,12 @@ from negotiation.counterparty.models import (
     CounterpartyType,
     DetectionSignal,
 )
+from negotiation.counterparty.tracker import ThreadContact, ThreadContactTracker
 
-__all__ = ["CounterpartyType", "DetectionSignal", "CounterpartyProfile"]
+__all__ = [
+    "CounterpartyType",
+    "DetectionSignal",
+    "CounterpartyProfile",
+    "ThreadContact",
+    "ThreadContactTracker",
+]

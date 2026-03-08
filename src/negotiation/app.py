@@ -277,6 +277,12 @@ def initialize_services(settings: Settings | None = None) -> dict[str, Any]:
     negotiation_states: dict[str, dict[str, Any]] = {}
     services["negotiation_states"] = negotiation_states
 
+    # j2. Per-thread contact tracker for counterparty awareness
+    from negotiation.counterparty.tracker import ThreadContactTracker
+
+    contact_tracker = ThreadContactTracker()
+    services["contact_tracker"] = contact_tracker
+
     # Startup recovery: load non-terminal negotiations from SQLite
     active_rows = state_store.load_active()
     for row in active_rows:
@@ -459,6 +465,9 @@ def build_negotiation_context(
         "product_offered": False,
         "syndication_proposed": False,
         "cpm_shared": False,
+        # Counterparty tracking defaults (updated on first inbound reply)
+        "counterparty_type": "direct_influencer",
+        "agency_name": None,
     }
 
 
@@ -784,6 +793,33 @@ async def process_inbound_email(message_id: str, services: dict[str, Any]) -> No
         state_machine = thread_state["state_machine"]
         context = thread_state["context"]
         round_count = thread_state["round_count"]
+
+        # Step 2b: Classify counterparty and update contact tracker
+        from negotiation.counterparty.classifier import classify_counterparty
+
+        counterparty_profile = classify_counterparty(
+            from_email=inbound.from_email,
+            email_body=inbound.body_text,
+            subject=inbound.subject,
+        )
+        contact_tracker = services.get("contact_tracker")
+        if contact_tracker is not None:
+            contact_tracker.update(
+                thread_id=inbound.thread_id,
+                from_email=inbound.from_email,
+                profile=counterparty_profile,
+            )
+            context["counterparty_type"] = str(
+                contact_tracker.get_primary_type(inbound.thread_id)
+            )
+            context["agency_name"] = contact_tracker.get_agency_name(inbound.thread_id)
+        logger.info(
+            "Counterparty classified",
+            counterparty_type=str(counterparty_profile.counterparty_type),
+            confidence=counterparty_profile.confidence,
+            agency_name=counterparty_profile.agency_name,
+            thread_id=inbound.thread_id,
+        )
 
         # Log inbound email to audit trail (DATA-03: every received email)
         audit_logger = services.get("audit_logger")
