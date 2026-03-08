@@ -8,15 +8,18 @@ from __future__ import annotations
 
 from decimal import Decimal
 from typing import Any
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
+from negotiation.campaign.models import BudgetConstraints, DeliverableScenarios
 from negotiation.domain.types import NegotiationState
+from negotiation.levers.models import LeverAction
 from negotiation.llm.models import (
     IntentClassification,
     NegotiationIntent,
 )
+from negotiation.llm.composer import compose_counter_email as compose_counter_email_real
 from negotiation.llm.negotiation_loop import process_influencer_reply
 from negotiation.state_machine import NegotiationStateMachine
 
@@ -33,7 +36,7 @@ def mock_client() -> MagicMock:
 
 @pytest.fixture()
 def base_context() -> dict[str, Any]:
-    """Standard negotiation context dict."""
+    """Standard negotiation context dict with deliverable scenarios for lever engine."""
     return {
         "influencer_name": "Jane Creator",
         "platform": "instagram",
@@ -42,6 +45,12 @@ def base_context() -> dict[str, Any]:
         "deliverable_types": ["instagram_reel"],
         "thread_id": "thread_123",
         "next_cpm": Decimal("25"),
+        "deliverable_scenarios": DeliverableScenarios(
+            target_deliverables=["instagram_reel"],
+            scenario_1="1 Instagram Reel + 1 Story",
+            scenario_2="1 Instagram Reel",
+            scenario_3="1 Story only",
+        ),
     }
 
 
@@ -434,3 +443,151 @@ def test_low_confidence_counter_overridden_to_unclear(
     # The returned classification should have intent UNCLEAR (overridden)
     returned_classification = result["classification"]
     assert returned_classification.intent == NegotiationIntent.UNCLEAR
+
+
+# ---------------------------------------------------------------------------
+# Test: Lever escalation ceiling (NEG-12)
+# ---------------------------------------------------------------------------
+
+
+def test_lever_escalation_ceiling(
+    mock_client: MagicMock,
+    state_machine: NegotiationStateMachine,
+) -> None:
+    """When their_rate exceeds max_cost_without_approval, lever engine escalates."""
+    # Use a rate within CPM ceiling ($30 * 100 = $3000) but above
+    # max_cost_without_approval so pricing Step 7 passes but lever ceiling triggers
+    context: dict[str, Any] = {
+        "influencer_name": "Jane Creator",
+        "platform": "instagram",
+        "average_views": 100_000,
+        "deliverables_summary": "1 Instagram Reel",
+        "deliverable_types": ["instagram_reel"],
+        "thread_id": "thread_123",
+        "next_cpm": Decimal("25"),
+        "budget_constraints": BudgetConstraints(
+            campaign_budget=Decimal("50000"),
+            max_cost_without_approval=Decimal("2000"),
+        ),
+    }
+    classification = IntentClassification(
+        intent=NegotiationIntent.COUNTER,
+        confidence=0.92,
+        proposed_rate="2800.00",
+        proposed_deliverables=[],
+        summary="Influencer counters with $2,800.",
+        key_concerns=[],
+    )
+    _configure_mock_client(mock_client, classification)
+
+    result = process_influencer_reply(
+        email_body="My rate is $2,800.",
+        negotiation_context=context,
+        state_machine=state_machine,
+        client=mock_client,
+        round_count=0,
+    )
+
+    assert result["action"] == "escalate"
+    assert "Lever engine" in str(result["reason"])
+    assert result["lever"].action == LeverAction.escalate_ceiling
+    assert state_machine.state == NegotiationState.ESCALATED
+
+
+# ---------------------------------------------------------------------------
+# Test: Lever graceful exit (NEG-15)
+# ---------------------------------------------------------------------------
+
+
+def test_lever_graceful_exit(
+    mock_client: MagicMock,
+    state_machine: NegotiationStateMachine,
+) -> None:
+    """When all levers exhausted, lever engine returns graceful exit."""
+    context: dict[str, Any] = {
+        "influencer_name": "Jane Creator",
+        "platform": "instagram",
+        "average_views": 100_000,
+        "deliverables_summary": "1 Story only",
+        "deliverable_types": ["instagram_story"],
+        "thread_id": "thread_123",
+        "next_cpm": Decimal("25"),
+        "current_scenario": 3,
+        "current_usage_tier": "minimum",
+        "product_offered": True,
+        "syndication_proposed": True,
+        "cpm_shared": True,
+    }
+    # Use a rate within CPM ceiling ($30 * 100 = $3000) so Step 7 pricing
+    # evaluation passes and we reach the lever engine
+    classification = IntentClassification(
+        intent=NegotiationIntent.COUNTER,
+        confidence=0.92,
+        proposed_rate="2800.00",
+        proposed_deliverables=[],
+        summary="Influencer counters with $2,800.",
+        key_concerns=[],
+    )
+    _configure_mock_client(mock_client, classification)
+
+    result = process_influencer_reply(
+        email_body="I need $2,800 minimum.",
+        negotiation_context=context,
+        state_machine=state_machine,
+        client=mock_client,
+        round_count=3,
+    )
+
+    assert result["action"] == "exit"
+    assert result["lever"].action == LeverAction.graceful_exit
+    assert result["lever"].should_exit is True
+    assert state_machine.state == NegotiationState.REJECTED
+
+
+# ---------------------------------------------------------------------------
+# Test: Lever instructions passed to composer
+# ---------------------------------------------------------------------------
+
+
+def test_lever_instructions_passed_to_composer(
+    mock_client: MagicMock,
+    base_context: dict[str, Any],
+    state_machine: NegotiationStateMachine,
+) -> None:
+    """When lever is active, lever_instructions kwarg is passed to compose_counter_email."""
+    classification = IntentClassification(
+        intent=NegotiationIntent.COUNTER,
+        confidence=0.92,
+        proposed_rate="1500.00",
+        proposed_deliverables=[],
+        summary="Influencer counters with $1,500.",
+        key_concerns=[],
+    )
+    email_text = (
+        "Hi Jane Creator,\n\n"
+        "Thank you for your proposal. We'd like to offer $2500.00 "
+        "for 1 Instagram Reel. Let us know!\n\nBest regards"
+    )
+    _configure_mock_client(mock_client, classification, compose_text=email_text)
+
+    with patch(
+        "negotiation.llm.negotiation_loop.compose_counter_email",
+        wraps=compose_counter_email_real,
+    ) as mock_compose:
+        # Use the real compose but wrapped so we can inspect calls
+        mock_compose.return_value = MagicMock(email_body=email_text)
+
+        result = process_influencer_reply(
+            email_body="I'd accept for $1,500.",
+            negotiation_context=base_context,
+            state_machine=state_machine,
+            client=mock_client,
+            round_count=0,
+        )
+
+        # Verify lever_instructions was passed and non-empty
+        mock_compose.assert_called_once()
+        call_kwargs = mock_compose.call_args.kwargs
+        assert "lever_instructions" in call_kwargs
+        assert len(call_kwargs["lever_instructions"]) > 0
+        assert result["lever"] is not None

@@ -113,9 +113,66 @@ def process_influencer_reply(
                 "classification": classification,
             }
 
-    # Step 8 - Calculate our counter rate
+    # Step 8 - Calculate base rate and select negotiation lever
     next_cpm = Decimal(str(negotiation_context["next_cpm"]))
-    our_rate = calculate_rate(average_views, next_cpm)
+    our_base_rate = calculate_rate(average_views, next_cpm)
+
+    # Step 8.5 - Select negotiation lever
+    from negotiation.levers import select_lever
+    from negotiation.levers.models import NegotiationLeverContext
+
+    lever_ctx = NegotiationLeverContext(
+        their_rate=(
+            Decimal(classification.proposed_rate)
+            if classification.proposed_rate
+            else our_base_rate
+        ),
+        our_current_rate=our_base_rate,
+        average_views=average_views,
+        current_scenario=int(negotiation_context.get("current_scenario", 1)),
+        current_usage_tier=str(negotiation_context.get("current_usage_tier", "target")),
+        product_offered=bool(negotiation_context.get("product_offered", False)),
+        syndication_proposed=bool(negotiation_context.get("syndication_proposed", False)),
+        cpm_shared=bool(negotiation_context.get("cpm_shared", False)),
+        round_number=round_count,
+        deliverable_scenarios=negotiation_context.get("deliverable_scenarios"),
+        usage_rights=negotiation_context.get("usage_rights"),
+        budget_constraints=negotiation_context.get("budget_constraints"),
+        product_leverage=negotiation_context.get("product_leverage"),
+    )
+
+    lever_result = select_lever(lever_ctx)
+
+    # Handle escalation from lever engine (NEG-12 ceiling)
+    if lever_result.should_escalate:
+        state_machine.trigger("escalate")
+        return {
+            "action": "escalate",
+            "reason": f"Lever engine: {lever_result.action.value}",
+            "lever": lever_result,
+            "classification": classification,
+        }
+
+    # Handle graceful exit from lever engine (NEG-15)
+    if lever_result.should_exit:
+        state_machine.trigger("reject")
+        return {
+            "action": "exit",
+            "reason": "All negotiation levers exhausted",
+            "lever": lever_result,
+            "classification": classification,
+        }
+
+    # Use lever-adjusted rate and deliverables
+    our_rate = (
+        lever_result.adjusted_rate
+        if lever_result.adjusted_rate is not None
+        else our_base_rate
+    )
+    deliverables_for_email = (
+        lever_result.deliverables_summary
+        or str(negotiation_context["deliverables_summary"])
+    )
 
     # Step 9 - Compose counter-offer email
     negotiation_stage = (
@@ -125,12 +182,13 @@ def process_influencer_reply(
         influencer_name=str(negotiation_context["influencer_name"]),
         their_rate=classification.proposed_rate or "not specified",
         our_rate=str(our_rate),
-        deliverables_summary=str(negotiation_context["deliverables_summary"]),
+        deliverables_summary=deliverables_for_email,
         platform=str(negotiation_context["platform"]),
         negotiation_stage=negotiation_stage,
         knowledge_base_content=kb_content,
         negotiation_history=str(negotiation_context.get("history", "")),
         client=client,
+        lever_instructions=lever_result.lever_instructions,
     )
 
     # Step 10 - Validate before sending
@@ -164,4 +222,5 @@ def process_influencer_reply(
         "our_rate": our_rate,
         "round": round_count + 1,
         "classification": classification,
+        "lever": lever_result,
     }
