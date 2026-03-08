@@ -57,7 +57,11 @@ Full details: [milestones/v1.1-ROADMAP.md](milestones/v1.1-ROADMAP.md)
   2. Agent exposes parsed deliverable scenarios (3 tiers), usage rights (target and minimum with durations), and budget constraints (floor, ceiling, CPM target + leniency) as structured data accessible to negotiation logic
   3. Agent uses per-campaign CPM Target and CPM Leniency percentage to calculate rate boundaries instead of the hardcoded $20-$30 range
   4. Agent parses product leverage fields (availability, description, monetary value) and campaign requirements (exclusivity, approval terms, dates) into queryable campaign attributes
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 13-01-PLAN.md -- Expand Campaign model with sub-models for all 42 fields
+- [ ] 13-02-PLAN.md -- Update ingestion pipeline for full 42-field parsing
+- [ ] 13-03-PLAN.md -- Wire per-campaign CPM target and leniency into pricing engine
 
 ### Phase 14: Knowledge Base Rewrite
 **Goal**: Agent has access to real AGM negotiation strategy and email examples so it can compose responses grounded in proven tactics rather than generic templates
@@ -121,7 +125,7 @@ Phases execute in numeric order: 13 and 14 (14 has no dependency on 13), then 15
 | 10. Docker Packaging and Deployment | v1.1 | 2/2 | Complete | 2026-02-19 |
 | 11. CI/CD Pipeline | v1.1 | 1/1 | Complete | 2026-02-19 |
 | 12. Monitoring, Observability, and Live Verification | v1.1 | 3/3 | Complete | 2026-02-19 |
-| 13. Campaign Data Model Expansion | v1.2 | 0/? | Not started | - |
+| 13. Campaign Data Model Expansion | v1.2 | 0/3 | Planning complete | - |
 | 14. Knowledge Base Rewrite | v1.2 | 0/? | Not started | - |
 | 15. Negotiation Levers and Strategy | v1.2 | 0/? | Not started | - |
 | 16. Counterparty Intelligence | v1.2 | 0/? | Not started | - |
