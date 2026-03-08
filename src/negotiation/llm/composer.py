@@ -5,11 +5,14 @@ emails, with knowledge base content injected via cached system prompts for
 cost efficiency.
 """
 
+from __future__ import annotations
+
 from anthropic import Anthropic
 
 from negotiation.llm.client import COMPOSE_MODEL
 from negotiation.llm.models import ComposedEmail
 from negotiation.llm.prompts import EMAIL_COMPOSITION_SYSTEM_PROMPT, EMAIL_COMPOSITION_USER_PROMPT
+from negotiation.llm.sow_formatter import format_rate_adjustment, format_sow_block
 
 
 def compose_counter_email(
@@ -25,6 +28,8 @@ def compose_counter_email(
     model: str = COMPOSE_MODEL,
     lever_instructions: str = "",
     counterparty_context: str = "",
+    original_rate: str = "",
+    usage_rights_summary: str | None = None,
 ) -> ComposedEmail:
     """Compose a counter-offer email using the Claude API.
 
@@ -43,10 +48,24 @@ def compose_counter_email(
         negotiation_history: Summary of prior negotiation exchanges.
         client: Configured Anthropic client instance.
         model: Model ID to use. Defaults to COMPOSE_MODEL (Sonnet).
+        lever_instructions: Specific negotiation lever tactic to use.
+        counterparty_context: Counterparty-specific context for tone adjustment.
+        original_rate: The influencer's original rate for strikethrough comparison.
+            If empty, their_rate is used as the original for comparison.
+        usage_rights_summary: Usage rights text for SOW block, or None for defaults.
 
     Returns:
         ComposedEmail with email body, model used, and token counts.
     """
+    # Build SOW block with rate adjustment formatting
+    rate_display = format_rate_adjustment(original_rate or their_rate, our_rate)
+    sow_block = format_sow_block(
+        deliverables_summary=deliverables_summary,
+        usage_rights_summary=usage_rights_summary,
+        rate_display=rate_display,
+        platform=platform,
+    )
+
     system_text = EMAIL_COMPOSITION_SYSTEM_PROMPT.format(
         knowledge_base_content=knowledge_base_content,
     )
@@ -58,6 +77,7 @@ def compose_counter_email(
         their_rate=their_rate,
         our_rate=our_rate,
         deliverables_summary=deliverables_summary,
+        sow_block=sow_block,
         lever_instructions=lever_instructions or "No specific lever -- respond naturally to their proposal.",
         counterparty_context=counterparty_context or "No specific counterparty context.",
         negotiation_history=negotiation_history,

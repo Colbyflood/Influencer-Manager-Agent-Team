@@ -13,11 +13,17 @@ def _format_currency(value: str) -> str:
 
     Args:
         value: Numeric rate string (e.g., "1500", "1500.00", "2000.50").
+            Non-numeric values are returned as-is.
 
     Returns:
-        Formatted currency string (e.g., "$1,500.00").
+        Formatted currency string (e.g., "$1,500.00"), or the original
+        value if it cannot be parsed as a number.
     """
-    amount = float(value.replace(",", "").replace("$", ""))
+    cleaned = value.replace(",", "").replace("$", "").strip()
+    try:
+        amount = float(cleaned)
+    except ValueError:
+        return value
     return f"${amount:,.2f}"
 
 

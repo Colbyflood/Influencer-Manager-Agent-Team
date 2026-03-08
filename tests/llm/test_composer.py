@@ -186,3 +186,80 @@ class TestComposeCounterEmail:
         call_kwargs = mock_client.messages.create.call_args
         system_blocks = call_kwargs.kwargs["system"]
         assert system_blocks[0]["cache_control"] == {"type": "ephemeral"}
+
+    def test_sow_block_in_user_prompt(self):
+        """User prompt contains Scope of Work block when composing counter email."""
+        mock_client = _make_mock_client()
+        compose_counter_email(
+            influencer_name="Sarah",
+            their_rate="2000.00",
+            our_rate="1500.00",
+            deliverables_summary="2x Instagram Reels, 1x Story",
+            platform="instagram",
+            negotiation_stage="initial_counter",
+            knowledge_base_content="KB content.",
+            negotiation_history="No prior.",
+            client=mock_client,
+        )
+        call_kwargs = mock_client.messages.create.call_args
+        user_content = call_kwargs.kwargs["messages"][0]["content"]
+        assert "Scope of Work:" in user_content
+
+    def test_strikethrough_rate_in_sow_block(self):
+        """Strikethrough formatting appears in user prompt when rates differ."""
+        mock_client = _make_mock_client()
+        compose_counter_email(
+            influencer_name="Sarah",
+            their_rate="2000.00",
+            our_rate="1500.00",
+            deliverables_summary="2x Instagram Reels",
+            platform="instagram",
+            negotiation_stage="initial_counter",
+            knowledge_base_content="KB content.",
+            negotiation_history="No prior.",
+            client=mock_client,
+        )
+        call_kwargs = mock_client.messages.create.call_args
+        user_content = call_kwargs.kwargs["messages"][0]["content"]
+        assert "~~$2,000.00~~" in user_content
+        assert "$1,500.00" in user_content
+
+    def test_usage_rights_in_sow_block(self):
+        """Usage rights appear in SOW block in the user prompt."""
+        mock_client = _make_mock_client()
+        compose_counter_email(
+            influencer_name="Sarah",
+            their_rate="2000.00",
+            our_rate="1500.00",
+            deliverables_summary="2x Instagram Reels",
+            platform="instagram",
+            negotiation_stage="initial_counter",
+            knowledge_base_content="KB content.",
+            negotiation_history="No prior.",
+            client=mock_client,
+            usage_rights_summary="12 months paid amplification",
+        )
+        call_kwargs = mock_client.messages.create.call_args
+        user_content = call_kwargs.kwargs["messages"][0]["content"]
+        assert "Usage Rights: 12 months paid amplification" in user_content
+
+    def test_original_rate_strikethrough(self):
+        """Original rate parameter creates strikethrough against counter rate."""
+        mock_client = _make_mock_client()
+        compose_counter_email(
+            influencer_name="Sarah",
+            their_rate="2500.00",
+            our_rate="1500.00",
+            deliverables_summary="2x Instagram Reels",
+            platform="instagram",
+            negotiation_stage="initial_counter",
+            knowledge_base_content="KB content.",
+            negotiation_history="No prior.",
+            client=mock_client,
+            original_rate="3000.00",
+        )
+        call_kwargs = mock_client.messages.create.call_args
+        user_content = call_kwargs.kwargs["messages"][0]["content"]
+        # Should strikethrough original_rate (3000), not their_rate (2500)
+        assert "~~$3,000.00~~" in user_content
+        assert "$1,500.00" in user_content
