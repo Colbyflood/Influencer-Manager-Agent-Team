@@ -52,8 +52,10 @@ def _make_mock_campaign(
     platform: str = "YouTube",
     min_cpm: Decimal = Decimal("15"),
     max_cpm: Decimal = Decimal("30"),
+    cpm_target: Decimal | None = None,
+    cpm_leniency_pct: Decimal | None = None,
 ) -> MagicMock:
-    """Build a mock Campaign with cpm_range sub-object."""
+    """Build a mock Campaign with cpm_range sub-object and budget_constraints."""
     campaign = MagicMock()
     campaign.campaign_id = campaign_id
     campaign.client_name = client_name
@@ -62,6 +64,13 @@ def _make_mock_campaign(
     campaign.cpm_range = MagicMock()
     campaign.cpm_range.min_cpm = min_cpm
     campaign.cpm_range.max_cpm = max_cpm
+    # budget_constraints: None by default (falls back to CPM_FLOOR/CPM_CEILING defaults)
+    if cpm_target is not None:
+        campaign.budget_constraints = MagicMock()
+        campaign.budget_constraints.cpm_target = cpm_target
+        campaign.budget_constraints.cpm_leniency_pct = cpm_leniency_pct
+    else:
+        campaign.budget_constraints = None
     return campaign
 
 
@@ -175,10 +184,10 @@ class TestBuildNegotiationContext:
             influencer_engagement_rate=4.5,
         )
 
-    def test_defaults_to_campaign_min_cpm_without_tracker(self) -> None:
-        """Without a CPMTracker, next_cpm falls back to campaign cpm_range.min_cpm."""
+    def test_defaults_to_cpm_floor_without_tracker_or_budget(self) -> None:
+        """Without a CPMTracker or budget_constraints, next_cpm falls back to CPM_FLOOR default."""
         sheet_data = _make_mock_influencer_row()
-        campaign = _make_mock_campaign(min_cpm=Decimal("12"))
+        campaign = _make_mock_campaign()  # budget_constraints=None
 
         context = build_negotiation_context(
             influencer_name="Jane",
@@ -188,7 +197,23 @@ class TestBuildNegotiationContext:
             thread_id="thread_xyz",
         )
 
-        assert context["next_cpm"] == Decimal("12")
+        # Falls back to CPM_FLOOR ($20) when no budget_constraints
+        assert context["next_cpm"] == Decimal("20")
+
+    def test_uses_campaign_cpm_target_without_tracker(self) -> None:
+        """Without a CPMTracker but with budget_constraints, next_cpm uses cpm_target."""
+        sheet_data = _make_mock_influencer_row()
+        campaign = _make_mock_campaign(cpm_target=Decimal("25"), cpm_leniency_pct=Decimal("20"))
+
+        context = build_negotiation_context(
+            influencer_name="Jane",
+            influencer_email="jane@example.com",
+            sheet_data=sheet_data,
+            campaign=campaign,
+            thread_id="thread_xyz",
+        )
+
+        assert context["next_cpm"] == Decimal("25.00")
 
 
 # ===========================================================================
@@ -659,7 +684,7 @@ class TestStartNegotiationsForCampaign:
         assert negotiation_states == {}
 
     def test_instantiates_cpm_tracker(self) -> None:
-        """CampaignCPMTracker is created with campaign CPM range."""
+        """CampaignCPMTracker is created with campaign-derived CPM bounds."""
         mock_gmail = MagicMock()
         mock_gmail.send.return_value = {"threadId": "thread_456"}
 
@@ -673,9 +698,10 @@ class TestStartNegotiationsForCampaign:
         )
 
         sheet_data = _make_mock_influencer_row()
+        # Use cpm_target=$25, leniency=20% -> floor=$25, ceiling=$30
         campaign = _make_mock_campaign(
-            min_cpm=Decimal("10"),
-            max_cpm=Decimal("20"),
+            cpm_target=Decimal("25"),
+            cpm_leniency_pct=Decimal("20"),
         )
 
         found_influencers = [
@@ -710,10 +736,11 @@ class TestStartNegotiationsForCampaign:
                 )
             )
 
+        # derive_cpm_bounds(Decimal("25"), Decimal("20")) -> ($25.00, $30.00)
         mock_tracker_cls.assert_called_once_with(
             campaign_id="CAMP-001",
-            target_min_cpm=Decimal("10"),
-            target_max_cpm=Decimal("20"),
+            target_min_cpm=Decimal("25.00"),
+            target_max_cpm=Decimal("30.00"),
             total_influencers=1,
         )
 
