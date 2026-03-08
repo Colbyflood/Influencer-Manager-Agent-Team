@@ -405,6 +405,16 @@ def build_negotiation_context(
 
     Returns:
         A dict matching process_influencer_reply's expected negotiation_context keys.
+        Includes campaign sub-models for lever engine consumption:
+        - deliverable_scenarios: DeliverableScenarios from campaign
+        - usage_rights: UsageRights from campaign
+        - budget_constraints: BudgetConstraints from campaign
+        - product_leverage: ProductLeverage from campaign
+        - current_scenario: Starting deliverable scenario tier (1)
+        - current_usage_tier: Starting usage rights tier ("target")
+        - product_offered: Whether product has been offered (False)
+        - syndication_proposed: Whether syndication has been proposed (False)
+        - cpm_shared: Whether CPM target has been shared (False)
     """
     # Determine target CPM -- use campaign-derived bounds, then tracker flexibility
     from negotiation.pricing.engine import derive_cpm_bounds
@@ -438,6 +448,17 @@ def build_negotiation_context(
         "client_name": campaign.client_name,
         "campaign_id": campaign.campaign_id,
         "history": "",
+        # Campaign sub-models for lever engine (Plan 15-03)
+        "deliverable_scenarios": campaign.deliverables,
+        "usage_rights": campaign.usage_rights,
+        "budget_constraints": campaign.budget_constraints,
+        "product_leverage": campaign.product_leverage,
+        # Lever state defaults -- starting position for negotiation
+        "current_scenario": 1,
+        "current_usage_tier": "target",
+        "product_offered": False,
+        "syndication_proposed": False,
+        "cpm_shared": False,
     }
 
 
