@@ -6,7 +6,17 @@
       "Skill(gsd:discuss-phase)",
       "WebSearch",
       "Skill(gsd:plan-phase)",
-      "Skill(gsd:progress)"
+      "Skill(gsd:progress)",
+      "Bash(node:*)",
+      "Bash(cat:*)",
+      "Bash(python3:*)",
+      "Bash(git -C \"/Users/colbyflood/Influencer Manager Agent Team/Influencer-Manager-Agent-Team\" log --oneline)",
+      "Bash(git -C \"/Users/colbyflood/Influencer Manager Agent Team/Influencer-Manager-Agent-Team\" show 8d4557a --stat)",
+      "Bash(# Verify test isolation - check if tests mock external services or use in-memory SQLite grep -rn \"\"sqlite\\\\|:memory:\\\\|MagicMock\\\\|patch\\\\|monkeypatch\"\" \"\"/Users/colbyflood/Influencer Manager Agent Team/Influencer-Manager-Agent-Team/tests/\"\" --include=\"\"*.py\"\")",
+      "Bash(# Check that there are no env file dependencies needed that would break CI grep -rn \"\"load_dotenv\\\\|dotenv_path\"\" \"\"/Users/colbyflood/Influencer Manager Agent Team/Influencer-Manager-Agent-Team/src/\"\" --include=\"\"*.py\"\")",
+      "Bash(# Attempt to check branch protection via gh cli gh api repos/Colbyflood/Influencer-Manager-Agent-Team/branches/main/protection)",
+      "Bash(gh api:*)",
+      "WebFetch(domain:github.com)"
     ]
   }
 }
