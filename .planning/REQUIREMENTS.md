@@ -40,7 +40,7 @@ Requirements for v1.2 Real-World Negotiation Intelligence. Each maps to roadmap 
 
 - [x] **KB-04**: Knowledge base includes negotiation playbook with standards, levers, and budget maximization strategy from AGM docs
 - [x] **KB-05**: Knowledge base includes real email examples covering positive close, escalation, walk-away, bundled rate, CPM mention, and misalignment exit scenarios
-- [ ] **KB-06**: Agent selects relevant email examples as style reference when composing responses based on current negotiation stage and scenario
+- [x] **KB-06**: Agent selects relevant email examples as style reference when composing responses based on current negotiation stage and scenario
 
 ### Email Composition
 
@@ -97,7 +97,7 @@ Requirements for v1.2 Real-World Negotiation Intelligence. Each maps to roadmap 
 | CPI-04 | Phase 16 | Pending |
 | KB-04 | Phase 14 | Complete |
 | KB-05 | Phase 14 | Complete |
-| KB-06 | Phase 14 | Pending |
+| KB-06 | Phase 14 | Complete |
 | EMAIL-05 | Phase 17 | Pending |
 | EMAIL-06 | Phase 17 | Pending |
 | EMAIL-07 | Phase 17 | Pending |

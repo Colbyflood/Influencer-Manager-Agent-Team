@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-08)
 ## Current Position
 
 Phase: 14 of 17 (Knowledge Base Rewrite)
-Plan: 1 of 2 in current phase
-Status: Executing
-Last activity: 2026-03-08 — Completed 14-01-PLAN.md
+Plan: 2 of 2 in current phase (COMPLETE)
+Status: Phase Complete
+Last activity: 2026-03-08 — Completed 14-02-PLAN.md
 
-Progress: [###########################░░░] 89% (33/33 plans v1.0+v1.1, 4/4 v1.2)
+Progress: [############################░░] 91% (33/33 plans v1.0+v1.1, 6/4 v1.2)
 
 ## Performance Metrics
 
@@ -45,6 +45,9 @@ All decisions logged in PROJECT.md Key Decisions table.
 - [14-01] Aligned tone stages to NegotiationState enum values (initial_offer, counter_received, counter_sent, agreed, escalated)
 - [14-01] Lever preference order: deliverable tiers > usage rights > product > CPM sharing
 - [14-01] Email examples use null platform for platform-agnostic scenarios
+- [14-02] Used yaml.safe_load with manual fallback for YAML frontmatter parsing
+- [14-02] Platform-agnostic examples always included regardless of platform filter
+- [14-02] Stage filtering via list membership check on example frontmatter stages array
 
 ### Pending Todos
 
@@ -57,5 +60,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-08
-Stopped at: Completed 14-01-PLAN.md (Knowledge Base Content Rewrite)
+Stopped at: Completed 14-02-PLAN.md (Stage-Aware Example Selection)
 Resume file: None
