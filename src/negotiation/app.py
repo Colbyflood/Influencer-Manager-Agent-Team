@@ -406,8 +406,14 @@ def build_negotiation_context(
     Returns:
         A dict matching process_influencer_reply's expected negotiation_context keys.
     """
-    # Determine target CPM -- use tracker flexibility if available, else campaign floor
-    next_cpm = campaign.cpm_range.min_cpm
+    # Determine target CPM -- use campaign-derived bounds, then tracker flexibility
+    from negotiation.pricing.engine import derive_cpm_bounds
+
+    cpm_floor, _cpm_ceiling = derive_cpm_bounds(
+        cpm_target=campaign.budget_constraints.cpm_target if campaign.budget_constraints else None,
+        cpm_leniency_pct=campaign.budget_constraints.cpm_leniency_pct if campaign.budget_constraints else None,
+    )
+    next_cpm = cpm_floor  # Start at campaign target (or default floor)
     if cpm_tracker is not None:
         engagement_rate = getattr(sheet_data, "engagement_rate", None)
         flexibility = cpm_tracker.get_flexibility(
@@ -476,10 +482,17 @@ async def start_negotiations_for_campaign(
     from negotiation.llm.knowledge_base import load_knowledge_base
     from negotiation.pricing import calculate_initial_offer
 
+    # Derive CPM bounds from campaign data if available
+    from negotiation.pricing.engine import derive_cpm_bounds
+
+    cpm_floor, cpm_ceiling = derive_cpm_bounds(
+        cpm_target=campaign.budget_constraints.cpm_target if campaign.budget_constraints else None,
+        cpm_leniency_pct=campaign.budget_constraints.cpm_leniency_pct if campaign.budget_constraints else None,
+    )
     cpm_tracker = CampaignCPMTracker(
         campaign_id=campaign.campaign_id,
-        target_min_cpm=campaign.cpm_range.min_cpm,
-        target_max_cpm=campaign.cpm_range.max_cpm,
+        target_min_cpm=cpm_floor,
+        target_max_cpm=cpm_ceiling,
         total_influencers=len(found_influencers),
     )
 
@@ -488,8 +501,8 @@ async def start_negotiations_for_campaign(
         sheet_data = influencer_data["sheet_data"]  # InfluencerRow
 
         try:
-            # Calculate initial offer
-            initial_rate = calculate_initial_offer(int(sheet_data.average_views))
+            # Calculate initial offer using campaign-derived CPM floor
+            initial_rate = calculate_initial_offer(int(sheet_data.average_views), cpm_floor=cpm_floor)
 
             # Create state machine
             state_machine = NegotiationStateMachine()

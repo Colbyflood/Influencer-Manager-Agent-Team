@@ -16,6 +16,39 @@ CPM_FLOOR = Decimal("20")
 CPM_CEILING = Decimal("30")
 
 
+def derive_cpm_bounds(
+    cpm_target: Decimal | None = None,
+    cpm_leniency_pct: Decimal | None = None,
+) -> tuple[Decimal, Decimal]:
+    """Derive CPM floor and ceiling from campaign target and leniency.
+
+    If cpm_target is provided:
+      floor = cpm_target (we open at target)
+      ceiling = cpm_target * (1 + leniency_pct/100)
+    If cpm_target is None: fall back to CPM_FLOOR/CPM_CEILING defaults.
+
+    If cpm_leniency_pct is None but cpm_target is provided, default leniency
+    to 0% (ceiling = target, meaning no room above target).
+
+    Args:
+        cpm_target: The campaign's target CPM in dollars (e.g. Decimal("25")).
+        cpm_leniency_pct: How far above the target is acceptable, as a
+            percentage (e.g. Decimal("20") for 20%).
+
+    Returns:
+        A (cpm_floor, cpm_ceiling) tuple of Decimals with 2 decimal places.
+    """
+    if cpm_target is None:
+        return (CPM_FLOOR, CPM_CEILING)
+
+    floor = cpm_target.quantize(TWO_PLACES, rounding=ROUND_HALF_UP)
+    leniency = cpm_leniency_pct if cpm_leniency_pct is not None else Decimal("0")
+    ceiling = (cpm_target * (Decimal("1") + leniency / Decimal("100"))).quantize(
+        TWO_PLACES, rounding=ROUND_HALF_UP
+    )
+    return (floor, ceiling)
+
+
 def _validate_views(average_views: int) -> None:
     """Validate that average_views is a positive integer.
 
