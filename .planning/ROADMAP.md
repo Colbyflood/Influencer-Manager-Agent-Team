@@ -75,11 +75,11 @@ Full details: [milestones/v1.2-ROADMAP.md](milestones/v1.2-ROADMAP.md)
   1. A React + Tailwind CSS application builds successfully and renders a page in the browser
   2. The frontend is served alongside the existing FastAPI backend (static files or dev proxy) without breaking any existing API endpoints
   3. Navigating to the dashboard URL returns the React application, not a 404
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 18-01: TBD
-- [ ] 18-02: TBD
+- [ ] 18-01-PLAN.md -- Scaffold React + Vite + TypeScript + Tailwind CSS app in frontend/
+- [ ] 18-02-PLAN.md -- Integrate frontend with FastAPI backend (static serving, Dockerfile)
 
 ### Phase 19: Campaign Overview
 **Goal**: Team can see all campaigns at a glance with live status summaries and key metrics
@@ -136,7 +136,7 @@ Phases execute in numeric order: 18 → 19 → 20 → 21
 | 1-7 | v1.0 | 23/23 | Complete | 2026-02-19 |
 | 8-12 | v1.1 | 10/10 | Complete | 2026-02-19 |
 | 13-17 | v1.2 | 13/13 | Complete | 2026-03-08 |
-| 18. Frontend Foundation | v1.3 | 0/TBD | Not started | - |
+| 18. Frontend Foundation | v1.3 | 0/2 | Not started | - |
 | 19. Campaign Overview | v1.3 | 0/TBD | Not started | - |
 | 20. Negotiation Detail | v1.3 | 0/TBD | Not started | - |
 | 21. Negotiation Controls | v1.3 | 0/TBD | Not started | - |
