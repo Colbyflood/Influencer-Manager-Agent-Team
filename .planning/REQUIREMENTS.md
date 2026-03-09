@@ -10,8 +10,8 @@ Requirements for v1.3 Campaign Dashboard. Each maps to roadmap phases.
 ### Dashboard Views
 
 - [x] **VIEW-01**: User can view a campaign list showing all campaigns with status summary (active negotiations, agreed, escalated, total influencers)
-- [ ] **VIEW-02**: User can view campaign detail page showing every influencer and their current negotiation state, rate, round count, and counterparty type
-- [ ] **VIEW-03**: User can view per-influencer negotiation timeline showing state transitions, emails exchanged, and rate history
+- [x] **VIEW-02**: User can view campaign detail page showing every influencer and their current negotiation state, rate, round count, and counterparty type
+- [x] **VIEW-03**: User can view per-influencer negotiation timeline showing state transitions, emails exchanged, and rate history
 - [x] **VIEW-04**: User can see campaign-level metrics: average CPM achieved, percentage closed, budget utilization
 
 ### Controls
@@ -56,8 +56,8 @@ Requirements for v1.3 Campaign Dashboard. Each maps to roadmap phases.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | VIEW-01 | Phase 19 | Complete |
-| VIEW-02 | Phase 20 | Pending |
-| VIEW-03 | Phase 20 | Pending |
+| VIEW-02 | Phase 20 | Complete |
+| VIEW-03 | Phase 20 | Complete |
 | VIEW-04 | Phase 19 | Complete |
 | CTRL-01 | Phase 21 | Pending |
 | CTRL-02 | Phase 21 | Pending |

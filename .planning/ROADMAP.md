@@ -62,7 +62,7 @@ Full details: [milestones/v1.2-ROADMAP.md](milestones/v1.2-ROADMAP.md)
 
 - [x] **Phase 18: Frontend Foundation** - React + Tailwind app scaffolding served alongside FastAPI backend (completed 2026-03-09)
 - [x] **Phase 19: Campaign Overview** - Campaign list API and dashboard view with status aggregation and polling (completed 2026-03-09)
-- [ ] **Phase 20: Negotiation Detail** - Per-influencer negotiation data, state timeline, and campaign detail view
+- [x] **Phase 20: Negotiation Detail** - Per-influencer negotiation data, state timeline, and campaign detail view (completed 2026-03-09)
 - [ ] **Phase 21: Negotiation Controls** - Pause, resume, and stop negotiations from the dashboard
 
 ## Phase Details
@@ -138,5 +138,5 @@ Phases execute in numeric order: 18 → 19 → 20 → 21
 | 13-17 | v1.2 | 13/13 | Complete | 2026-03-08 |
 | 18. Frontend Foundation | 2/2 | Complete    | 2026-03-09 | - |
 | 19. Campaign Overview | 2/2 | Complete   | 2026-03-09 | - |
-| 20. Negotiation Detail | 1/2 | In Progress|  | - |
+| 20. Negotiation Detail | 2/2 | Complete   | 2026-03-09 | - |
 | 21. Negotiation Controls | v1.3 | 0/TBD | Not started | - |
