@@ -33,6 +33,7 @@ from negotiation.audit.store import close_audit_db, init_audit_db
 from negotiation.audit.wiring import wire_audit_to_campaign_ingestion
 from negotiation.campaign.ingestion import ingest_campaign
 from negotiation.api.campaigns import router as campaigns_router
+from negotiation.api.negotiations import router as negotiations_router
 from negotiation.campaign.models import Campaign
 from negotiation.campaign.webhook import router as webhook_router
 from negotiation.campaign.webhook import set_campaign_processor
@@ -699,6 +700,7 @@ def create_app(services: dict[str, Any]) -> FastAPI:
     fastapi_app.state.negotiation_states = services.get("negotiation_states", {})
     fastapi_app.include_router(webhook_router)
     fastapi_app.include_router(campaigns_router, prefix="/api/v1", tags=["campaigns"])
+    fastapi_app.include_router(negotiations_router, prefix="/api/v1", tags=["negotiations"])
     register_health_routes(fastapi_app)
 
     # Observability: Prometheus metrics endpoint
