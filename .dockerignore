@@ -44,5 +44,9 @@ service_account.json
 .planning/
 .claude/
 
+# Frontend build artifacts (rebuilt in Docker, don't use local)
+frontend/node_modules/
+frontend/dist/
+
 # Tests (not needed in production image)
 tests/

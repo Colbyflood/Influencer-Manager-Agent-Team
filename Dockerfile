@@ -1,4 +1,14 @@
 # ============================================================================
+# FRONTEND BUILD STAGE -- build React app with Vite
+# ============================================================================
+FROM node:20-slim AS frontend-builder
+WORKDIR /frontend
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
+COPY frontend/ ./
+RUN npm run build
+
+# ============================================================================
 # BUILD STAGE -- install dependencies with uv
 # ============================================================================
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS builder
@@ -38,6 +48,9 @@ RUN mkdir -p /app/data/credentials \
 
 # Copy application from builder with appuser ownership
 COPY --from=builder --chown=appuser:appuser /app /app
+
+# Copy built frontend dist from frontend-builder stage
+COPY --from=frontend-builder --chown=appuser:appuser /frontend/dist /app/frontend/dist
 
 # Copy entrypoint as root-owned (it runs as root to do chown)
 COPY --chown=root:root entrypoint.sh /entrypoint.sh
