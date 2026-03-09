@@ -100,13 +100,24 @@ The system can:
 
 ### Active
 
-(No active milestone -- all v1.2 requirements shipped)
+**Current Milestone: v1.3 Campaign Dashboard**
+
+**Goal:** Give the team a real-time web dashboard to monitor all campaigns, see per-influencer negotiation progress, and control the agent (pause/stop negotiations) without relying solely on Slack.
+
+**Target features:**
+- React + Tailwind CSS dashboard served alongside FastAPI backend
+- Campaign list view with status aggregation (active, % closed, avg CPM)
+- Campaign detail view with per-influencer negotiation states and timeline
+- Controls: stop/pause negotiation with a specific influencer
+- Controls: stop all negotiations with a specific talent agent/agency
+- Near-real-time status updates
+- API endpoints powering the dashboard views
 
 ### Out of Scope
 
 - Full outreach automation (cold email) -- future agent handles this; team uses Instantly today
 - Campaign-level CPM optimization across influencers -- future "strategist" agent territory
-- Web dashboard -- v1 uses Slack notifications; dashboard deferred
+- Web dashboard with auth/multi-user -- single-user dashboard in v1.3; auth deferred
 - Contract generation/sending -- legal liability; human sends contracts after agent alerts deal
 - Direct platform API integration for pulling influencer metrics -- metrics are pre-loaded
 - Fully autonomous mode -- hybrid with human escalation; trust must be earned
@@ -170,4 +181,4 @@ The system can:
 | Tone guidance in user prompt (not system prompt) | Varies per-request without invalidating cached system prompt | ✓ Good -- backward compatible default |
 
 ---
-*Last updated: 2026-03-08 after v1.2 milestone completion*
+*Last updated: 2026-03-08 after v1.3 milestone start*

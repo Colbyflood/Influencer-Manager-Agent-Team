@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-03-08)
 
 **Core value:** The agent must negotiate influencer rates accurately using CPM-based logic and reliably communicate the outcome -- every agreed deal must result in a clear, actionable Slack notification to the team.
-**Current focus:** Planning next milestone
+**Current focus:** v1.3 Campaign Dashboard — defining requirements
 
 ## Current Position
 
-Milestone: v1.2 Real-World Negotiation Intelligence -- SHIPPED 2026-03-08
-Status: Milestone complete, awaiting next milestone definition
-
-Progress: v1.0 (23 plans) + v1.1 (10 plans) + v1.2 (13 plans) = 46 plans shipped
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-08 — Milestone v1.3 started
 
 ## Performance Metrics
 
@@ -35,7 +35,6 @@ Progress: v1.0 (23 plans) + v1.1 (10 plans) + v1.2 (13 plans) = 46 plans shipped
 ### Decisions
 
 All decisions logged in PROJECT.md Key Decisions table.
-v1.2 decisions archived in milestones/v1.2-ROADMAP.md.
 
 ### Pending Todos
 
@@ -48,5 +47,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-08
-Stopped at: v1.2 milestone completed and archived
+Stopped at: Starting v1.3 Campaign Dashboard milestone
 Resume file: None
