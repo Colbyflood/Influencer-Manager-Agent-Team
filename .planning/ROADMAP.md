@@ -60,7 +60,7 @@ Full details: [milestones/v1.2-ROADMAP.md](milestones/v1.2-ROADMAP.md)
 
 **Milestone Goal:** Give the team a real-time web dashboard to monitor all campaigns, see per-influencer negotiation progress, and control the agent without relying solely on Slack.
 
-- [ ] **Phase 18: Frontend Foundation** - React + Tailwind app scaffolding served alongside FastAPI backend
+- [x] **Phase 18: Frontend Foundation** - React + Tailwind app scaffolding served alongside FastAPI backend (completed 2026-03-09)
 - [ ] **Phase 19: Campaign Overview** - Campaign list API and dashboard view with status aggregation and polling
 - [ ] **Phase 20: Negotiation Detail** - Per-influencer negotiation data, state timeline, and campaign detail view
 - [ ] **Phase 21: Negotiation Controls** - Pause, resume, and stop negotiations from the dashboard
@@ -136,7 +136,7 @@ Phases execute in numeric order: 18 → 19 → 20 → 21
 | 1-7 | v1.0 | 23/23 | Complete | 2026-02-19 |
 | 8-12 | v1.1 | 10/10 | Complete | 2026-02-19 |
 | 13-17 | v1.2 | 13/13 | Complete | 2026-03-08 |
-| 18. Frontend Foundation | 1/2 | In Progress|  | - |
+| 18. Frontend Foundation | 2/2 | Complete   | 2026-03-09 | - |
 | 19. Campaign Overview | v1.3 | 0/TBD | Not started | - |
 | 20. Negotiation Detail | v1.3 | 0/TBD | Not started | - |
 | 21. Negotiation Controls | v1.3 | 0/TBD | Not started | - |

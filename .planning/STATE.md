@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-03-08)
 
 ## Current Position
 
-Phase: 18 of 21 (Frontend Foundation)
-Plan: 1 of 2 in current phase
-Status: Executing
-Last activity: 2026-03-08 — Completed 18-01 (Frontend Scaffold)
+Phase: 18 of 21 (Frontend Foundation) -- COMPLETE
+Plan: 2 of 2 in current phase
+Status: Phase Complete
+Last activity: 2026-03-08 — Completed 18-02 (Backend Integration)
 
-Progress: [█████░░░░░] 50%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -38,6 +38,9 @@ Progress: [█████░░░░░] 50%
 
 - Phase 18-01: Used Tailwind CSS v4 with @tailwindcss/postcss plugin (latest stable)
 - Phase 18-01: Configured Vite /api proxy to localhost:8000 for FastAPI backend integration
+- Phase 18-02: Mount dashboard AFTER all API routes to prevent catch-all interception
+- Phase 18-02: Cache index.html in memory at mount time for performance
+- Phase 18-02: Graceful no-op when dist/ absent (dev mode uses Vite dev server)
 - All prior decisions logged in PROJECT.md Key Decisions table.
 
 ### Pending Todos
@@ -51,5 +54,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-08
-Stopped at: Completed 18-01-PLAN.md (Frontend Scaffold)
+Stopped at: Completed 18-02-PLAN.md (Backend Integration)
 Resume file: None
