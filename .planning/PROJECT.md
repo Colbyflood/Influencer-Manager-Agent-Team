@@ -117,7 +117,17 @@ The system can:
 
 ### Active
 
-No active milestone. All v1.3 requirements shipped.
+## Current Milestone: v1.4 Per-Campaign Influencer Sheets
+
+**Goal:** Replace the single global influencer sheet with per-campaign sheet tabs (or separate spreadsheets), monitor for newly added influencers mid-campaign, and auto-start negotiations for them.
+
+**Target features:**
+- Per-campaign worksheet tab name via ClickUp form field (default: tab in master sheet)
+- Optional per-campaign spreadsheet URL override for separate sheets
+- Campaign model and ingestion pipeline updated to use per-campaign tab/sheet
+- Hourly sheet polling to detect newly added influencer rows after initial ingestion
+- Auto-start negotiations for newly discovered influencers
+- Slack alert when an influencer's row is updated after negotiation has already started
 
 ### Out of Scope
 
@@ -198,4 +208,4 @@ No active milestone. All v1.3 requirements shipped.
 | app.state for sharing negotiation data with API | FastAPI Request dependency pattern; no global variables | ✓ Good -- consistent across all API endpoints |
 
 ---
-*Last updated: 2026-03-09 after v1.3 milestone completion*
+*Last updated: 2026-03-09 after v1.4 milestone start*

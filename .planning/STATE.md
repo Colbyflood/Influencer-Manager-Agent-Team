@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-03-09)
 
 **Core value:** The agent must negotiate influencer rates accurately using CPM-based logic and reliably communicate the outcome -- every agreed deal must result in a clear, actionable Slack notification to the team.
-**Current focus:** Planning next milestone
+**Current focus:** v1.4 Per-Campaign Influencer Sheets
 
 ## Current Position
 
-Phase: None (between milestones)
-Plan: N/A
-Status: v1.3 Campaign Dashboard shipped
-Last activity: 2026-03-09 — v1.3 milestone completed and archived
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-09 — Milestone v1.4 started
 
 Progress: [██████████] 100%
 
