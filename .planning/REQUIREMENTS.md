@@ -55,26 +55,26 @@ Requirements for v1.3 Campaign Dashboard. Each maps to roadmap phases.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| VIEW-01 | TBD | Pending |
-| VIEW-02 | TBD | Pending |
-| VIEW-03 | TBD | Pending |
-| VIEW-04 | TBD | Pending |
-| CTRL-01 | TBD | Pending |
-| CTRL-02 | TBD | Pending |
-| CTRL-03 | TBD | Pending |
-| API-01 | TBD | Pending |
-| API-02 | TBD | Pending |
-| API-03 | TBD | Pending |
-| API-04 | TBD | Pending |
-| UI-01 | TBD | Pending |
-| UI-02 | TBD | Pending |
-| UI-03 | TBD | Pending |
+| VIEW-01 | Phase 19 | Pending |
+| VIEW-02 | Phase 20 | Pending |
+| VIEW-03 | Phase 20 | Pending |
+| VIEW-04 | Phase 19 | Pending |
+| CTRL-01 | Phase 21 | Pending |
+| CTRL-02 | Phase 21 | Pending |
+| CTRL-03 | Phase 21 | Pending |
+| API-01 | Phase 19 | Pending |
+| API-02 | Phase 20 | Pending |
+| API-03 | Phase 21 | Pending |
+| API-04 | Phase 20 | Pending |
+| UI-01 | Phase 18 | Pending |
+| UI-02 | Phase 18 | Pending |
+| UI-03 | Phase 19 | Pending |
 
 **Coverage:**
 - v1.3 requirements: 14 total
-- Mapped to phases: 0
-- Unmapped: 14
+- Mapped to phases: 14
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-08*
-*Last updated: 2026-03-08 after initial definition*
+*Last updated: 2026-03-08 after roadmap creation*
