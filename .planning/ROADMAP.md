@@ -90,11 +90,11 @@ Plans:
   2. User sees campaign-level metrics: average CPM achieved, percentage of negotiations closed, budget utilization
   3. Dashboard data refreshes automatically at a configurable polling interval without manual page reload
   4. Campaign list API endpoint returns correct status aggregation when queried directly
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 19-01: TBD
-- [ ] 19-02: TBD
+- [ ] 19-01-PLAN.md -- Campaign list API endpoint with status aggregation and metrics
+- [ ] 19-02-PLAN.md -- Frontend campaign cards with status counts, metrics, and auto-polling
 
 ### Phase 20: Negotiation Detail
 **Goal**: Team can drill into any campaign and inspect per-influencer negotiation progress, state history, and rate evolution
@@ -137,6 +137,6 @@ Phases execute in numeric order: 18 → 19 → 20 → 21
 | 8-12 | v1.1 | 10/10 | Complete | 2026-02-19 |
 | 13-17 | v1.2 | 13/13 | Complete | 2026-03-08 |
 | 18. Frontend Foundation | 2/2 | Complete    | 2026-03-09 | - |
-| 19. Campaign Overview | v1.3 | 0/TBD | Not started | - |
+| 19. Campaign Overview | v1.3 | 0/2 | Not started | - |
 | 20. Negotiation Detail | v1.3 | 0/TBD | Not started | - |
 | 21. Negotiation Controls | v1.3 | 0/TBD | Not started | - |
