@@ -65,3 +65,10 @@ export interface TimelineResponse {
   state_transitions: StateTransition[];
   timeline: TimelineEntry[];
 }
+
+export interface ControlResponse {
+  thread_id: string;
+  action: string;
+  previous_state: string;
+  new_state: string;
+}
