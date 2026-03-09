@@ -54,6 +54,10 @@ field_mapping:
   "Content Delivery Date": "requirements.content_delivery_date"
   "Content Publish Date": "requirements.content_publish_date"
 
+  # Sheet routing (2 fields)
+  "Influencer Sheet Tab": "influencer_sheet_tab"
+  "Influencer Sheet ID": "influencer_sheet_id"
+
   # Influencer list (kept from original - parsed separately via Google Sheet)
   "Influencer List": "influencers_raw"
   "Platform": "platform"

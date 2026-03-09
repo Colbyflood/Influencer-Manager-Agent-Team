@@ -275,6 +275,16 @@ class Campaign(BaseModel):
     requirements: CampaignRequirements | None = None
     distribution: DistributionInfo | None = None
 
+    # Sheet routing (per-campaign spreadsheet overrides)
+    influencer_sheet_tab: str | None = Field(
+        default=None,
+        description="Worksheet tab name for this campaign's influencer data",
+    )
+    influencer_sheet_id: str | None = Field(
+        default=None,
+        description="Optional separate spreadsheet ID override (instead of master sheet)",
+    )
+
     @field_validator("budget", mode="before")
     @classmethod
     def reject_float_budget(cls, v: object) -> object:
