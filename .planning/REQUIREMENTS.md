@@ -22,7 +22,7 @@ Requirements for v1.3 Campaign Dashboard. Each maps to roadmap phases.
 
 ### API
 
-- [ ] **API-01**: Backend exposes campaign list endpoint with per-campaign status aggregation
+- [x] **API-01**: Backend exposes campaign list endpoint with per-campaign status aggregation
 - [ ] **API-02**: Backend exposes campaign detail endpoint with per-influencer negotiation data
 - [ ] **API-03**: Backend exposes negotiation control endpoints (pause, resume, stop)
 - [ ] **API-04**: Backend exposes per-influencer timeline endpoint with state transitions and email history
@@ -62,7 +62,7 @@ Requirements for v1.3 Campaign Dashboard. Each maps to roadmap phases.
 | CTRL-01 | Phase 21 | Pending |
 | CTRL-02 | Phase 21 | Pending |
 | CTRL-03 | Phase 21 | Pending |
-| API-01 | Phase 19 | Pending |
+| API-01 | Phase 19 | Complete |
 | API-02 | Phase 20 | Pending |
 | API-03 | Phase 21 | Pending |
 | API-04 | Phase 20 | Pending |
