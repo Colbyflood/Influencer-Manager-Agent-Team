@@ -73,7 +73,7 @@ Full details: [milestones/v1.3-ROADMAP.md](milestones/v1.3-ROADMAP.md)
 
 **Milestone Goal:** Replace the single global influencer sheet with per-campaign sheet tabs (or separate spreadsheets), monitor for newly added influencers mid-campaign, and auto-start negotiations for them.
 
-- [ ] **Phase 22: Per-Campaign Sheet Routing** - Campaign model, ClickUp parsing, and SheetsClient all use per-campaign tab/sheet instead of hardcoded "Sheet1"
+- [x] **Phase 22: Per-Campaign Sheet Routing** - Campaign model, ClickUp parsing, and SheetsClient all use per-campaign tab/sheet instead of hardcoded "Sheet1" (completed 2026-03-09)
 - [ ] **Phase 23: Sheet Monitoring and Auto-Negotiation** - Hourly polling detects new influencer rows, auto-starts negotiations, alerts on modifications, and prevents duplicate outreach
 
 ## Phase Details
@@ -119,5 +119,5 @@ Phases execute in numeric order: 22 → 23
 | 8-12 | v1.1 | 10/10 | Complete | 2026-02-19 |
 | 13-17 | v1.2 | 13/13 | Complete | 2026-03-08 |
 | 18-21 | v1.3 | 8/8 | Complete | 2026-03-09 |
-| 22. Per-Campaign Sheet Routing | 1/2 | In Progress|  | - |
+| 22. Per-Campaign Sheet Routing | 2/2 | Complete   | 2026-03-09 | - |
 | 23. Sheet Monitoring and Auto-Negotiation | v1.4 | 0/TBD | Not started | - |

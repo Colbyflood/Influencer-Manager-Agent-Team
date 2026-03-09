@@ -17,7 +17,7 @@ Requirements for Per-Campaign Influencer Sheets milestone. Each maps to roadmap 
 
 - [x] **INGEST-01**: Campaign model includes `influencer_sheet_tab` field parsed from ClickUp form
 - [x] **INGEST-02**: Campaign model includes optional `influencer_sheet_id` field for spreadsheet override
-- [ ] **INGEST-03**: Ingestion pipeline passes per-campaign tab/sheet to `find_influencer()` instead of hardcoded "Sheet1"
+- [x] **INGEST-03**: Ingestion pipeline passes per-campaign tab/sheet to `find_influencer()` instead of hardcoded "Sheet1"
 
 ### Sheet Monitoring
 
@@ -53,7 +53,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SHEET-03 | Phase 22 | Complete |
 | INGEST-01 | Phase 22 | Complete |
 | INGEST-02 | Phase 22 | Complete |
-| INGEST-03 | Phase 22 | Pending |
+| INGEST-03 | Phase 22 | Complete |
 | MON-01 | Phase 23 | Pending |
 | MON-02 | Phase 23 | Pending |
 | MON-03 | Phase 23 | Pending |
