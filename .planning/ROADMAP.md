@@ -120,11 +120,11 @@ Plans:
   2. User can resume a previously paused negotiation from the dashboard, and the agent picks up where it left off
   3. User can stop all negotiations associated with a specific talent agent or agency in one action
   4. Control API endpoints accept pause/resume/stop requests and return confirmation of the state change
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 21-01: TBD
-- [ ] 21-02: TBD
+- [ ] 21-01-PLAN.md -- Backend control API: PAUSED/STOPPED states, control endpoints, email processing guard
+- [ ] 21-02-PLAN.md -- Frontend control buttons: Pause/Resume/Stop UI in campaign detail table
 
 ## Progress
 
@@ -139,4 +139,4 @@ Phases execute in numeric order: 18 → 19 → 20 → 21
 | 18. Frontend Foundation | 2/2 | Complete    | 2026-03-09 | - |
 | 19. Campaign Overview | 2/2 | Complete   | 2026-03-09 | - |
 | 20. Negotiation Detail | 2/2 | Complete   | 2026-03-09 | - |
-| 21. Negotiation Controls | v1.3 | 0/TBD | Not started | - |
+| 21. Negotiation Controls | v1.3 | 0/2 | Not started | - |
