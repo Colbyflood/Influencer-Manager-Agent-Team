@@ -76,3 +76,29 @@
 
 ---
 
+
+## v1.3 Campaign Dashboard (Shipped: 2026-03-09)
+
+**Phases completed:** 4 phases, 8 plans
+**Tests:** 857 passing | **Total LOC:** ~11,372 Python + 856 TypeScript
+**Timeline:** 1 day (2026-03-08 to 2026-03-09) | **Commits:** 30
+**Requirements:** 14/14 satisfied
+
+**Key accomplishments:**
+- React 19 + Vite + TypeScript + Tailwind CSS 4 frontend served alongside FastAPI backend at /dashboard with multi-stage Docker build
+- Campaign overview dashboard with auto-polling (30s configurable), status aggregation (active/agreed/escalated/total), and campaign-level metrics (avg CPM, % closed, budget utilization)
+- Per-influencer negotiation detail view with color-coded state badges, drill-down from campaign list, and clickable rows leading to individual timelines
+- Per-influencer negotiation timeline showing state transitions from state machine history and email activity from SQLite audit trail with expandable email bodies
+- Dashboard-driven negotiation controls: Pause/Resume/Stop buttons per influencer with state-aware rendering, backend state machine extensions (PAUSED/STOPPED states), and email processing guard
+- Bulk stop-by-agency API endpoint for stopping all negotiations associated with a talent agent/agency in one request
+
+**Archive:** [v1.3-ROADMAP.md](milestones/v1.3-ROADMAP.md) | [v1.3-REQUIREMENTS.md](milestones/v1.3-REQUIREMENTS.md) | [v1.3-MILESTONE-AUDIT.md](milestones/v1.3-MILESTONE-AUDIT.md)
+
+**Known tech debt (v1.3 acknowledged):**
+- Vite `base` not set to `/dashboard/` — production static asset URLs may need adjustment
+- `rejected` count not displayed on CampaignCard (data available in API, omitted from UI)
+- `stop-by-agency` bulk endpoint has no frontend UI trigger (API-only)
+- Contact tracker is in-memory (pre-existing from v1.2)
+
+---
+

@@ -2,7 +2,7 @@
 
 ## What This Is
 
-An AI-powered agent that handles influencer rate negotiations via email on behalf of marketing teams. The agent picks up email threads where influencers have already responded to outreach, negotiates deliverable rates using CPM-based pricing with per-campaign targets and leniency, and alerts the team via Slack when agreements are reached or escalation is needed. It operates in hybrid mode -- autonomously handling routine negotiation while escalating edge cases to humans. The system uses a full negotiation lever stack (deliverable tiers, usage rights, product offers, CPM sharing), detects counterparty type (influencer vs talent manager), and composes AGM-style emails with structured SOW counter-offers. Production-ready with persistent state, Docker deployment, CI/CD, and full observability.
+An AI-powered agent that handles influencer rate negotiations via email on behalf of marketing teams. The agent picks up email threads where influencers have already responded to outreach, negotiates deliverable rates using CPM-based pricing with per-campaign targets and leniency, and alerts the team via Slack when agreements are reached or escalation is needed. It operates in hybrid mode -- autonomously handling routine negotiation while escalating edge cases to humans. The system uses a full negotiation lever stack (deliverable tiers, usage rights, product offers, CPM sharing), detects counterparty type (influencer vs talent manager), and composes AGM-style emails with structured SOW counter-offers. Includes a real-time web dashboard for monitoring all campaigns, inspecting per-influencer negotiation progress, and controlling the agent (pause/resume/stop). Production-ready with persistent state, Docker deployment, CI/CD, and full observability.
 
 ## Core Value
 
@@ -10,10 +10,10 @@ The agent must negotiate influencer rates accurately using CPM-based logic and r
 
 ## Current State
 
-**Shipped:** v1.2 Real-World Negotiation Intelligence (2026-03-08)
-**Codebase:** ~23,872 LOC Python (source + tests)
-**Tests:** 832+ passing + 4 live integration tests
-**Tech stack:** Python 3.12+, FastAPI, Anthropic SDK, Gmail API, Google Sheets API, Slack Bolt, SQLite, Pydantic v2, Docker, GitHub Actions, Prometheus, Sentry, structlog
+**Shipped:** v1.3 Campaign Dashboard (2026-03-09)
+**Codebase:** ~11,372 LOC Python + 856 LOC TypeScript (source + tests)
+**Tests:** 857 passing + 4 live integration tests
+**Tech stack:** Python 3.12+, FastAPI, Anthropic SDK, Gmail API, Google Sheets API, Slack Bolt, SQLite, Pydantic v2, Docker, GitHub Actions, Prometheus, Sentry, structlog, React 19, Vite 6, TypeScript, Tailwind CSS 4
 
 The system can:
 1. Receive inbound emails via Gmail Pub/Sub and run the full negotiation pipeline
@@ -30,6 +30,9 @@ The system can:
 12. Persist negotiation state to SQLite -- survives restarts with zero data loss
 13. Deploy via `docker compose up` with health checks and auto-restart
 14. Report metrics to Prometheus, errors to Sentry, with request ID tracing
+15. Serve a real-time web dashboard at /dashboard with campaign overview, per-influencer negotiation detail, and timeline views
+16. Allow team to pause, resume, or stop negotiations directly from the dashboard
+17. Auto-refresh dashboard data via polling (30s configurable interval)
 
 ## Requirements
 
@@ -97,27 +100,30 @@ The system can:
 - ✓ EMAIL-05: Agent composes emails with AGM partnership-first style -- v1.2
 - ✓ EMAIL-06: Agent formats counter-offers with SOW structure and strikethrough rates -- v1.2
 - ✓ EMAIL-07: Agent includes payment terms and next steps in agreement emails -- v1.2
+- ✓ UI-01: React + Tailwind CSS frontend application with campaign list and detail views -- v1.3
+- ✓ UI-02: Dashboard served alongside existing FastAPI backend (static files or dev proxy) -- v1.3
+- ✓ UI-03: Dashboard updates via polling (configurable interval) for near-real-time status -- v1.3
+- ✓ VIEW-01: User can view a campaign list showing all campaigns with status summary -- v1.3
+- ✓ VIEW-02: User can view campaign detail page showing every influencer and their negotiation state, rate, round count, and counterparty type -- v1.3
+- ✓ VIEW-03: User can view per-influencer negotiation timeline showing state transitions, emails exchanged, and rate history -- v1.3
+- ✓ VIEW-04: User can see campaign-level metrics: average CPM achieved, percentage closed, budget utilization -- v1.3
+- ✓ API-01: Backend exposes campaign list endpoint with per-campaign status aggregation -- v1.3
+- ✓ API-02: Backend exposes campaign detail endpoint with per-influencer negotiation data -- v1.3
+- ✓ API-03: Backend exposes negotiation control endpoints (pause, resume, stop) -- v1.3
+- ✓ API-04: Backend exposes per-influencer timeline endpoint with state transitions and email history -- v1.3
+- ✓ CTRL-01: User can pause/stop negotiation with a specific influencer from the dashboard -- v1.3
+- ✓ CTRL-02: User can resume a paused negotiation from the dashboard -- v1.3
+- ✓ CTRL-03: User can stop all negotiations associated with a specific talent agent or agency -- v1.3
 
 ### Active
 
-**Current Milestone: v1.3 Campaign Dashboard**
-
-**Goal:** Give the team a real-time web dashboard to monitor all campaigns, see per-influencer negotiation progress, and control the agent (pause/stop negotiations) without relying solely on Slack.
-
-**Target features:**
-- React + Tailwind CSS dashboard served alongside FastAPI backend
-- Campaign list view with status aggregation (active, % closed, avg CPM)
-- Campaign detail view with per-influencer negotiation states and timeline
-- Controls: stop/pause negotiation with a specific influencer
-- Controls: stop all negotiations with a specific talent agent/agency
-- Near-real-time status updates
-- API endpoints powering the dashboard views
+No active milestone. All v1.3 requirements shipped.
 
 ### Out of Scope
 
 - Full outreach automation (cold email) -- future agent handles this; team uses Instantly today
 - Campaign-level CPM optimization across influencers -- future "strategist" agent territory
-- Web dashboard with auth/multi-user -- single-user dashboard in v1.3; auth deferred
+- Multi-user auth for dashboard -- single-user sufficient for current team size
 - Contract generation/sending -- legal liability; human sends contracts after agent alerts deal
 - Direct platform API integration for pulling influencer metrics -- metrics are pre-loaded
 - Fully autonomous mode -- hybrid with human escalation; trust must be earned
@@ -127,6 +133,10 @@ The system can:
 - Redis state cache -- adds second container and failure mode for no benefit at current scale
 - Kubernetes/ECS -- massive operational overhead for single-VM target
 - OpenTelemetry traces -- requires collector sidecar; Prometheus + Sentry covers the need
+- WebSocket real-time updates -- polling sufficient for dashboard refresh
+- Mobile-responsive design -- desktop-first; team uses dashboard on workstations
+- Email composition from dashboard -- agent composes emails; dashboard is monitoring and control only
+- Campaign creation from dashboard -- campaigns come from ClickUp forms
 
 ## Context
 
@@ -140,6 +150,7 @@ The system can:
 - v1.0 shipped with 691 tests, 22/22 requirements satisfied, all E2E flows verified
 - v1.1 added 40 more tests (731 total + 4 live), 14/14 production requirements satisfied
 - v1.2 added 100+ tests (832+ total), 26/26 negotiation intelligence requirements satisfied
+- v1.3 added 25+ tests (857 total), 14/14 dashboard requirements satisfied, 856 LOC TypeScript frontend
 - Deployment target is a single VM with Docker Compose
 
 ## Constraints
@@ -179,6 +190,12 @@ The system can:
 | Signal-based counterparty classification | Composable signals with confidence scoring vs binary rules | ✓ Good -- handles ambiguous cases with default fallback |
 | SOW formatter as deterministic module | LLM embeds pre-formatted SOW blocks as-is, no reformulation | ✓ Good -- strikethrough rates, deliverable bullets |
 | Tone guidance in user prompt (not system prompt) | Varies per-request without invalidating cached system prompt | ✓ Good -- backward compatible default |
+| React + Vite + TypeScript for frontend | Modern toolchain, fast builds, type-safe; Tailwind CSS 4 for styling | ✓ Good -- 856 LOC, 5 components, builds in <1s |
+| Serve React from FastAPI (no separate server) | Single process, no CORS; dashboard at /dashboard, API at /api/v1 | ✓ Good -- mount_dashboard after API routes prevents conflicts |
+| State-based navigation (no React Router) | Lightweight for 3 views; conditional rendering via useState | ✓ Good -- simple, no extra dependency |
+| Polling over WebSocket for dashboard | Simpler architecture; 30s interval sufficient for monitoring | ✓ Good -- usePolling hook with configurable interval |
+| PAUSED is non-terminal, STOPPED is terminal | Pause is reversible (resume restores exact pre-pause state); stop is permanent | ✓ Good -- pre_pause_state storage enables clean resume |
+| app.state for sharing negotiation data with API | FastAPI Request dependency pattern; no global variables | ✓ Good -- consistent across all API endpoints |
 
 ---
-*Last updated: 2026-03-08 after v1.3 milestone start*
+*Last updated: 2026-03-09 after v1.3 milestone completion*
