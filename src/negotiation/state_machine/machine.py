@@ -27,12 +27,14 @@ class NegotiationStateMachine:
     ) -> None:
         self._state: NegotiationState = initial_state
         self._history: list[tuple[NegotiationState, str, NegotiationState]] = []
+        self._pre_pause_state: NegotiationState | None = None
 
     @classmethod
     def from_snapshot(
         cls,
         state: NegotiationState,
         history: list[tuple[NegotiationState, str, NegotiationState]],
+        pre_pause_state: NegotiationState | None = None,
     ) -> NegotiationStateMachine:
         """Reconstruct a state machine from a persisted snapshot.
 
@@ -44,6 +46,7 @@ class NegotiationStateMachine:
             state: The negotiation state to restore.
             history: The full transition history as ``(from, event, to)``
                      tuples in chronological order.
+            pre_pause_state: The state saved before a pause, if any.
 
         Returns:
             A ``NegotiationStateMachine`` positioned at *state* with the
@@ -51,6 +54,7 @@ class NegotiationStateMachine:
         """
         instance = cls(initial_state=state)
         instance._history = list(history)  # defensive copy
+        instance._pre_pause_state = pre_pause_state
         return instance
 
     @property
@@ -59,8 +63,13 @@ class NegotiationStateMachine:
         return self._state
 
     @property
+    def pre_pause_state(self) -> NegotiationState | None:
+        """Return the state that was active before the machine was paused."""
+        return self._pre_pause_state
+
+    @property
     def is_terminal(self) -> bool:
-        """Return True if the machine is in a terminal state (AGREED or REJECTED)."""
+        """Return True if the machine is in a terminal state."""
         return self._state in TERMINAL_STATES
 
     @property
@@ -106,3 +115,45 @@ class NegotiationStateMachine:
         if self.is_terminal:
             return []
         return sorted(event for state, event in TRANSITIONS if state == self._state)
+
+    # ------------------------------------------------------------------
+    # Control methods: pause / resume / stop
+    # ------------------------------------------------------------------
+
+    def pause(self) -> NegotiationState:
+        """Pause the negotiation, storing the current state for later resume.
+
+        Raises:
+            InvalidTransitionError: If the machine is in a terminal state
+                or already paused.
+        """
+        if self.is_terminal:
+            raise InvalidTransitionError(self._state, "pause")
+        if self._state == NegotiationState.PAUSED:
+            raise InvalidTransitionError(self._state, "pause")
+        self._pre_pause_state = self._state
+        return self.trigger("pause")
+
+    def resume(self) -> NegotiationState:
+        """Resume a paused negotiation, restoring the pre-pause state.
+
+        Raises:
+            InvalidTransitionError: If the machine is not paused or has no
+                saved pre-pause state.
+        """
+        if self._state != NegotiationState.PAUSED or self._pre_pause_state is None:
+            raise InvalidTransitionError(self._state, "resume")
+        restored = self._pre_pause_state
+        self._pre_pause_state = None
+        self._history.append((NegotiationState.PAUSED, "resume", restored))
+        self._state = restored
+        return restored
+
+    def stop(self) -> NegotiationState:
+        """Permanently stop the negotiation (terminal).
+
+        Raises:
+            InvalidTransitionError: If the machine is already in a terminal
+                state.
+        """
+        return self.trigger("stop")

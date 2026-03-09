@@ -38,6 +38,8 @@ class NegotiationState(StrEnum):
     REJECTED = "rejected"
     ESCALATED = "escalated"
     STALE = "stale"
+    PAUSED = "paused"
+    STOPPED = "stopped"
 
 
 # Mapping of platforms to their valid deliverable types

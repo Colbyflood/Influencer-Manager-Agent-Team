@@ -16,6 +16,9 @@ class NegotiationEvent(StrEnum):
     REJECT = "reject"
     ESCALATE = "escalate"
     RESUME_COUNTER = "resume_counter"
+    PAUSE = "pause"
+    RESUME = "resume"
+    STOP = "stop"
 
 
 # All valid (current_state, event_string) -> next_state mappings.
@@ -46,9 +49,24 @@ TRANSITIONS: dict[tuple[NegotiationState, str], NegotiationState] = {
     # From STALE
     (NegotiationState.STALE, NegotiationEvent.RECEIVE_REPLY): NegotiationState.COUNTER_RECEIVED,
     (NegotiationState.STALE, NegotiationEvent.REJECT): NegotiationState.REJECTED,
+    # Pause transitions (all non-terminal states -> PAUSED)
+    (NegotiationState.INITIAL_OFFER, NegotiationEvent.PAUSE): NegotiationState.PAUSED,
+    (NegotiationState.AWAITING_REPLY, NegotiationEvent.PAUSE): NegotiationState.PAUSED,
+    (NegotiationState.COUNTER_RECEIVED, NegotiationEvent.PAUSE): NegotiationState.PAUSED,
+    (NegotiationState.COUNTER_SENT, NegotiationEvent.PAUSE): NegotiationState.PAUSED,
+    (NegotiationState.ESCALATED, NegotiationEvent.PAUSE): NegotiationState.PAUSED,
+    (NegotiationState.STALE, NegotiationEvent.PAUSE): NegotiationState.PAUSED,
+    # Stop transitions (all non-terminal states + PAUSED -> STOPPED)
+    (NegotiationState.INITIAL_OFFER, NegotiationEvent.STOP): NegotiationState.STOPPED,
+    (NegotiationState.AWAITING_REPLY, NegotiationEvent.STOP): NegotiationState.STOPPED,
+    (NegotiationState.COUNTER_RECEIVED, NegotiationEvent.STOP): NegotiationState.STOPPED,
+    (NegotiationState.COUNTER_SENT, NegotiationEvent.STOP): NegotiationState.STOPPED,
+    (NegotiationState.ESCALATED, NegotiationEvent.STOP): NegotiationState.STOPPED,
+    (NegotiationState.STALE, NegotiationEvent.STOP): NegotiationState.STOPPED,
+    (NegotiationState.PAUSED, NegotiationEvent.STOP): NegotiationState.STOPPED,
 }
 
 # States that reject all events -- no outgoing transitions allowed.
 TERMINAL_STATES: frozenset[NegotiationState] = frozenset(
-    {NegotiationState.AGREED, NegotiationState.REJECTED}
+    {NegotiationState.AGREED, NegotiationState.REJECTED, NegotiationState.STOPPED}
 )
