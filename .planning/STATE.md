@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-09)
 ## Current Position
 
 Phase: 22 of 23 (Per-Campaign Sheet Routing)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-03-09 -- Roadmap created for v1.4
+Plan: 1 of 2 in current phase
+Status: Executing
+Last activity: 2026-03-09 -- Completed 22-01 (per-campaign sheet routing foundation)
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█████░░░░░] 50%
 
 ## Performance Metrics
 
@@ -42,6 +42,9 @@ Progress: [░░░░░░░░░░] 0%
 
 All decisions logged in PROJECT.md Key Decisions table.
 
+- [22-01] Override spreadsheets opened without caching to support multiple campaigns with different sheets
+- [22-01] Sheet routing fields are plain text in ClickUp, no special type parsing needed
+
 ### Pending Todos
 
 None.
@@ -54,5 +57,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-09
-Stopped at: v1.4 roadmap created, ready to plan Phase 22
+Stopped at: Completed 22-01-PLAN.md
 Resume file: None

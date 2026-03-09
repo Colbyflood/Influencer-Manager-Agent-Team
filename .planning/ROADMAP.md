@@ -119,5 +119,5 @@ Phases execute in numeric order: 22 → 23
 | 8-12 | v1.1 | 10/10 | Complete | 2026-02-19 |
 | 13-17 | v1.2 | 13/13 | Complete | 2026-03-08 |
 | 18-21 | v1.3 | 8/8 | Complete | 2026-03-09 |
-| 22. Per-Campaign Sheet Routing | v1.4 | 0/2 | Not started | - |
+| 22. Per-Campaign Sheet Routing | 1/2 | In Progress|  | - |
 | 23. Sheet Monitoring and Auto-Negotiation | v1.4 | 0/TBD | Not started | - |

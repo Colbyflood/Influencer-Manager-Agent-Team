@@ -9,14 +9,14 @@ Requirements for Per-Campaign Influencer Sheets milestone. Each maps to roadmap 
 
 ### Sheet Configuration
 
-- [ ] **SHEET-01**: Agent supports per-campaign worksheet tab name specified via ClickUp form field
-- [ ] **SHEET-02**: Agent supports optional per-campaign spreadsheet ID override (separate sheet instead of tab in master sheet)
-- [ ] **SHEET-03**: Agent defaults to master spreadsheet (GOOGLE_SHEETS_KEY) when no override is provided
+- [x] **SHEET-01**: Agent supports per-campaign worksheet tab name specified via ClickUp form field
+- [x] **SHEET-02**: Agent supports optional per-campaign spreadsheet ID override (separate sheet instead of tab in master sheet)
+- [x] **SHEET-03**: Agent defaults to master spreadsheet (GOOGLE_SHEETS_KEY) when no override is provided
 
 ### Ingestion
 
-- [ ] **INGEST-01**: Campaign model includes `influencer_sheet_tab` field parsed from ClickUp form
-- [ ] **INGEST-02**: Campaign model includes optional `influencer_sheet_id` field for spreadsheet override
+- [x] **INGEST-01**: Campaign model includes `influencer_sheet_tab` field parsed from ClickUp form
+- [x] **INGEST-02**: Campaign model includes optional `influencer_sheet_id` field for spreadsheet override
 - [ ] **INGEST-03**: Ingestion pipeline passes per-campaign tab/sheet to `find_influencer()` instead of hardcoded "Sheet1"
 
 ### Sheet Monitoring
@@ -48,11 +48,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SHEET-01 | Phase 22 | Pending |
-| SHEET-02 | Phase 22 | Pending |
-| SHEET-03 | Phase 22 | Pending |
-| INGEST-01 | Phase 22 | Pending |
-| INGEST-02 | Phase 22 | Pending |
+| SHEET-01 | Phase 22 | Complete |
+| SHEET-02 | Phase 22 | Complete |
+| SHEET-03 | Phase 22 | Complete |
+| INGEST-01 | Phase 22 | Complete |
+| INGEST-02 | Phase 22 | Complete |
 | INGEST-03 | Phase 22 | Pending |
 | MON-01 | Phase 23 | Pending |
 | MON-02 | Phase 23 | Pending |
