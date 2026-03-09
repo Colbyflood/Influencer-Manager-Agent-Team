@@ -36,6 +36,7 @@ from negotiation.campaign.models import Campaign
 from negotiation.campaign.webhook import router as webhook_router
 from negotiation.campaign.webhook import set_campaign_processor
 from negotiation.config import Settings, get_settings, validate_credentials
+from negotiation.dashboard import mount_dashboard
 from negotiation.domain.types import NegotiationState
 from negotiation.health import register_health_routes
 from negotiation.observability.metrics import ACTIVE_NEGOTIATIONS, DEALS_CLOSED
@@ -750,6 +751,10 @@ def create_app(services: dict[str, Any]) -> FastAPI:
 
         logger.info("Gmail notification processed", new_messages=len(new_ids))
         return {"status": "ok"}
+
+    # Mount React dashboard AFTER all API routes so catch-all doesn't
+    # intercept API requests (FastAPI matches routes in registration order).
+    mount_dashboard(fastapi_app)
 
     return fastapi_app
 
