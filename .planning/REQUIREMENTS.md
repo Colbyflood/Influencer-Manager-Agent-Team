@@ -29,7 +29,7 @@ Requirements for v1.3 Campaign Dashboard. Each maps to roadmap phases.
 
 ### Frontend Infrastructure
 
-- [ ] **UI-01**: React + Tailwind CSS frontend application with campaign list and detail views
+- [x] **UI-01**: React + Tailwind CSS frontend application with campaign list and detail views
 - [ ] **UI-02**: Dashboard served alongside existing FastAPI backend (static files or dev proxy)
 - [ ] **UI-03**: Dashboard updates via polling (configurable interval) for near-real-time status
 
@@ -66,7 +66,7 @@ Requirements for v1.3 Campaign Dashboard. Each maps to roadmap phases.
 | API-02 | Phase 20 | Pending |
 | API-03 | Phase 21 | Pending |
 | API-04 | Phase 20 | Pending |
-| UI-01 | Phase 18 | Pending |
+| UI-01 | Phase 18 | Complete |
 | UI-02 | Phase 18 | Pending |
 | UI-03 | Phase 19 | Pending |
 
