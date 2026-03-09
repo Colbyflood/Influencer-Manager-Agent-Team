@@ -2,13 +2,17 @@ import type { CampaignSummary } from "../types/campaign";
 
 interface CampaignCardProps {
   campaign: CampaignSummary;
+  onSelect?: (campaignId: string) => void;
 }
 
-export function CampaignCard({ campaign }: CampaignCardProps) {
+export function CampaignCard({ campaign, onSelect }: CampaignCardProps) {
   const { status_counts, metrics } = campaign;
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+    <div
+      onClick={() => onSelect?.(campaign.campaign_id)}
+      className="cursor-pointer rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md"
+    >
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>

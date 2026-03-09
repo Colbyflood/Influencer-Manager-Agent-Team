@@ -2,7 +2,11 @@ import { usePolling } from "../hooks/usePolling";
 import type { CampaignListResponse } from "../types/campaign";
 import { CampaignCard } from "./CampaignCard";
 
-export function CampaignList() {
+interface CampaignListProps {
+  onSelect?: (campaignId: string) => void;
+}
+
+export function CampaignList({ onSelect }: CampaignListProps = {}) {
   const { data, loading, error } = usePolling<CampaignListResponse>(
     "/api/v1/campaigns",
     30000
@@ -63,7 +67,7 @@ export function CampaignList() {
       {/* Campaign grid */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
         {data.campaigns.map((campaign) => (
-          <CampaignCard key={campaign.campaign_id} campaign={campaign} />
+          <CampaignCard key={campaign.campaign_id} campaign={campaign} onSelect={onSelect} />
         ))}
       </div>
     </div>

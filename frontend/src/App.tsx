@@ -1,6 +1,10 @@
+import { useState } from "react";
 import { CampaignList } from "./components/CampaignList";
+import { CampaignDetail } from "./components/CampaignDetail";
 
 function App() {
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -14,7 +18,14 @@ function App() {
 
       {/* Main content */}
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <CampaignList />
+        {selectedCampaignId ? (
+          <CampaignDetail
+            campaignId={selectedCampaignId}
+            onBack={() => setSelectedCampaignId(null)}
+          />
+        ) : (
+          <CampaignList onSelect={setSelectedCampaignId} />
+        )}
       </main>
     </div>
   );
