@@ -801,6 +801,16 @@ async def process_inbound_email(message_id: str, services: dict[str, Any]) -> No
             return
 
         state_machine = thread_state["state_machine"]
+
+        # Guard: skip processing for paused or stopped negotiations
+        if state_machine.state in (NegotiationState.PAUSED, NegotiationState.STOPPED):
+            logger.info(
+                "Negotiation is %s, skipping inbound email",
+                state_machine.state.value,
+                thread_id=inbound.thread_id,
+            )
+            return
+
         context = thread_state["context"]
         round_count = thread_state["round_count"]
 

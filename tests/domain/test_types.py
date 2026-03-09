@@ -66,8 +66,8 @@ class TestDeliverableTypeEnum:
 class TestNegotiationStateEnum:
     """Tests for the NegotiationState enum."""
 
-    def test_has_exactly_eight_members(self):
-        assert len(NegotiationState) == 8
+    def test_has_exactly_ten_members(self):
+        assert len(NegotiationState) == 10
 
     def test_all_states_present(self):
         expected = {
@@ -79,6 +79,8 @@ class TestNegotiationStateEnum:
             "rejected",
             "escalated",
             "stale",
+            "paused",
+            "stopped",
         }
         actual = {str(s) for s in NegotiationState}
         assert actual == expected

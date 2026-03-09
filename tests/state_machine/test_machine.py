@@ -8,22 +8,13 @@ from negotiation.state_machine.machine import NegotiationStateMachine
 from negotiation.state_machine.transitions import NegotiationEvent
 
 # ---------------------------------------------------------------------------
-# All 13 valid transitions
+# All valid transitions (derived from the transition map)
 # ---------------------------------------------------------------------------
+from negotiation.state_machine.transitions import TRANSITIONS, TERMINAL_STATES as _TERMINAL_STATES
+
 VALID_TRANSITIONS: list[tuple[NegotiationState, str, NegotiationState]] = [
-    (NegotiationState.INITIAL_OFFER, "send_offer", NegotiationState.AWAITING_REPLY),
-    (NegotiationState.AWAITING_REPLY, "receive_reply", NegotiationState.COUNTER_RECEIVED),
-    (NegotiationState.AWAITING_REPLY, "timeout", NegotiationState.STALE),
-    (NegotiationState.COUNTER_RECEIVED, "send_counter", NegotiationState.COUNTER_SENT),
-    (NegotiationState.COUNTER_RECEIVED, "accept", NegotiationState.AGREED),
-    (NegotiationState.COUNTER_RECEIVED, "reject", NegotiationState.REJECTED),
-    (NegotiationState.COUNTER_RECEIVED, "escalate", NegotiationState.ESCALATED),
-    (NegotiationState.COUNTER_SENT, "receive_reply", NegotiationState.COUNTER_RECEIVED),
-    (NegotiationState.COUNTER_SENT, "timeout", NegotiationState.STALE),
-    (NegotiationState.ESCALATED, "resume_counter", NegotiationState.COUNTER_SENT),
-    (NegotiationState.ESCALATED, "reject", NegotiationState.REJECTED),
-    (NegotiationState.STALE, "receive_reply", NegotiationState.COUNTER_RECEIVED),
-    (NegotiationState.STALE, "reject", NegotiationState.REJECTED),
+    (from_state, event, to_state)
+    for (from_state, event), to_state in TRANSITIONS.items()
 ]
 
 # ---------------------------------------------------------------------------
@@ -38,7 +29,7 @@ ALL_EVENTS: list[str] = [e.value for e in NegotiationEvent]
 # ---------------------------------------------------------------------------
 _VALID_PAIRS: set[tuple[NegotiationState, str]] = {(s, e) for s, e, _ in VALID_TRANSITIONS}
 
-TERMINAL_STATES = {NegotiationState.AGREED, NegotiationState.REJECTED}
+TERMINAL_STATES = _TERMINAL_STATES
 
 INVALID_NON_TERMINAL_TRANSITIONS: list[tuple[NegotiationState, str]] = [
     (state, event)
@@ -195,30 +186,34 @@ class TestHistory:
 class TestGetValidEvents:
     """get_valid_events returns sorted list of valid events from current state."""
 
-    def test_initial_offer_only_send_offer(self) -> None:
+    def test_initial_offer_valid_events(self) -> None:
         sm = NegotiationStateMachine()
-        assert sm.get_valid_events() == ["send_offer"]
+        assert sm.get_valid_events() == sorted(["send_offer", "pause", "stop"])
 
     def test_agreed_has_no_valid_events(self) -> None:
         sm = NegotiationStateMachine(initial_state=NegotiationState.AGREED)
         assert sm.get_valid_events() == []
 
-    def test_counter_received_has_four_events(self) -> None:
+    def test_stopped_has_no_valid_events(self) -> None:
+        sm = NegotiationStateMachine(initial_state=NegotiationState.STOPPED)
+        assert sm.get_valid_events() == []
+
+    def test_counter_received_has_events(self) -> None:
         sm = NegotiationStateMachine(initial_state=NegotiationState.COUNTER_RECEIVED)
         valid = sm.get_valid_events()
-        assert valid == sorted(["send_counter", "accept", "reject", "escalate"])
+        assert valid == sorted(["send_counter", "accept", "reject", "escalate", "pause", "stop"])
 
 
 # ===================================================================
 # is_terminal property
 # ===================================================================
 class TestIsTerminal:
-    """is_terminal property checks AGREED and REJECTED."""
+    """is_terminal property checks all terminal states."""
 
     @pytest.mark.parametrize(
         "state",
-        [NegotiationState.AGREED, NegotiationState.REJECTED],
-        ids=["agreed", "rejected"],
+        list(_TERMINAL_STATES),
+        ids=[s.value for s in _TERMINAL_STATES],
     )
     def test_terminal_states_return_true(self, state: NegotiationState) -> None:
         sm = NegotiationStateMachine(initial_state=state)
@@ -226,16 +221,8 @@ class TestIsTerminal:
 
     @pytest.mark.parametrize(
         "state",
-        [
-            s
-            for s in NegotiationState
-            if s not in {NegotiationState.AGREED, NegotiationState.REJECTED}
-        ],
-        ids=[
-            s.value
-            for s in NegotiationState
-            if s not in {NegotiationState.AGREED, NegotiationState.REJECTED}
-        ],
+        [s for s in NegotiationState if s not in _TERMINAL_STATES],
+        ids=[s.value for s in NegotiationState if s not in _TERMINAL_STATES],
     )
     def test_non_terminal_states_return_false(self, state: NegotiationState) -> None:
         sm = NegotiationStateMachine(initial_state=state)

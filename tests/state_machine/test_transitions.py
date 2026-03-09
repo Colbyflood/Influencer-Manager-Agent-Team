@@ -24,10 +24,13 @@ class TestNegotiationEvent:
         "REJECT": "reject",
         "ESCALATE": "escalate",
         "RESUME_COUNTER": "resume_counter",
+        "PAUSE": "pause",
+        "RESUME": "resume",
+        "STOP": "stop",
     }
 
-    def test_has_exactly_8_members(self) -> None:
-        assert len(NegotiationEvent) == 8
+    def test_has_exactly_11_members(self) -> None:
+        assert len(NegotiationEvent) == 11
 
     @pytest.mark.parametrize(
         ("name", "value"),
@@ -46,8 +49,8 @@ class TestNegotiationEvent:
 class TestTransitionsMap:
     """Tests for the TRANSITIONS dict completeness."""
 
-    def test_has_exactly_13_entries(self) -> None:
-        assert len(TRANSITIONS) == 13
+    def test_has_exactly_26_entries(self) -> None:
+        assert len(TRANSITIONS) == 26
 
     def test_all_non_terminal_states_appear_as_source(self) -> None:
         """Every non-terminal state must be a source in at least one transition."""
@@ -76,8 +79,14 @@ class TestTerminalStates:
     def test_contains_rejected(self) -> None:
         assert NegotiationState.REJECTED in TERMINAL_STATES
 
-    def test_has_exactly_2_members(self) -> None:
-        assert len(TERMINAL_STATES) == 2
+    def test_contains_stopped(self) -> None:
+        assert NegotiationState.STOPPED in TERMINAL_STATES
+
+    def test_paused_is_not_terminal(self) -> None:
+        assert NegotiationState.PAUSED not in TERMINAL_STATES
+
+    def test_has_exactly_3_members(self) -> None:
+        assert len(TERMINAL_STATES) == 3
 
     def test_is_frozenset(self) -> None:
         assert isinstance(TERMINAL_STATES, frozenset)

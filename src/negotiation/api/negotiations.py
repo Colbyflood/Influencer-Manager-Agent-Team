@@ -1,9 +1,13 @@
-"""Campaign detail and timeline API endpoints.
+"""Campaign detail, timeline, and negotiation control API endpoints.
 
 Provides:
 - GET /campaigns/{campaign_id}/negotiations — per-influencer negotiation data
 - GET /campaigns/{campaign_id}/negotiations/{thread_id}/timeline — state
   transitions and audit trail for a specific negotiation thread
+- POST /campaigns/{campaign_id}/negotiations/{thread_id}/pause — pause a negotiation
+- POST /campaigns/{campaign_id}/negotiations/{thread_id}/resume — resume a paused negotiation
+- POST /campaigns/{campaign_id}/negotiations/{thread_id}/stop — permanently stop a negotiation
+- POST /negotiations/stop-by-agency — bulk stop all negotiations for an agency
 """
 
 from __future__ import annotations
@@ -14,6 +18,8 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
 from negotiation.audit.store import query_audit_trail
+from negotiation.domain.types import NegotiationState
+from negotiation.state_machine.transitions import TERMINAL_STATES
 
 router = APIRouter()
 
@@ -71,6 +77,55 @@ class TimelineResponse(BaseModel):
     influencer_name: str
     state_transitions: list[StateTransition]
     timeline: list[TimelineEntry]
+
+
+class ControlResponse(BaseModel):
+    """Response model for negotiation control actions (pause/resume/stop)."""
+
+    thread_id: str
+    action: str
+    previous_state: str
+    new_state: str
+
+
+class BulkStopRequest(BaseModel):
+    """Request body for bulk stop-by-agency."""
+
+    agency_name: str
+
+
+class BulkStopResponse(BaseModel):
+    """Response model for bulk stop-by-agency."""
+
+    agency_name: str
+    stopped_count: int
+    thread_ids: list[str]
+
+
+# ---------------------------------------------------------------------------
+# Helper: look up thread and verify campaign membership
+# ---------------------------------------------------------------------------
+
+
+def _get_thread_entry(
+    request: Request,
+    campaign_id: str,
+    thread_id: str,
+) -> dict[str, Any]:
+    """Retrieve a negotiation thread entry, raising 404 on missing/mismatch."""
+    negotiation_states: dict[str, dict[str, Any]] = getattr(
+        request.app.state, "negotiation_states", {}
+    )
+    entry = negotiation_states.get(thread_id)
+    if entry is None:
+        raise HTTPException(status_code=404, detail="Thread not found")
+    context = entry.get("context", {})
+    if context.get("campaign_id") != campaign_id:
+        raise HTTPException(
+            status_code=404,
+            detail="Thread does not belong to this campaign",
+        )
+    return entry
 
 
 # ---------------------------------------------------------------------------
@@ -209,4 +264,127 @@ async def negotiation_timeline(
         influencer_name=influencer_name,
         state_transitions=state_transitions,
         timeline=timeline,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Control endpoints: pause / resume / stop / stop-by-agency
+# ---------------------------------------------------------------------------
+
+
+@router.post(
+    "/campaigns/{campaign_id}/negotiations/{thread_id}/pause",
+    response_model=ControlResponse,
+)
+async def pause_negotiation(
+    campaign_id: str,
+    thread_id: str,
+    request: Request,
+) -> ControlResponse:
+    """Pause an active negotiation thread."""
+    entry = _get_thread_entry(request, campaign_id, thread_id)
+    state_machine = entry["state_machine"]
+
+    if state_machine.is_terminal or state_machine.state == NegotiationState.PAUSED:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Cannot pause negotiation in state '{state_machine.state.value}'",
+        )
+
+    previous = state_machine.state.value
+    state_machine.pause()
+    return ControlResponse(
+        thread_id=thread_id,
+        action="paused",
+        previous_state=previous,
+        new_state=state_machine.state.value,
+    )
+
+
+@router.post(
+    "/campaigns/{campaign_id}/negotiations/{thread_id}/resume",
+    response_model=ControlResponse,
+)
+async def resume_negotiation(
+    campaign_id: str,
+    thread_id: str,
+    request: Request,
+) -> ControlResponse:
+    """Resume a previously paused negotiation thread."""
+    entry = _get_thread_entry(request, campaign_id, thread_id)
+    state_machine = entry["state_machine"]
+
+    if state_machine.state != NegotiationState.PAUSED:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Cannot resume negotiation in state '{state_machine.state.value}' (must be paused)",
+        )
+
+    previous = state_machine.state.value
+    state_machine.resume()
+    return ControlResponse(
+        thread_id=thread_id,
+        action="resumed",
+        previous_state=previous,
+        new_state=state_machine.state.value,
+    )
+
+
+@router.post(
+    "/campaigns/{campaign_id}/negotiations/{thread_id}/stop",
+    response_model=ControlResponse,
+)
+async def stop_negotiation(
+    campaign_id: str,
+    thread_id: str,
+    request: Request,
+) -> ControlResponse:
+    """Permanently stop a negotiation thread."""
+    entry = _get_thread_entry(request, campaign_id, thread_id)
+    state_machine = entry["state_machine"]
+
+    if state_machine.is_terminal:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Cannot stop negotiation in terminal state '{state_machine.state.value}'",
+        )
+
+    previous = state_machine.state.value
+    state_machine.stop()
+    return ControlResponse(
+        thread_id=thread_id,
+        action="stopped",
+        previous_state=previous,
+        new_state=state_machine.state.value,
+    )
+
+
+@router.post(
+    "/negotiations/stop-by-agency",
+    response_model=BulkStopResponse,
+)
+async def stop_by_agency(
+    body: BulkStopRequest,
+    request: Request,
+) -> BulkStopResponse:
+    """Bulk stop all non-terminal negotiations belonging to an agency."""
+    negotiation_states: dict[str, dict[str, Any]] = getattr(
+        request.app.state, "negotiation_states", {}
+    )
+
+    stopped_ids: list[str] = []
+    for tid, entry in negotiation_states.items():
+        context = entry.get("context", {})
+        if context.get("agency_name") != body.agency_name:
+            continue
+        sm = entry.get("state_machine")
+        if sm is None or sm.is_terminal:
+            continue
+        sm.stop()
+        stopped_ids.append(tid)
+
+    return BulkStopResponse(
+        agency_name=body.agency_name,
+        stopped_count=len(stopped_ids),
+        thread_ids=stopped_ids,
     )
