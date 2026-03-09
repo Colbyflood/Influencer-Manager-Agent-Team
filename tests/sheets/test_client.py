@@ -428,3 +428,87 @@ class TestSpreadsheetCaching:
         client = SheetsClient(gc=mock_gc, spreadsheet_key="key")
         client._get_spreadsheet()
         assert client._spreadsheet is not None
+
+
+# ---------------------------------------------------------------------------
+# Spreadsheet key override
+# ---------------------------------------------------------------------------
+
+
+class TestSpreadsheetKeyOverride:
+    """Tests for spreadsheet_key_override parameter on public methods."""
+
+    def test_override_opens_different_spreadsheet(self) -> None:
+        """When spreadsheet_key_override is provided, gc.open_by_key is called with the override key."""
+        gc = MagicMock()
+        worksheet = MagicMock()
+        worksheet.get_all_records.return_value = [
+            {
+                "Name": "Creator A",
+                "Email": "a@email.com",
+                "Platform": "instagram",
+                "Handle": "@a",
+                "Average Views": 50000,
+                "Min Rate": 1000.0,
+                "Max Rate": 1500.0,
+            },
+        ]
+        override_spreadsheet = MagicMock()
+        override_spreadsheet.worksheet.return_value = worksheet
+        gc.open_by_key.return_value = override_spreadsheet
+
+        client = SheetsClient(gc=gc, spreadsheet_key="default-key")
+        client.get_all_influencers(spreadsheet_key_override="override-key")
+
+        gc.open_by_key.assert_called_once_with("override-key")
+
+    def test_no_override_uses_default(self) -> None:
+        """When spreadsheet_key_override is None, the default spreadsheet is used."""
+        gc = MagicMock()
+        worksheet = MagicMock()
+        worksheet.get_all_records.return_value = [
+            {
+                "Name": "Creator A",
+                "Email": "a@email.com",
+                "Platform": "instagram",
+                "Handle": "@a",
+                "Average Views": 50000,
+                "Min Rate": 1000.0,
+                "Max Rate": 1500.0,
+            },
+        ]
+        default_spreadsheet = MagicMock()
+        default_spreadsheet.worksheet.return_value = worksheet
+        gc.open_by_key.return_value = default_spreadsheet
+
+        client = SheetsClient(gc=gc, spreadsheet_key="default-key")
+        client.get_all_influencers(spreadsheet_key_override=None)
+
+        gc.open_by_key.assert_called_once_with("default-key")
+
+    def test_override_does_not_cache(self) -> None:
+        """Two calls with different overrides result in two separate open_by_key calls."""
+        gc = MagicMock()
+        worksheet = MagicMock()
+        worksheet.get_all_records.return_value = [
+            {
+                "Name": "Creator A",
+                "Email": "a@email.com",
+                "Platform": "instagram",
+                "Handle": "@a",
+                "Average Views": 50000,
+                "Min Rate": 1000.0,
+                "Max Rate": 1500.0,
+            },
+        ]
+        spreadsheet_mock = MagicMock()
+        spreadsheet_mock.worksheet.return_value = worksheet
+        gc.open_by_key.return_value = spreadsheet_mock
+
+        client = SheetsClient(gc=gc, spreadsheet_key="default-key")
+        client.get_all_influencers(spreadsheet_key_override="key-1")
+        client.get_all_influencers(spreadsheet_key_override="key-2")
+
+        assert gc.open_by_key.call_count == 2
+        gc.open_by_key.assert_any_call("key-1")
+        gc.open_by_key.assert_any_call("key-2")

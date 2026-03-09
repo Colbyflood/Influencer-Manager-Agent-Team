@@ -42,7 +42,32 @@ class SheetsClient:
             self._spreadsheet = self._gc.open_by_key(self._spreadsheet_key)
         return self._spreadsheet
 
-    def get_all_influencers(self, worksheet_name: str = "Sheet1") -> list[InfluencerRow]:
+    def _get_spreadsheet_for(
+        self, spreadsheet_key_override: str | None = None
+    ) -> gspread.Spreadsheet:
+        """Return the appropriate spreadsheet for the given override key.
+
+        If *spreadsheet_key_override* is ``None`` or empty, delegates to the
+        cached :meth:`_get_spreadsheet` (master sheet).  Otherwise opens the
+        alternate spreadsheet directly -- **without** caching, because different
+        campaigns may point to different sheets.
+
+        Args:
+            spreadsheet_key_override: An alternate Google Sheets spreadsheet ID,
+                or ``None`` to use the default.
+
+        Returns:
+            The opened ``gspread.Spreadsheet``.
+        """
+        if spreadsheet_key_override:
+            return self._gc.open_by_key(spreadsheet_key_override)
+        return self._get_spreadsheet()
+
+    def get_all_influencers(
+        self,
+        worksheet_name: str = "Sheet1",
+        spreadsheet_key_override: str | None = None,
+    ) -> list[InfluencerRow]:
         """Read all influencer rows from the specified worksheet.
 
         Uses a single ``get_all_records()`` call to fetch data in one API
@@ -58,7 +83,7 @@ class SheetsClient:
         Raises:
             ValueError: If the worksheet is empty or has no records.
         """
-        spreadsheet = self._get_spreadsheet()
+        spreadsheet = self._get_spreadsheet_for(spreadsheet_key_override)
         worksheet = spreadsheet.worksheet(worksheet_name)
         records = worksheet.get_all_records()
 
@@ -87,7 +112,12 @@ class SheetsClient:
 
         return rows
 
-    def find_influencer(self, name: str, worksheet_name: str = "Sheet1") -> InfluencerRow:
+    def find_influencer(
+        self,
+        name: str,
+        worksheet_name: str = "Sheet1",
+        spreadsheet_key_override: str | None = None,
+    ) -> InfluencerRow:
         """Find a specific influencer by name (case-insensitive).
 
         Performs a case-insensitive, whitespace-trimmed comparison against
@@ -97,6 +127,8 @@ class SheetsClient:
             name: The influencer name to search for.
             worksheet_name: Name of the worksheet tab. Defaults to
                 ``"Sheet1"``.
+            spreadsheet_key_override: An alternate spreadsheet ID, or ``None``
+                to use the default master sheet.
 
         Returns:
             The first matching ``InfluencerRow``.
@@ -104,7 +136,7 @@ class SheetsClient:
         Raises:
             ValueError: If no influencer with the given name is found.
         """
-        all_influencers = self.get_all_influencers(worksheet_name)
+        all_influencers = self.get_all_influencers(worksheet_name, spreadsheet_key_override)
         search_name = name.strip().lower()
 
         for row in all_influencers:
@@ -113,7 +145,12 @@ class SheetsClient:
 
         raise ValueError(f"Influencer '{name}' not found in sheet")
 
-    def get_pay_range(self, name: str, worksheet_name: str = "Sheet1") -> PayRange:
+    def get_pay_range(
+        self,
+        name: str,
+        worksheet_name: str = "Sheet1",
+        spreadsheet_key_override: str | None = None,
+    ) -> PayRange:
         """Look up an influencer's pay range by name.
 
         Convenience method that combines ``find_influencer`` with
@@ -124,6 +161,8 @@ class SheetsClient:
             name: The influencer name to search for.
             worksheet_name: Name of the worksheet tab. Defaults to
                 ``"Sheet1"``.
+            spreadsheet_key_override: An alternate spreadsheet ID, or ``None``
+                to use the default master sheet.
 
         Returns:
             A ``PayRange`` with the influencer's rate data.
@@ -131,7 +170,7 @@ class SheetsClient:
         Raises:
             ValueError: If no influencer with the given name is found.
         """
-        influencer = self.find_influencer(name, worksheet_name)
+        influencer = self.find_influencer(name, worksheet_name, spreadsheet_key_override)
         return influencer.to_pay_range()
 
 
