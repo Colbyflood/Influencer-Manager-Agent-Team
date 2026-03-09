@@ -512,6 +512,12 @@ def build_campaign(task_id: str, parsed_fields: dict[str, Any]) -> Campaign:
     distribution_data = nested.get("distribution")
     distribution = DistributionInfo(**distribution_data) if isinstance(distribution_data, dict) and distribution_data else None
 
+    # Per-campaign sheet routing fields (empty strings become None)
+    raw_tab = nested.get("influencer_sheet_tab")
+    influencer_sheet_tab = raw_tab.strip() or None if isinstance(raw_tab, str) else raw_tab
+    raw_sheet_id = nested.get("influencer_sheet_id")
+    influencer_sheet_id = raw_sheet_id.strip() or None if isinstance(raw_sheet_id, str) else raw_sheet_id
+
     return Campaign(
         campaign_id=task_id,
         client_name=client_name,
@@ -530,6 +536,8 @@ def build_campaign(task_id: str, parsed_fields: dict[str, Any]) -> Campaign:
         product_leverage=product_leverage,
         requirements=requirements,
         distribution=distribution,
+        influencer_sheet_tab=influencer_sheet_tab or None,
+        influencer_sheet_id=influencer_sheet_id or None,
     )
 
 
@@ -583,9 +591,22 @@ async def ingest_campaign(
     found_influencers: list[dict[str, Any]] = []
     missing_influencers: list[str] = []
 
+    # Per-campaign sheet routing: use campaign overrides or defaults
+    worksheet_name = campaign.influencer_sheet_tab or "Sheet1"
+    spreadsheet_key_override = campaign.influencer_sheet_id or None
+    logger.info(
+        "Influencer lookup config",
+        tab=worksheet_name,
+        sheet_override=bool(spreadsheet_key_override),
+    )
+
     for influencer in campaign.influencers:
         try:
-            sheet_data = sheets_client.find_influencer(influencer.name)
+            sheet_data = sheets_client.find_influencer(
+                influencer.name,
+                worksheet_name=worksheet_name,
+                spreadsheet_key_override=spreadsheet_key_override,
+            )
             found_influencers.append(
                 {
                     "name": influencer.name,
