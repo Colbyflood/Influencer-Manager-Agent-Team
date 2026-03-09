@@ -105,11 +105,11 @@ Plans:
   2. User can view a per-influencer timeline showing each state transition, emails exchanged, and how the rate changed over time
   3. Campaign detail API endpoint returns per-influencer negotiation data with all required fields
   4. Timeline API endpoint returns chronological state transitions and email history for a given influencer negotiation
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 20-01: TBD
-- [ ] 20-02: TBD
+- [ ] 20-01-PLAN.md -- Campaign detail and timeline API endpoints (backend)
+- [ ] 20-02-PLAN.md -- Campaign detail view and negotiation timeline UI (frontend)
 
 ### Phase 21: Negotiation Controls
 **Goal**: Team can control the agent directly from the dashboard -- pausing, resuming, or stopping negotiations without relying on Slack
@@ -138,5 +138,5 @@ Phases execute in numeric order: 18 → 19 → 20 → 21
 | 13-17 | v1.2 | 13/13 | Complete | 2026-03-08 |
 | 18. Frontend Foundation | 2/2 | Complete    | 2026-03-09 | - |
 | 19. Campaign Overview | 2/2 | Complete   | 2026-03-09 | - |
-| 20. Negotiation Detail | v1.3 | 0/TBD | Not started | - |
+| 20. Negotiation Detail | v1.3 | 0/2 | In progress | - |
 | 21. Negotiation Controls | v1.3 | 0/TBD | Not started | - |
