@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import type { CampaignDetailResponse, NegotiationSummary } from "../types/campaign";
 import { NegotiationTimeline } from "./NegotiationTimeline";
 
@@ -12,6 +12,17 @@ const ACTIVE_STATES = new Set([
   "counter_sent",
   "counter_received",
   "initial_offer",
+]);
+
+const TERMINAL_STATES = new Set(["agreed", "rejected", "stopped"]);
+
+const PAUSABLE_STATES = new Set([
+  "awaiting_reply",
+  "counter_sent",
+  "counter_received",
+  "initial_offer",
+  "escalated",
+  "stale",
 ]);
 
 function stateBadgeClasses(state: string): string {
@@ -29,34 +40,59 @@ export function CampaignDetail({ campaignId, onBack }: CampaignDetailProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
+  const [actionInFlight, setActionInFlight] = useState<string | null>(null);
+  const cancelledRef = useRef(false);
+
+  const fetchDetail = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/v1/campaigns/${campaignId}/negotiations`);
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      }
+      const json = (await res.json()) as CampaignDetailResponse;
+      if (!cancelledRef.current) {
+        setData(json);
+        setError(null);
+      }
+    } catch (err) {
+      if (!cancelledRef.current) {
+        setError(err instanceof Error ? err.message : "An unknown error occurred");
+      }
+    } finally {
+      if (!cancelledRef.current) setLoading(false);
+    }
+  }, [campaignId]);
 
   useEffect(() => {
-    let cancelled = false;
-
-    async function fetchDetail() {
-      setLoading(true);
-      try {
-        const res = await fetch(`/api/v1/campaigns/${campaignId}/negotiations`);
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-        }
-        const json = (await res.json()) as CampaignDetailResponse;
-        if (!cancelled) {
-          setData(json);
-          setError(null);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : "An unknown error occurred");
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
+    cancelledRef.current = false;
     fetchDetail();
-    return () => { cancelled = true; };
-  }, [campaignId]);
+    return () => { cancelledRef.current = true; };
+  }, [fetchDetail]);
+
+  async function handleControl(
+    threadId: string,
+    action: "pause" | "resume" | "stop",
+    event: React.MouseEvent,
+  ) {
+    event.stopPropagation();
+    setActionInFlight(threadId);
+    try {
+      const res = await fetch(
+        `/api/v1/campaigns/${campaignId}/negotiations/${threadId}/${action}`,
+        { method: "POST" },
+      );
+      if (!res.ok) {
+        const body = await res.text();
+        throw new Error(`HTTP ${res.status}: ${body}`);
+      }
+      await fetchDetail();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Control action failed");
+    } finally {
+      setActionInFlight(null);
+    }
+  }
 
   if (selectedThreadId) {
     return (
@@ -135,6 +171,9 @@ export function CampaignDetail({ campaignId, onBack }: CampaignDetailProps) {
                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                   Agency
                 </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -165,6 +204,49 @@ export function CampaignDetail({ campaignId, onBack }: CampaignDetailProps) {
                   </td>
                   <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-700">
                     {neg.agency_name ?? "--"}
+                  </td>
+                  <td className="whitespace-nowrap px-6 py-4">
+                    <div className="flex gap-2">
+                      {PAUSABLE_STATES.has(neg.state) && (
+                        <>
+                          <button
+                            onClick={(e) => handleControl(neg.thread_id, "pause", e)}
+                            disabled={actionInFlight === neg.thread_id}
+                            className="px-2 py-1 text-xs font-medium rounded bg-amber-100 text-amber-800 hover:bg-amber-200 disabled:opacity-50"
+                          >
+                            Pause
+                          </button>
+                          <button
+                            onClick={(e) => handleControl(neg.thread_id, "stop", e)}
+                            disabled={actionInFlight === neg.thread_id}
+                            className="px-2 py-1 text-xs font-medium rounded bg-red-100 text-red-800 hover:bg-red-200 disabled:opacity-50"
+                          >
+                            Stop
+                          </button>
+                        </>
+                      )}
+                      {neg.state === "paused" && (
+                        <>
+                          <button
+                            onClick={(e) => handleControl(neg.thread_id, "resume", e)}
+                            disabled={actionInFlight === neg.thread_id}
+                            className="px-2 py-1 text-xs font-medium rounded bg-green-100 text-green-800 hover:bg-green-200 disabled:opacity-50"
+                          >
+                            Resume
+                          </button>
+                          <button
+                            onClick={(e) => handleControl(neg.thread_id, "stop", e)}
+                            disabled={actionInFlight === neg.thread_id}
+                            className="px-2 py-1 text-xs font-medium rounded bg-red-100 text-red-800 hover:bg-red-200 disabled:opacity-50"
+                          >
+                            Stop
+                          </button>
+                        </>
+                      )}
+                      {TERMINAL_STATES.has(neg.state) && (
+                        <span className="text-xs text-gray-400">--</span>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
