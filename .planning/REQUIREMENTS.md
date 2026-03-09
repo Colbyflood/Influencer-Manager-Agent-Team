@@ -18,13 +18,13 @@ Requirements for v1.3 Campaign Dashboard. Each maps to roadmap phases.
 
 - [ ] **CTRL-01**: User can pause/stop negotiation with a specific influencer from the dashboard
 - [ ] **CTRL-02**: User can resume a paused negotiation from the dashboard
-- [ ] **CTRL-03**: User can stop all negotiations associated with a specific talent agent or agency
+- [x] **CTRL-03**: User can stop all negotiations associated with a specific talent agent or agency
 
 ### API
 
 - [x] **API-01**: Backend exposes campaign list endpoint with per-campaign status aggregation
 - [x] **API-02**: Backend exposes campaign detail endpoint with per-influencer negotiation data
-- [ ] **API-03**: Backend exposes negotiation control endpoints (pause, resume, stop)
+- [x] **API-03**: Backend exposes negotiation control endpoints (pause, resume, stop)
 - [x] **API-04**: Backend exposes per-influencer timeline endpoint with state transitions and email history
 
 ### Frontend Infrastructure
@@ -61,10 +61,10 @@ Requirements for v1.3 Campaign Dashboard. Each maps to roadmap phases.
 | VIEW-04 | Phase 19 | Complete |
 | CTRL-01 | Phase 21 | Pending |
 | CTRL-02 | Phase 21 | Pending |
-| CTRL-03 | Phase 21 | Pending |
+| CTRL-03 | Phase 21 | Complete |
 | API-01 | Phase 19 | Complete |
 | API-02 | Phase 20 | Complete |
-| API-03 | Phase 21 | Pending |
+| API-03 | Phase 21 | Complete |
 | API-04 | Phase 20 | Complete |
 | UI-01 | Phase 18 | Complete |
 | UI-02 | Phase 18 | Complete |

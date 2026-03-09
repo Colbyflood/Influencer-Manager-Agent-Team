@@ -139,4 +139,4 @@ Phases execute in numeric order: 18 → 19 → 20 → 21
 | 18. Frontend Foundation | 2/2 | Complete    | 2026-03-09 | - |
 | 19. Campaign Overview | 2/2 | Complete   | 2026-03-09 | - |
 | 20. Negotiation Detail | 2/2 | Complete   | 2026-03-09 | - |
-| 21. Negotiation Controls | v1.3 | 0/2 | Not started | - |
+| 21. Negotiation Controls | 1/2 | In Progress|  | - |

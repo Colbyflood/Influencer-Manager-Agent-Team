@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-08)
 
 **Core value:** The agent must negotiate influencer rates accurately using CPM-based logic and reliably communicate the outcome -- every agreed deal must result in a clear, actionable Slack notification to the team.
-**Current focus:** v1.3 Campaign Dashboard — Phase 20 (Negotiation Detail)
+**Current focus:** v1.3 Campaign Dashboard — Phase 21 (Negotiation Controls)
 
 ## Current Position
 
-Phase: 20 of 21 (Negotiation Detail)
-Plan: 2 of 2 in current phase (COMPLETE)
-Status: Phase 20 Complete
-Last activity: 2026-03-08 — Completed 20-02 (Frontend Campaign Detail & Timeline)
+Phase: 21 of 21 (Negotiation Controls)
+Plan: 1 of 2 in current phase
+Status: Executing
+Last activity: 2026-03-09 — Completed 21-01-PLAN.md
 
-Progress: [██████████] 100%
+Progress: [██████████] 98%
 
 ## Performance Metrics
 
@@ -36,6 +36,9 @@ Progress: [██████████] 100%
 
 ### Decisions
 
+- Phase 21-01: STOPPED is terminal, PAUSED is non-terminal (resumable)
+- Phase 21-01: Resume bypasses transition map, directly restores pre_pause_state
+- Phase 21-01: Extracted _get_thread_entry helper for control endpoint thread lookup
 - Phase 20-02: State-based conditional rendering for navigation instead of React Router
 - Phase 20-02: Color-coded state badges: green=agreed, blue=active, amber=escalated, red=rejected, gray=other
 - Phase 20-01: Query audit trail by campaign_id + influencer_name (query_audit_trail does not support thread_id filtering)
@@ -61,6 +64,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-08
-Stopped at: Completed 20-02-PLAN.md (Frontend Campaign Detail & Timeline)
+Last session: 2026-03-09
+Stopped at: Completed 21-01-PLAN.md (Backend State Machine Extensions & Control API)
 Resume file: None
