@@ -48,22 +48,22 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SHEET-01 | Pending | Pending |
-| SHEET-02 | Pending | Pending |
-| SHEET-03 | Pending | Pending |
-| INGEST-01 | Pending | Pending |
-| INGEST-02 | Pending | Pending |
-| INGEST-03 | Pending | Pending |
-| MON-01 | Pending | Pending |
-| MON-02 | Pending | Pending |
-| MON-03 | Pending | Pending |
-| MON-04 | Pending | Pending |
+| SHEET-01 | Phase 22 | Pending |
+| SHEET-02 | Phase 22 | Pending |
+| SHEET-03 | Phase 22 | Pending |
+| INGEST-01 | Phase 22 | Pending |
+| INGEST-02 | Phase 22 | Pending |
+| INGEST-03 | Phase 22 | Pending |
+| MON-01 | Phase 23 | Pending |
+| MON-02 | Phase 23 | Pending |
+| MON-03 | Phase 23 | Pending |
+| MON-04 | Phase 23 | Pending |
 
 **Coverage:**
 - v1.4 requirements: 10 total
-- Mapped to phases: 0
-- Unmapped: 10
+- Mapped to phases: 10
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-09*
-*Last updated: 2026-03-09 after initial definition*
+*Last updated: 2026-03-09 after roadmap creation*

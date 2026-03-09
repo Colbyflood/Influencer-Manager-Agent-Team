@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-09)
 
 **Core value:** The agent must negotiate influencer rates accurately using CPM-based logic and reliably communicate the outcome -- every agreed deal must result in a clear, actionable Slack notification to the team.
-**Current focus:** v1.4 Per-Campaign Influencer Sheets
+**Current focus:** v1.4 Per-Campaign Influencer Sheets -- Phase 22
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-03-09 — Milestone v1.4 started
+Phase: 22 of 23 (Per-Campaign Sheet Routing)
+Plan: 0 of TBD in current phase
+Status: Ready to plan
+Last activity: 2026-03-09 -- Roadmap created for v1.4
 
-Progress: [██████████] 100%
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
@@ -49,10 +49,10 @@ None.
 ### Blockers/Concerns
 
 - Target VM filesystem type must be confirmed as local block storage before Docker deployment
-- Vite base path not set to /dashboard/ — may need adjustment for production static serving
+- Vite base path not set to /dashboard/ -- may need adjustment for production static serving
 
 ## Session Continuity
 
 Last session: 2026-03-09
-Stopped at: v1.3 milestone completed and archived
+Stopped at: v1.4 roadmap created, ready to plan Phase 22
 Resume file: None

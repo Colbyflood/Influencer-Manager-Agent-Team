@@ -6,6 +6,7 @@
 - ✅ **v1.1 Production Readiness** - Phases 8-12 (shipped 2026-02-19)
 - ✅ **v1.2 Real-World Negotiation Intelligence** - Phases 13-17 (shipped 2026-03-08)
 - ✅ **v1.3 Campaign Dashboard** - Phases 18-21 (shipped 2026-03-09)
+- 🚧 **v1.4 Per-Campaign Influencer Sheets** - Phases 22-23 (in progress)
 
 ## Phases
 
@@ -68,7 +69,49 @@ Full details: [milestones/v1.3-ROADMAP.md](milestones/v1.3-ROADMAP.md)
 
 </details>
 
+### v1.4 Per-Campaign Influencer Sheets (In Progress)
+
+**Milestone Goal:** Replace the single global influencer sheet with per-campaign sheet tabs (or separate spreadsheets), monitor for newly added influencers mid-campaign, and auto-start negotiations for them.
+
+- [ ] **Phase 22: Per-Campaign Sheet Routing** - Campaign model, ClickUp parsing, and SheetsClient all use per-campaign tab/sheet instead of hardcoded "Sheet1"
+- [ ] **Phase 23: Sheet Monitoring and Auto-Negotiation** - Hourly polling detects new influencer rows, auto-starts negotiations, alerts on modifications, and prevents duplicate outreach
+
+## Phase Details
+
+### Phase 22: Per-Campaign Sheet Routing
+**Goal**: Each campaign reads influencer data from its own sheet tab (or separate spreadsheet) instead of the hardcoded global "Sheet1"
+**Depends on**: Phase 21 (v1.3 complete)
+**Requirements**: SHEET-01, SHEET-02, SHEET-03, INGEST-01, INGEST-02, INGEST-03
+**Success Criteria** (what must be TRUE):
+  1. When a ClickUp form includes a sheet tab name, the campaign uses that tab to find influencers
+  2. When a ClickUp form includes a separate spreadsheet URL/ID, the campaign reads from that spreadsheet instead of the master sheet
+  3. When no tab name or spreadsheet override is provided, the campaign defaults to the master spreadsheet with reasonable tab behavior
+  4. The existing negotiation pipeline works identically regardless of which sheet/tab the influencer data came from
+**Plans**: TBD
+
+Plans:
+- [ ] 22-01: TBD
+- [ ] 22-02: TBD
+
+### Phase 23: Sheet Monitoring and Auto-Negotiation
+**Goal**: The system continuously watches each active campaign's sheet tab for changes and automatically acts on new or modified influencer rows
+**Depends on**: Phase 22
+**Requirements**: MON-01, MON-02, MON-03, MON-04
+**Success Criteria** (what must be TRUE):
+  1. When a new influencer row is added to a campaign's sheet tab after initial ingestion, the agent detects it within the next polling cycle (hourly)
+  2. Newly discovered influencers automatically enter the negotiation pipeline without manual intervention
+  3. When an existing influencer's row is modified after their negotiation has started, the team receives a Slack alert with the change details
+  4. An influencer row that has already been processed is never sent through outreach a second time
+**Plans**: TBD
+
+Plans:
+- [ ] 23-01: TBD
+- [ ] 23-02: TBD
+
 ## Progress
+
+**Execution Order:**
+Phases execute in numeric order: 22 → 23
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -76,3 +119,5 @@ Full details: [milestones/v1.3-ROADMAP.md](milestones/v1.3-ROADMAP.md)
 | 8-12 | v1.1 | 10/10 | Complete | 2026-02-19 |
 | 13-17 | v1.2 | 13/13 | Complete | 2026-03-08 |
 | 18-21 | v1.3 | 8/8 | Complete | 2026-03-09 |
+| 22. Per-Campaign Sheet Routing | v1.4 | 0/TBD | Not started | - |
+| 23. Sheet Monitoring and Auto-Negotiation | v1.4 | 0/TBD | Not started | - |
