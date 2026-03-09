@@ -396,7 +396,7 @@ class TestIngestCampaign:
 
         sheets_client = MagicMock()
 
-        def find_influencer_side_effect(name: str) -> InfluencerRow:
+        def find_influencer_side_effect(name: str, **kwargs: Any) -> InfluencerRow:
             if name == "Alice Johnson":
                 return alice_row
             raise ValueError(f"Influencer '{name}' not found in sheet")
@@ -608,7 +608,7 @@ class TestIngestCampaign:
 
         sheets_client = MagicMock()
 
-        def find_influencer_side_effect(name: str) -> InfluencerRow:
+        def find_influencer_side_effect(name: str, **kwargs: Any) -> InfluencerRow:
             if name == "Alice Johnson":
                 return alice_row
             raise ValueError(f"Influencer '{name}' not found in sheet")
@@ -1124,3 +1124,231 @@ class TestLoadFieldMappingWithTypes:
         )
         mapping, types = load_field_mapping(config_path)
         assert types == {}
+
+
+# --- Per-campaign sheet routing tests ---
+
+
+def _minimal_parsed_fields(**overrides: Any) -> dict[str, Any]:
+    """Return minimal parsed_fields dict for build_campaign, with optional overrides."""
+    base: dict[str, Any] = {
+        "client_name": "Test Corp",
+        "budget": "5000",
+        "cpm_min": "10",
+        "cpm_max": "30",
+        "platform": "instagram",
+        "timeline": "Q1 2026",
+        "influencers_raw": "Alice",
+    }
+    base.update(overrides)
+    return base
+
+
+def _minimal_config_yaml() -> str:
+    """Return minimal YAML config string for ingestion tests."""
+    return (
+        "field_mapping:\n"
+        '  "Client Name": "client_name"\n'
+        '  "Budget": "budget"\n'
+        '  "Target Deliverables": "target_deliverables"\n'
+        '  "Influencer List": "influencers_raw"\n'
+        '  "CPM Min": "cpm_min"\n'
+        '  "CPM Max": "cpm_max"\n'
+        '  "Platform": "platform"\n'
+        '  "Timeline": "timeline"\n'
+        '  "Influencer Sheet Tab": "influencer_sheet_tab"\n'
+        '  "Influencer Sheet ID": "influencer_sheet_id"\n'
+    )
+
+
+class TestPerCampaignSheetRouting:
+    """Tests for per-campaign sheet tab and spreadsheet ID routing in ingestion."""
+
+    def test_build_campaign_with_sheet_tab(self) -> None:
+        """build_campaign populates influencer_sheet_tab from parsed fields."""
+        campaign = build_campaign("t1", _minimal_parsed_fields(influencer_sheet_tab="MyTab"))
+        assert campaign.influencer_sheet_tab == "MyTab"
+
+    def test_build_campaign_with_sheet_id(self) -> None:
+        """build_campaign populates influencer_sheet_id from parsed fields."""
+        campaign = build_campaign("t2", _minimal_parsed_fields(influencer_sheet_id="alt-spreadsheet-key"))
+        assert campaign.influencer_sheet_id == "alt-spreadsheet-key"
+
+    def test_build_campaign_defaults_none(self) -> None:
+        """build_campaign defaults both sheet fields to None when not provided."""
+        campaign = build_campaign("t3", _minimal_parsed_fields())
+        assert campaign.influencer_sheet_tab is None
+        assert campaign.influencer_sheet_id is None
+
+    def test_build_campaign_empty_string_becomes_none(self) -> None:
+        """Empty/whitespace-only sheet fields are normalized to None."""
+        campaign = build_campaign(
+            "t4",
+            _minimal_parsed_fields(influencer_sheet_tab="", influencer_sheet_id="  "),
+        )
+        assert campaign.influencer_sheet_tab is None
+        assert campaign.influencer_sheet_id is None
+
+    @pytest.mark.anyio()
+    async def test_ingest_passes_tab_to_find_influencer(self, tmp_path: Path) -> None:
+        """ingest_campaign passes campaign's sheet tab to find_influencer."""
+        config_path = _write_config(tmp_path, _minimal_config_yaml())
+
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            "id": "task_tab",
+            "custom_fields": [
+                {"name": "Client Name", "type": "text", "value": "Tab Corp"},
+                {"name": "Budget", "type": "number", "value": "3000"},
+                {"name": "Target Deliverables", "type": "text", "value": "1 reel"},
+                {"name": "Influencer List", "type": "text", "value": "Alice"},
+                {"name": "CPM Min", "type": "number", "value": "10"},
+                {"name": "CPM Max", "type": "number", "value": "25"},
+                {"name": "Platform", "type": "text", "value": "instagram"},
+                {"name": "Timeline", "type": "text", "value": "Q2 2026"},
+                {"name": "Influencer Sheet Tab", "type": "text", "value": "CampaignX"},
+            ],
+        }
+        mock_response.raise_for_status = MagicMock()
+
+        alice_row = InfluencerRow(
+            name="Alice",
+            email="alice@example.com",
+            platform=Platform.INSTAGRAM,
+            handle="@alice",
+            average_views=50000,
+            min_rate=Decimal("500"),
+            max_rate=Decimal("1500"),
+        )
+        sheets_client = MagicMock()
+        sheets_client.find_influencer.return_value = alice_row
+
+        with patch("negotiation.campaign.ingestion.httpx.AsyncClient") as mock_httpx:
+            mock_client_instance = AsyncMock()
+            mock_client_instance.get.return_value = mock_response
+            mock_client_instance.__aenter__ = AsyncMock(return_value=mock_client_instance)
+            mock_client_instance.__aexit__ = AsyncMock(return_value=False)
+            mock_httpx.return_value = mock_client_instance
+
+            await ingest_campaign(
+                task_id="task_tab",
+                api_token="test-token",
+                sheets_client=sheets_client,
+                slack_notifier=None,
+                config_path=config_path,
+            )
+
+        sheets_client.find_influencer.assert_called_once_with(
+            "Alice",
+            worksheet_name="CampaignX",
+            spreadsheet_key_override=None,
+        )
+
+    @pytest.mark.anyio()
+    async def test_ingest_passes_sheet_id_to_find_influencer(self, tmp_path: Path) -> None:
+        """ingest_campaign passes campaign's sheet ID override to find_influencer."""
+        config_path = _write_config(tmp_path, _minimal_config_yaml())
+
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            "id": "task_sid",
+            "custom_fields": [
+                {"name": "Client Name", "type": "text", "value": "Sheet Corp"},
+                {"name": "Budget", "type": "number", "value": "4000"},
+                {"name": "Target Deliverables", "type": "text", "value": "2 posts"},
+                {"name": "Influencer List", "type": "text", "value": "Alice"},
+                {"name": "CPM Min", "type": "number", "value": "15"},
+                {"name": "CPM Max", "type": "number", "value": "30"},
+                {"name": "Platform", "type": "text", "value": "instagram"},
+                {"name": "Timeline", "type": "text", "value": "Q2 2026"},
+                {"name": "Influencer Sheet ID", "type": "text", "value": "alt-key-123"},
+            ],
+        }
+        mock_response.raise_for_status = MagicMock()
+
+        alice_row = InfluencerRow(
+            name="Alice",
+            email="alice@example.com",
+            platform=Platform.INSTAGRAM,
+            handle="@alice",
+            average_views=50000,
+            min_rate=Decimal("500"),
+            max_rate=Decimal("1500"),
+        )
+        sheets_client = MagicMock()
+        sheets_client.find_influencer.return_value = alice_row
+
+        with patch("negotiation.campaign.ingestion.httpx.AsyncClient") as mock_httpx:
+            mock_client_instance = AsyncMock()
+            mock_client_instance.get.return_value = mock_response
+            mock_client_instance.__aenter__ = AsyncMock(return_value=mock_client_instance)
+            mock_client_instance.__aexit__ = AsyncMock(return_value=False)
+            mock_httpx.return_value = mock_client_instance
+
+            await ingest_campaign(
+                task_id="task_sid",
+                api_token="test-token",
+                sheets_client=sheets_client,
+                slack_notifier=None,
+                config_path=config_path,
+            )
+
+        sheets_client.find_influencer.assert_called_once_with(
+            "Alice",
+            worksheet_name="Sheet1",
+            spreadsheet_key_override="alt-key-123",
+        )
+
+    @pytest.mark.anyio()
+    async def test_ingest_defaults_to_sheet1_when_no_override(self, tmp_path: Path) -> None:
+        """Without sheet tab/id overrides, find_influencer uses Sheet1 and no override."""
+        config_path = _write_config(tmp_path, _minimal_config_yaml())
+
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            "id": "task_default",
+            "custom_fields": [
+                {"name": "Client Name", "type": "text", "value": "Default Corp"},
+                {"name": "Budget", "type": "number", "value": "2000"},
+                {"name": "Target Deliverables", "type": "text", "value": "1 post"},
+                {"name": "Influencer List", "type": "text", "value": "Alice"},
+                {"name": "CPM Min", "type": "number", "value": "10"},
+                {"name": "CPM Max", "type": "number", "value": "20"},
+                {"name": "Platform", "type": "text", "value": "instagram"},
+                {"name": "Timeline", "type": "text", "value": "Q3 2026"},
+            ],
+        }
+        mock_response.raise_for_status = MagicMock()
+
+        alice_row = InfluencerRow(
+            name="Alice",
+            email="alice@example.com",
+            platform=Platform.INSTAGRAM,
+            handle="@alice",
+            average_views=50000,
+            min_rate=Decimal("500"),
+            max_rate=Decimal("1500"),
+        )
+        sheets_client = MagicMock()
+        sheets_client.find_influencer.return_value = alice_row
+
+        with patch("negotiation.campaign.ingestion.httpx.AsyncClient") as mock_httpx:
+            mock_client_instance = AsyncMock()
+            mock_client_instance.get.return_value = mock_response
+            mock_client_instance.__aenter__ = AsyncMock(return_value=mock_client_instance)
+            mock_client_instance.__aexit__ = AsyncMock(return_value=False)
+            mock_httpx.return_value = mock_client_instance
+
+            await ingest_campaign(
+                task_id="task_default",
+                api_token="test-token",
+                sheets_client=sheets_client,
+                slack_notifier=None,
+                config_path=config_path,
+            )
+
+        sheets_client.find_influencer.assert_called_once_with(
+            "Alice",
+            worksheet_name="Sheet1",
+            spreadsheet_key_override=None,
+        )
