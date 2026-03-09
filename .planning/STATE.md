@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-08)
 ## Current Position
 
 Phase: 21 of 21 (Negotiation Controls)
-Plan: 1 of 2 in current phase
-Status: Executing
-Last activity: 2026-03-09 — Completed 21-01-PLAN.md
+Plan: 2 of 2 in current phase (COMPLETE)
+Status: Phase Complete
+Last activity: 2026-03-09 — Completed 21-02-PLAN.md
 
-Progress: [██████████] 98%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -36,6 +36,9 @@ Progress: [██████████] 98%
 
 ### Decisions
 
+- Phase 21-02: Used useCallback + useRef for fetch refactoring in CampaignDetail
+- Phase 21-02: PAUSABLE_STATES includes escalated and stale alongside four active states
+- Phase 21-02: alert() for error display; upgradeable to toast later
 - Phase 21-01: STOPPED is terminal, PAUSED is non-terminal (resumable)
 - Phase 21-01: Resume bypasses transition map, directly restores pre_pause_state
 - Phase 21-01: Extracted _get_thread_entry helper for control endpoint thread lookup
@@ -65,5 +68,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-09
-Stopped at: Completed 21-01-PLAN.md (Backend State Machine Extensions & Control API)
+Stopped at: Completed 21-02-PLAN.md (Frontend Control Buttons) — Phase 21 complete
 Resume file: None
