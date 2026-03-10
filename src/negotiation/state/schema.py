@@ -1,7 +1,8 @@
 """SQLite schema for negotiation state persistence.
 
-Provides the DDL function to create the negotiation_state table following the
-same pattern as init_audit_db() in negotiation.audit.store.
+Provides DDL functions to create the negotiation_state, gmail_watch_state,
+and processed_influencers tables following the same pattern as
+init_audit_db() in negotiation.audit.store.
 """
 
 from __future__ import annotations
@@ -56,5 +57,35 @@ def init_gmail_watch_state_table(conn: sqlite3.Connection) -> None:
             updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
         )
     """)
+
+    conn.commit()
+
+
+def init_processed_influencers_table(conn: sqlite3.Connection) -> None:
+    """Create the processed_influencers table if it does not already exist.
+
+    Tracks which influencer rows (by name) have already been processed for
+    each campaign, along with a SHA-256 hash of the row data for modification
+    detection.  The UNIQUE constraint on (campaign_id, influencer_name)
+    prevents duplicate processing.
+
+    Args:
+        conn: An open sqlite3.Connection.
+    """
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS processed_influencers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            campaign_id TEXT NOT NULL,
+            influencer_name TEXT NOT NULL,
+            row_hash TEXT NOT NULL,
+            processed_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+            UNIQUE(campaign_id, influencer_name)
+        )
+    """)
+
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_processed_campaign "
+        "ON processed_influencers (campaign_id)"
+    )
 
     conn.commit()
