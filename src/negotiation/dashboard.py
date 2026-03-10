@@ -19,9 +19,12 @@ from starlette.staticfiles import StaticFiles
 
 logger = logging.getLogger(__name__)
 
-# Resolve the frontend dist path relative to this file's location.
-# Layout: src/negotiation/dashboard.py -> ../../frontend/dist
-FRONTEND_DIST = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
+# Resolve the frontend dist path.
+# In Docker, the package is installed in .venv so __file__ doesn't point to /app/src/.
+# Try /app/frontend/dist first (Docker), then fall back to relative path (local dev).
+_DOCKER_DIST = Path("/app/frontend/dist")
+_RELATIVE_DIST = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
+FRONTEND_DIST = _DOCKER_DIST if _DOCKER_DIST.is_dir() else _RELATIVE_DIST
 
 
 def mount_dashboard(app: FastAPI) -> None:
