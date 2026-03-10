@@ -22,8 +22,8 @@ Requirements for Per-Campaign Influencer Sheets milestone. Each maps to roadmap 
 ### Sheet Monitoring
 
 - [x] **MON-01**: Agent polls each active campaign's sheet tab hourly to detect new influencer rows
-- [ ] **MON-02**: Agent auto-starts negotiations for newly discovered influencers (rows added after initial ingestion)
-- [ ] **MON-03**: Agent sends Slack alert when an existing influencer's row is modified after negotiation has started
+- [x] **MON-02**: Agent auto-starts negotiations for newly discovered influencers (rows added after initial ingestion)
+- [x] **MON-03**: Agent sends Slack alert when an existing influencer's row is modified after negotiation has started
 - [x] **MON-04**: Agent tracks which influencer rows have been processed to avoid duplicate outreach
 
 ## Future Requirements
@@ -55,8 +55,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INGEST-02 | Phase 22 | Complete |
 | INGEST-03 | Phase 22 | Complete |
 | MON-01 | Phase 23 | Complete |
-| MON-02 | Phase 23 | Pending |
-| MON-03 | Phase 23 | Pending |
+| MON-02 | Phase 23 | Complete |
+| MON-03 | Phase 23 | Complete |
 | MON-04 | Phase 23 | Complete |
 
 **Coverage:**
