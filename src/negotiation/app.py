@@ -46,7 +46,12 @@ from negotiation.resilience.retry import configure_error_notifier
 from negotiation.slack.app import create_slack_app, start_slack_app
 from negotiation.slack.commands import register_commands
 from negotiation.slack.takeover import ThreadStateManager
-from negotiation.state.schema import init_gmail_watch_state_table, init_negotiation_state_table
+from negotiation.sheets.monitor import run_sheet_monitor_loop
+from negotiation.state.schema import (
+    init_gmail_watch_state_table,
+    init_negotiation_state_table,
+    init_processed_influencers_table,
+)
 from negotiation.state.serializers import (
     deserialize_context,
     deserialize_cpm_tracker,
@@ -154,6 +159,9 @@ def initialize_services(settings: Settings | None = None) -> dict[str, Any]:
     init_gmail_watch_state_table(audit_conn)
     watch_store = GmailWatchStore(audit_conn)
     services["watch_store"] = watch_store
+
+    # Initialize processed influencers table for sheet monitoring
+    init_processed_influencers_table(audit_conn)
 
     # b. Create AuditLogger
     audit_logger = AuditLogger(audit_conn)
@@ -1079,12 +1087,30 @@ async def main() -> None:
         gmail_topic = services.get("gmail_pubsub_topic", "")
         if gmail_client and gmail_topic:
             tasks_to_run.append(renew_gmail_watch_periodically(services))
+        # Add sheet monitor if sheets client is configured
+        sheets_client = services.get("sheets_client")
+        if sheets_client:
+            tasks_to_run.append(run_sheet_monitor_loop(services))
         await asyncio.gather(*tasks_to_run)
     finally:
         audit_conn = services.get("audit_conn")
         if audit_conn is not None:
             close_audit_db(audit_conn)
             logger.info("Audit database connection closed on shutdown")
+
+
+def create_dev_app() -> FastAPI:
+    """Zero-argument factory for local development with ``uvicorn --factory``.
+
+    Initializes services with default settings (reads ``.env`` if present)
+    and returns the FastAPI app.  Does NOT start the Slack bot or Gmail
+    watch renewal — only the HTTP server.
+    """
+    settings = get_settings()
+    configure_logging(production=False)
+    validate_credentials(settings)
+    services = initialize_services(settings)
+    return create_app(services)
 
 
 if __name__ == "__main__":
