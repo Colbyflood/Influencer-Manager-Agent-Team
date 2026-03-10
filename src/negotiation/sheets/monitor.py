@@ -7,14 +7,17 @@ change sets (``SheetDiff``) for downstream processing.
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import logging
 import sqlite3
 from dataclasses import dataclass, field
+from typing import Any
 
 from negotiation.campaign.models import Campaign
 from negotiation.sheets.client import SheetsClient
 from negotiation.sheets.models import InfluencerRow
+from negotiation.state.schema import init_processed_influencers_table
 
 logger = logging.getLogger(__name__)
 
@@ -157,3 +160,130 @@ class SheetMonitor:
         for row in rows:
             row_hash = self._compute_row_hash(row)
             self._mark_processed(campaign_id, row.name, row_hash)
+
+
+async def run_sheet_monitor_loop(services: dict[str, Any]) -> None:
+    """Poll campaign sheets hourly for new and modified influencer rows.
+
+    Discovers new influencer rows and auto-starts negotiations via
+    ``start_negotiations_for_campaign``.  Sends Slack escalation alerts
+    for rows modified after negotiation began.  Pre-seeds already-negotiated
+    influencers as processed on first encounter to prevent duplicate outreach.
+
+    Follows the same pattern as ``renew_gmail_watch_periodically`` in app.py.
+
+    Args:
+        services: The services dict from ``initialize_services()``.
+    """
+    sheets_client = services["sheets_client"]
+    negotiation_states: dict[str, dict[str, Any]] = services.get(
+        "negotiation_states", {}
+    )
+    slack_notifier = services.get("slack_notifier")
+    state_conn = services["audit_conn"]
+
+    monitor = SheetMonitor(sheets_client, state_conn)
+    init_processed_influencers_table(state_conn)
+    logger.info("Sheet monitor started")
+
+    while True:
+        try:
+            # Collect unique campaigns from active negotiations that have sheet routing
+            seen_campaign_ids: set[str] = set()
+            campaigns: list[Campaign] = []
+            for entry in negotiation_states.values():
+                campaign: Campaign = entry["campaign"]
+                if campaign.campaign_id in seen_campaign_ids:
+                    continue
+                if not (campaign.influencer_sheet_tab or campaign.influencer_sheet_id):
+                    continue
+                seen_campaign_ids.add(campaign.campaign_id)
+                campaigns.append(campaign)
+
+            for campaign in campaigns:
+                try:
+                    # Pre-seed existing negotiations as processed to prevent duplicates
+                    processed = monitor._get_processed(campaign.campaign_id)
+                    for entry in negotiation_states.values():
+                        entry_campaign: Campaign = entry["campaign"]
+                        if entry_campaign.campaign_id != campaign.campaign_id:
+                            continue
+                        inf_name = entry.get("context", {}).get("influencer_name")
+                        if inf_name and inf_name not in processed:
+                            monitor._mark_processed(
+                                campaign.campaign_id, inf_name, "pre-seeded"
+                            )
+
+                    diff = monitor.check_campaign_sheet(campaign)
+
+                    # Handle new rows (MON-02): auto-start negotiations
+                    if diff.new_rows:
+                        found_influencers = [
+                            {"name": row.name, "sheet_data": row}
+                            for row in diff.new_rows
+                        ]
+                        # Late import to avoid circular imports
+                        from negotiation.app import start_negotiations_for_campaign
+
+                        await start_negotiations_for_campaign(
+                            found_influencers=found_influencers,
+                            campaign=campaign,
+                            services=services,
+                        )
+                        monitor.mark_rows_processed(
+                            campaign.campaign_id, diff.new_rows
+                        )
+                        logger.info(
+                            "Sheet monitor: %d new influencers found for campaign %s",
+                            len(diff.new_rows),
+                            campaign.campaign_id,
+                        )
+
+                    # Handle modified rows (MON-03): Slack alerts
+                    if diff.modified_rows:
+                        for row, _old_hash in diff.modified_rows:
+                            if slack_notifier is not None:
+                                blocks = [
+                                    {
+                                        "type": "section",
+                                        "text": {
+                                            "type": "mrkdwn",
+                                            "text": (
+                                                f"*Influencer row modified after negotiation started*\n"
+                                                f"*Campaign:* {campaign.client_name}\n"
+                                                f"*Influencer:* {row.name}\n"
+                                                f"Please review the updated row data."
+                                            ),
+                                        },
+                                    }
+                                ]
+                                fallback_text = (
+                                    f"Influencer row modified: {row.name} "
+                                    f"in campaign {campaign.client_name}"
+                                )
+                                slack_notifier.post_escalation(
+                                    blocks=blocks, fallback_text=fallback_text
+                                )
+                            # Update stored hash
+                            monitor._mark_processed(
+                                campaign.campaign_id,
+                                row.name,
+                                monitor._compute_row_hash(row),
+                            )
+                        logger.info(
+                            "Sheet monitor: %d modified rows in campaign %s",
+                            len(diff.modified_rows),
+                            campaign.campaign_id,
+                        )
+
+                except Exception:
+                    logger.warning(
+                        "Sheet monitor error for campaign %s",
+                        campaign.campaign_id,
+                        exc_info=True,
+                    )
+
+        except Exception:
+            logger.warning("Sheet monitor loop iteration error", exc_info=True)
+
+        await asyncio.sleep(3600)
