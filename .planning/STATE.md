@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-09)
 
 **Core value:** The agent must negotiate influencer rates accurately using CPM-based logic and reliably communicate the outcome -- every agreed deal must result in a clear, actionable Slack notification to the team.
-**Current focus:** v1.4 Per-Campaign Influencer Sheets -- Phase 22
+**Current focus:** v1.5 Sheet Monitoring and Auto-Negotiation -- Phase 23
 
 ## Current Position
 
-Phase: 22 of 23 (Per-Campaign Sheet Routing)
-Plan: 2 of 2 in current phase (complete)
-Status: Phase Complete
-Last activity: 2026-03-09 -- Completed 22-02 (per-campaign sheet routing ingestion wiring)
+Phase: 23 of 23 (Sheet Monitoring and Auto-Negotiation)
+Plan: 1 of 2 in current phase
+Status: In Progress
+Last activity: 2026-03-09 -- Completed 23-01 (sheet monitoring core)
 
-Progress: [██████████] 100%
+Progress: [█████████░] 95%
 
 ## Performance Metrics
 
@@ -45,6 +45,8 @@ All decisions logged in PROJECT.md Key Decisions table.
 - [22-01] Override spreadsheets opened without caching to support multiple campaigns with different sheets
 - [22-01] Sheet routing fields are plain text in ClickUp, no special type parsing needed
 - [22-02] Empty string sheet routing fields normalized to None at build_campaign level
+- [Phase 23]: SHA-256 hash of model_dump_json() for row change detection
+- [Phase 23]: INSERT OR REPLACE upsert pattern for processed_influencers dedup
 
 ### Pending Todos
 
@@ -58,5 +60,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-09
-Stopped at: Completed 22-02-PLAN.md (Phase 22 complete)
+Stopped at: Completed 23-01-PLAN.md
 Resume file: None
