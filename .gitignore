@@ -37,6 +37,10 @@ frontend/dist/
 # OS
 .DS_Store
 
+# Environment variables (never commit)
+.env
+.env.*
+
 # Google API credentials (never commit)
 credentials.json
 token.json

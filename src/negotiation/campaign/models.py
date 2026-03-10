@@ -36,6 +36,13 @@ class OptimizeFor(StrEnum):
     balance = "balance"
 
 
+def _coerce_non_string_to_none(v: object) -> str | None:
+    """ClickUp returns 0 for empty text fields; coerce to None."""
+    if isinstance(v, str):
+        return v or None
+    return None
+
+
 class CampaignGoals(BaseModel):
     """Campaign goals and optimization targets."""
 
@@ -45,6 +52,12 @@ class CampaignGoals(BaseModel):
     secondary_goal: str | None = None
     business_context: str | None = None
     optimize_for: OptimizeFor = OptimizeFor.balance
+
+    @field_validator("secondary_goal", "business_context", mode="before")
+    @classmethod
+    def coerce_non_string_to_none(cls, v: object) -> str | None:
+        """ClickUp returns 0 for empty text fields; coerce to None."""
+        return _coerce_non_string_to_none(v)
 
     @field_validator("primary_goal")
     @classmethod
@@ -65,6 +78,12 @@ class DeliverableScenarios(BaseModel):
     scenario_1: str | None = None
     scenario_2: str | None = None
     scenario_3: str | None = None
+
+    @field_validator("scenario_1", "scenario_2", "scenario_3", mode="before")
+    @classmethod
+    def coerce_non_string_to_none(cls, v: object) -> str | None:
+        """ClickUp returns 0 for empty text fields; coerce to None."""
+        return _coerce_non_string_to_none(v)
 
     @model_validator(mode="after")
     def at_least_one_scenario(self) -> "DeliverableScenarios":
@@ -122,11 +141,17 @@ class BudgetConstraints(BaseModel):
 
     campaign_budget: Decimal
     target_influencer_count: int | None = None
-    target_cost_range: str | None = None
+    target_cost_range: str | None = None  # validated below
     min_cost_per_influencer: Decimal | None = None
     max_cost_without_approval: Decimal | None = None
     cpm_target: Decimal | None = None
     cpm_leniency_pct: Decimal | None = None
+
+    @field_validator("target_cost_range", mode="before")
+    @classmethod
+    def coerce_non_string_to_none(cls, v: object) -> str | None:
+        """ClickUp returns 0 for empty text fields; coerce to None."""
+        return _coerce_non_string_to_none(v)
 
     @field_validator(
         "campaign_budget",
@@ -151,6 +176,12 @@ class ProductLeverage(BaseModel):
     product_description: str | None = None
     product_monetary_value: Decimal | None = None
 
+    @field_validator("product_description", mode="before")
+    @classmethod
+    def coerce_non_string_to_none(cls, v: object) -> str | None:
+        """ClickUp returns 0 for empty text fields; coerce to None."""
+        return _coerce_non_string_to_none(v)
+
     @field_validator("product_monetary_value", mode="before")
     @classmethod
     def reject_float_inputs(cls, v: object) -> object:
@@ -173,6 +204,16 @@ class CampaignRequirements(BaseModel):
     content_delivery_date: str | None = None
     content_publish_date: str | None = None
 
+    @field_validator(
+        "exclusivity_term", "exclusivity_description",
+        "raw_footage_required", "content_delivery_date", "content_publish_date",
+        mode="before",
+    )
+    @classmethod
+    def coerce_non_string_to_none(cls, v: object) -> str | None:
+        """ClickUp returns 0 for empty text fields; coerce to None."""
+        return _coerce_non_string_to_none(v)
+
 
 class CampaignBackground(BaseModel):
     """Background information about the campaign client and logistics."""
@@ -184,6 +225,12 @@ class CampaignBackground(BaseModel):
     payment_methods: list[str] = []
     payment_terms: str | None = None
 
+    @field_validator("client_website", "campaign_manager", "payment_terms", mode="before")
+    @classmethod
+    def coerce_non_string_to_none(cls, v: object) -> str | None:
+        """ClickUp returns 0 for empty text fields; coerce to None."""
+        return _coerce_non_string_to_none(v)
+
 
 class DistributionInfo(BaseModel):
     """Distribution targets across platforms, markets, and influencer sizes."""
@@ -193,6 +240,15 @@ class DistributionInfo(BaseModel):
     platform_distribution: str | None = None
     market_distribution: str | None = None
     influencer_size_distribution: str | None = None
+
+    @field_validator(
+        "platform_distribution", "market_distribution", "influencer_size_distribution",
+        mode="before",
+    )
+    @classmethod
+    def coerce_non_string_to_none(cls, v: object) -> str | None:
+        """ClickUp returns 0 for empty text fields; coerce to None."""
+        return _coerce_non_string_to_none(v)
 
 
 class CampaignInfluencer(BaseModel):
