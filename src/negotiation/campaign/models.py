@@ -205,8 +205,11 @@ class CampaignRequirements(BaseModel):
     content_publish_date: str | None = None
 
     @field_validator(
-        "exclusivity_term", "exclusivity_description",
-        "raw_footage_required", "content_delivery_date", "content_publish_date",
+        "exclusivity_term",
+        "exclusivity_description",
+        "raw_footage_required",
+        "content_delivery_date",
+        "content_publish_date",
         mode="before",
     )
     @classmethod
@@ -242,7 +245,9 @@ class DistributionInfo(BaseModel):
     influencer_size_distribution: str | None = None
 
     @field_validator(
-        "platform_distribution", "market_distribution", "influencer_size_distribution",
+        "platform_distribution",
+        "market_distribution",
+        "influencer_size_distribution",
         mode="before",
     )
     @classmethod
