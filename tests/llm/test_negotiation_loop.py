@@ -15,12 +15,11 @@ import pytest
 from negotiation.campaign.models import BudgetConstraints, DeliverableScenarios
 from negotiation.domain.types import NegotiationState
 from negotiation.levers.models import LeverAction
+from negotiation.llm.composer import compose_counter_email as compose_counter_email_real
 from negotiation.llm.models import (
     IntentClassification,
     NegotiationIntent,
 )
-from negotiation.llm.composer import compose_agreement_email as compose_agreement_email_real
-from negotiation.llm.composer import compose_counter_email as compose_counter_email_real
 from negotiation.llm.negotiation_loop import process_influencer_reply
 from negotiation.state_machine import NegotiationStateMachine
 

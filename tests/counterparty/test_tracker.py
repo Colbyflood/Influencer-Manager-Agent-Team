@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from negotiation.counterparty.models import CounterpartyProfile, CounterpartyType, DetectionSignal
-from negotiation.counterparty.tracker import ThreadContact, ThreadContactTracker
+from negotiation.counterparty.models import CounterpartyProfile, CounterpartyType
+from negotiation.counterparty.tracker import ThreadContactTracker
 
 
 def _make_profile(

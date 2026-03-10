@@ -19,7 +19,6 @@ from pydantic import BaseModel
 
 from negotiation.audit.store import query_audit_trail
 from negotiation.domain.types import NegotiationState
-from negotiation.state_machine.transitions import TERMINAL_STATES
 
 router = APIRouter()
 
@@ -175,9 +174,7 @@ async def campaign_detail(
                 influencer_email=context.get("influencer_email", ""),
                 state=state_str,
                 round_count=entry.get("round_count", 0),
-                counterparty_type=context.get(
-                    "counterparty_type", "direct_influencer"
-                ),
+                counterparty_type=context.get("counterparty_type", "direct_influencer"),
                 agency_name=context.get("agency_name"),
                 current_rate=current_rate,
             )
@@ -317,7 +314,8 @@ async def resume_negotiation(
     if state_machine.state != NegotiationState.PAUSED:
         raise HTTPException(
             status_code=409,
-            detail=f"Cannot resume negotiation in state '{state_machine.state.value}' (must be paused)",
+            detail=f"Cannot resume negotiation in state "
+            f"'{state_machine.state.value}' (must be paused)",
         )
 
     previous = state_machine.state.value

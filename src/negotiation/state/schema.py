@@ -84,8 +84,7 @@ def init_processed_influencers_table(conn: sqlite3.Connection) -> None:
     """)
 
     conn.execute(
-        "CREATE INDEX IF NOT EXISTS idx_processed_campaign "
-        "ON processed_influencers (campaign_id)"
+        "CREATE INDEX IF NOT EXISTS idx_processed_campaign ON processed_influencers (campaign_id)"
     )
 
     conn.commit()

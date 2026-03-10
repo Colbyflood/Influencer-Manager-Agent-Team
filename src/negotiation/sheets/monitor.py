@@ -78,15 +78,12 @@ class SheetMonitor:
             rows in the given campaign.
         """
         cursor = self._conn.execute(
-            "SELECT influencer_name, row_hash FROM processed_influencers "
-            "WHERE campaign_id = ?",
+            "SELECT influencer_name, row_hash FROM processed_influencers WHERE campaign_id = ?",
             (campaign_id,),
         )
         return {name: row_hash for name, row_hash in cursor.fetchall()}
 
-    def _mark_processed(
-        self, campaign_id: str, name: str, row_hash: str
-    ) -> None:
+    def _mark_processed(self, campaign_id: str, name: str, row_hash: str) -> None:
         """Insert or update a processed influencer record.
 
         Uses INSERT OR REPLACE to upsert -- if the (campaign_id, influencer_name)
@@ -145,9 +142,7 @@ class SheetMonitor:
 
         return diff
 
-    def mark_rows_processed(
-        self, campaign_id: str, rows: list[InfluencerRow]
-    ) -> None:
+    def mark_rows_processed(self, campaign_id: str, rows: list[InfluencerRow]) -> None:
         """Mark a batch of influencer rows as processed.
 
         Should be called after successful negotiation start to prevent
@@ -176,9 +171,7 @@ async def run_sheet_monitor_loop(services: dict[str, Any]) -> None:
         services: The services dict from ``initialize_services()``.
     """
     sheets_client = services["sheets_client"]
-    negotiation_states: dict[str, dict[str, Any]] = services.get(
-        "negotiation_states", {}
-    )
+    negotiation_states: dict[str, dict[str, Any]] = services.get("negotiation_states", {})
     slack_notifier = services.get("slack_notifier")
     state_conn = services["audit_conn"]
 
@@ -210,17 +203,14 @@ async def run_sheet_monitor_loop(services: dict[str, Any]) -> None:
                             continue
                         inf_name = entry.get("context", {}).get("influencer_name")
                         if inf_name and inf_name not in processed:
-                            monitor._mark_processed(
-                                campaign.campaign_id, inf_name, "pre-seeded"
-                            )
+                            monitor._mark_processed(campaign.campaign_id, inf_name, "pre-seeded")
 
                     diff = monitor.check_campaign_sheet(campaign)
 
                     # Handle new rows (MON-02): auto-start negotiations
                     if diff.new_rows:
                         found_influencers = [
-                            {"name": row.name, "sheet_data": row}
-                            for row in diff.new_rows
+                            {"name": row.name, "sheet_data": row} for row in diff.new_rows
                         ]
                         # Late import to avoid circular imports
                         from negotiation.app import start_negotiations_for_campaign
@@ -230,9 +220,7 @@ async def run_sheet_monitor_loop(services: dict[str, Any]) -> None:
                             campaign=campaign,
                             services=services,
                         )
-                        monitor.mark_rows_processed(
-                            campaign.campaign_id, diff.new_rows
-                        )
+                        monitor.mark_rows_processed(campaign.campaign_id, diff.new_rows)
                         logger.info(
                             "Sheet monitor: %d new influencers found for campaign %s",
                             len(diff.new_rows),
@@ -249,7 +237,8 @@ async def run_sheet_monitor_loop(services: dict[str, Any]) -> None:
                                         "text": {
                                             "type": "mrkdwn",
                                             "text": (
-                                                f"*Influencer row modified after negotiation started*\n"
+                                                "*Influencer row modified"
+                                                " after negotiation started*\n"
                                                 f"*Campaign:* {campaign.client_name}\n"
                                                 f"*Influencer:* {row.name}\n"
                                                 f"Please review the updated row data."

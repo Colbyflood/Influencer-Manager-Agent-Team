@@ -7,8 +7,6 @@ syndication > CPM sharing > graceful exit.
 
 from decimal import Decimal
 
-import pytest
-
 from negotiation.campaign.models import (
     BudgetConstraints,
     Campaign,
@@ -16,17 +14,17 @@ from negotiation.campaign.models import (
     DeliverableScenarios,
     ProductLeverage,
     UsageRights,
-    UsageRightsSet,
     UsageRightsDuration,
+    UsageRightsSet,
 )
 from negotiation.domain.types import Platform
 from negotiation.levers.engine import build_opening_context, select_lever
-from negotiation.levers.models import LeverAction, LeverResult, NegotiationLeverContext
-
+from negotiation.levers.models import LeverAction, NegotiationLeverContext
 
 # ---------------------------------------------------------------------------
 # Helpers for building test contexts
 # ---------------------------------------------------------------------------
+
 
 def _budget(
     campaign_budget: str = "10000",

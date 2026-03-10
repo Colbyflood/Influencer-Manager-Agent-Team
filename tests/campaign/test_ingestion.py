@@ -691,17 +691,27 @@ _FULL_FIELD_MAPPING: dict[str, str] = {
 
 _FULL_FIELD_TYPES: dict[str, list[str]] = {
     "number": [
-        "CPM Target", "CPM Leniency", "Campaign Budget",
-        "Target Number of Influencers", "Min Cost per Influencer",
-        "Max Cost without Human Approval", "Product Monetary Value",
+        "CPM Target",
+        "CPM Leniency",
+        "Campaign Budget",
+        "Target Number of Influencers",
+        "Min Cost per Influencer",
+        "Max Cost without Human Approval",
+        "Product Monetary Value",
         "Revision Rounds",
     ],
     "date_range": ["Content Delivery Date", "Content Publish Date"],
     "select": [
-        "Campaign Type / Primary Goal", "Secondary Goal", "Optimize For",
-        "Payment Terms", "Content Syndication", "Exclusivity Term",
-        "Raw Footage Required", "Content Approval Required",
-        "Category Exclusivity Required", "Content Posted Organically",
+        "Campaign Type / Primary Goal",
+        "Secondary Goal",
+        "Optimize For",
+        "Payment Terms",
+        "Content Syndication",
+        "Exclusivity Term",
+        "Raw Footage Required",
+        "Content Approval Required",
+        "Category Exclusivity Required",
+        "Content Posted Organically",
         "Product as Lever",
     ],
     "multi_select": ["Payment Methods", "Target Deliverables"],
@@ -726,11 +736,27 @@ def _build_full_clickup_task() -> dict[str, Any]:
             {"name": "Client Name", "type": "text", "value": "Acme Corp"},
             {"name": "Client Website", "type": "url", "value": "https://acme.com"},
             {"name": "Campaign Manager", "type": "text", "value": "Jane Doe"},
-            {"name": "Payment Methods", "type": "labels", "value": [{"name": "Wire"}, {"name": "PayPal"}]},
-            {"name": "Payment Terms", "type": "drop_down", "value": {"name": "Net 30", "id": "pt1"}},
+            {
+                "name": "Payment Methods",
+                "type": "labels",
+                "value": [{"name": "Wire"}, {"name": "PayPal"}],
+            },
+            {
+                "name": "Payment Terms",
+                "type": "drop_down",
+                "value": {"name": "Net 30", "id": "pt1"},
+            },
             # Goals
-            {"name": "Campaign Type / Primary Goal", "type": "drop_down", "value": {"name": "Organic Social Performance", "id": "g1"}},
-            {"name": "Secondary Goal", "type": "drop_down", "value": {"name": "Brand Awareness", "id": "g2"}},
+            {
+                "name": "Campaign Type / Primary Goal",
+                "type": "drop_down",
+                "value": {"name": "Organic Social Performance", "id": "g1"},
+            },
+            {
+                "name": "Secondary Goal",
+                "type": "drop_down",
+                "value": {"name": "Brand Awareness", "id": "g2"},
+            },
             {"name": "Business Context", "type": "text", "value": "Q1 product launch"},
             {"name": "Optimize For", "type": "drop_down", "value": {"name": "CPM", "id": "o1"}},
             # Budget / CPM
@@ -739,20 +765,64 @@ def _build_full_clickup_task() -> dict[str, Any]:
             # Distribution
             {"name": "Platform Distribution", "type": "text", "value": "60% TikTok, 40% IG"},
             {"name": "Market Distribution", "type": "text", "value": "US 80%, UK 20%"},
-            {"name": "Influencer Size Distribution", "type": "text", "value": "50% Macro, 50% Micro"},
+            {
+                "name": "Influencer Size Distribution",
+                "type": "text",
+                "value": "50% Macro, 50% Micro",
+            },
             # Deliverables
-            {"name": "Target Deliverables", "type": "labels", "value": [{"name": "TikTok"}, {"name": "Instagram Reel"}]},
-            {"name": "Content Syndication", "type": "drop_down", "value": {"name": "Yes", "id": "cs1"}},
+            {
+                "name": "Target Deliverables",
+                "type": "labels",
+                "value": [{"name": "TikTok"}, {"name": "Instagram Reel"}],
+            },
+            {
+                "name": "Content Syndication",
+                "type": "drop_down",
+                "value": {"name": "Yes", "id": "cs1"},
+            },
             {"name": "Minimum Deliverables Scenario 1", "type": "text", "value": "1x TikTok"},
-            {"name": "Minimum Deliverables Scenario 2", "type": "text", "value": "1x TikTok + 1x IG Reel"},
-            {"name": "Minimum Deliverables Scenario 3", "type": "text", "value": "2x TikTok + 1x IG Reel"},
+            {
+                "name": "Minimum Deliverables Scenario 2",
+                "type": "text",
+                "value": "1x TikTok + 1x IG Reel",
+            },
+            {
+                "name": "Minimum Deliverables Scenario 3",
+                "type": "text",
+                "value": "2x TikTok + 1x IG Reel",
+            },
             # Usage Rights
-            {"name": "Usage Rights - Target for: Paid Usage", "type": "drop_down", "value": {"name": "90 Days", "id": "ur1"}},
-            {"name": "Usage Rights - Target for: Whitelisting", "type": "drop_down", "value": {"name": "60 Days", "id": "ur2"}},
-            {"name": "Usage Rights - Target for: Organic/Owned", "type": "drop_down", "value": {"name": "Perpetual", "id": "ur3"}},
-            {"name": "Usage Rights - Minimum for: Paid Usage", "type": "drop_down", "value": {"name": "30 Days", "id": "ur4"}},
-            {"name": "Usage Rights - Minimum for: Whitelisting", "type": "drop_down", "value": {"name": "30 Days", "id": "ur5"}},
-            {"name": "Usage Rights - Minimum for: Organic/Owned", "type": "drop_down", "value": {"name": "90 Days", "id": "ur6"}},
+            {
+                "name": "Usage Rights - Target for: Paid Usage",
+                "type": "drop_down",
+                "value": {"name": "90 Days", "id": "ur1"},
+            },
+            {
+                "name": "Usage Rights - Target for: Whitelisting",
+                "type": "drop_down",
+                "value": {"name": "60 Days", "id": "ur2"},
+            },
+            {
+                "name": "Usage Rights - Target for: Organic/Owned",
+                "type": "drop_down",
+                "value": {"name": "Perpetual", "id": "ur3"},
+            },
+            {
+                "name": "Usage Rights - Minimum for: Paid Usage",
+                "type": "drop_down",
+                "value": {"name": "30 Days", "id": "ur4"},
+            },
+            {
+                "name": "Usage Rights - Minimum for: Whitelisting",
+                "type": "drop_down",
+                "value": {"name": "30 Days", "id": "ur5"},
+            },
+            {
+                "name": "Usage Rights - Minimum for: Organic/Owned",
+                "type": "drop_down",
+                "value": {"name": "90 Days", "id": "ur6"},
+            },
             # Budget
             {"name": "Campaign Budget", "type": "number", "value": "50000"},
             {"name": "Target Number of Influencers", "type": "number", "value": "10"},
@@ -760,19 +830,55 @@ def _build_full_clickup_task() -> dict[str, Any]:
             {"name": "Min Cost per Influencer", "type": "number", "value": "2000"},
             {"name": "Max Cost without Human Approval", "type": "number", "value": "5000"},
             # Product Leverage
-            {"name": "Product as Lever", "type": "drop_down", "value": {"name": "Yes", "id": "pl1"}},
+            {
+                "name": "Product as Lever",
+                "type": "drop_down",
+                "value": {"name": "Yes", "id": "pl1"},
+            },
             {"name": "Product Description", "type": "text", "value": "Premium skincare set"},
             {"name": "Product Monetary Value", "type": "number", "value": "150"},
             # Requirements
-            {"name": "Category Exclusivity Required", "type": "drop_down", "value": {"name": "Yes", "id": "ex1"}},
-            {"name": "Exclusivity Term", "type": "drop_down", "value": {"name": "30 Days", "id": "et1"}},
-            {"name": "Exclusivity Description", "type": "text", "value": "No competing skincare brands"},
-            {"name": "Content Posted Organically", "type": "drop_down", "value": {"name": "Yes", "id": "cp1"}},
-            {"name": "Content Approval Required", "type": "drop_down", "value": {"name": "Yes", "id": "ca1"}},
+            {
+                "name": "Category Exclusivity Required",
+                "type": "drop_down",
+                "value": {"name": "Yes", "id": "ex1"},
+            },
+            {
+                "name": "Exclusivity Term",
+                "type": "drop_down",
+                "value": {"name": "30 Days", "id": "et1"},
+            },
+            {
+                "name": "Exclusivity Description",
+                "type": "text",
+                "value": "No competing skincare brands",
+            },
+            {
+                "name": "Content Posted Organically",
+                "type": "drop_down",
+                "value": {"name": "Yes", "id": "cp1"},
+            },
+            {
+                "name": "Content Approval Required",
+                "type": "drop_down",
+                "value": {"name": "Yes", "id": "ca1"},
+            },
             {"name": "Revision Rounds", "type": "number", "value": "2"},
-            {"name": "Raw Footage Required", "type": "drop_down", "value": {"name": "Yes", "id": "rf1"}},
-            {"name": "Content Delivery Date", "type": "date", "value": {"start": 1700000000000, "end": 1702000000000}},
-            {"name": "Content Publish Date", "type": "date", "value": {"start": 1703000000000, "end": 1705000000000}},
+            {
+                "name": "Raw Footage Required",
+                "type": "drop_down",
+                "value": {"name": "Yes", "id": "rf1"},
+            },
+            {
+                "name": "Content Delivery Date",
+                "type": "date",
+                "value": {"start": 1700000000000, "end": 1702000000000},
+            },
+            {
+                "name": "Content Publish Date",
+                "type": "date",
+                "value": {"start": 1703000000000, "end": 1705000000000},
+            },
             # Influencer / Platform / Timeline
             {"name": "Influencer List", "type": "text", "value": "Alice, Bob, Charlie"},
             {"name": "Platform", "type": "text", "value": "tiktok"},
@@ -832,7 +938,11 @@ class TestParseCustomFieldsExpanded:
         """ClickUp select field with value as {name, id} object."""
         task_data: dict[str, Any] = {
             "custom_fields": [
-                {"name": "Optimize For", "type": "drop_down", "value": {"name": "CPM", "id": "123"}},
+                {
+                    "name": "Optimize For",
+                    "type": "drop_down",
+                    "value": {"name": "CPM", "id": "123"},
+                },
             ],
         }
         mapping = {"Optimize For": "goals.optimize_for"}
@@ -844,7 +954,11 @@ class TestParseCustomFieldsExpanded:
         """ClickUp multi-select field extracts list of option names."""
         task_data: dict[str, Any] = {
             "custom_fields": [
-                {"name": "Payment Methods", "type": "labels", "value": [{"name": "Wire"}, {"name": "ACH"}]},
+                {
+                    "name": "Payment Methods",
+                    "type": "labels",
+                    "value": [{"name": "Wire"}, {"name": "ACH"}],
+                },
             ],
         }
         mapping = {"Payment Methods": "background.payment_methods"}
@@ -945,8 +1059,12 @@ class TestBuildCampaignExpanded:
             "requirements.content_approval_required": True,
             "requirements.revision_rounds": 2,
             "requirements.raw_footage_required": "Yes",
-            "requirements.content_delivery_date": "2023-11-14T22:13:20+00:00 to 2023-12-08T01:46:40+00:00",
-            "requirements.content_publish_date": "2023-12-19T15:33:20+00:00 to 2024-01-11T19:06:40+00:00",
+            "requirements.content_delivery_date": (
+                "2023-11-14T22:13:20+00:00 to 2023-12-08T01:46:40+00:00"
+            ),
+            "requirements.content_publish_date": (
+                "2023-12-19T15:33:20+00:00 to 2024-01-11T19:06:40+00:00"
+            ),
             "influencers_raw": "Alice, Bob, Charlie",
             "platform": "tiktok",
             "timeline": "Q1 2026",
@@ -1122,7 +1240,7 @@ class TestLoadFieldMappingWithTypes:
             tmp_path,
             'field_mapping:\n  "Client Name": "client_name"\n',
         )
-        mapping, types = load_field_mapping(config_path)
+        _mapping, types = load_field_mapping(config_path)
         assert types == {}
 
 
@@ -1171,7 +1289,9 @@ class TestPerCampaignSheetRouting:
 
     def test_build_campaign_with_sheet_id(self) -> None:
         """build_campaign populates influencer_sheet_id from parsed fields."""
-        campaign = build_campaign("t2", _minimal_parsed_fields(influencer_sheet_id="alt-spreadsheet-key"))
+        campaign = build_campaign(
+            "t2", _minimal_parsed_fields(influencer_sheet_id="alt-spreadsheet-key")
+        )
         assert campaign.influencer_sheet_id == "alt-spreadsheet-key"
 
     def test_build_campaign_defaults_none(self) -> None:

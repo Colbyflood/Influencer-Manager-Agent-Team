@@ -27,13 +27,13 @@ import structlog
 import uvicorn
 from fastapi import FastAPI, Request
 
+from negotiation.api.campaigns import router as campaigns_router
+from negotiation.api.negotiations import router as negotiations_router
 from negotiation.audit.logger import AuditLogger
 from negotiation.audit.slack_commands import register_audit_command
 from negotiation.audit.store import close_audit_db, init_audit_db
 from negotiation.audit.wiring import wire_audit_to_campaign_ingestion
 from negotiation.campaign.ingestion import ingest_campaign
-from negotiation.api.campaigns import router as campaigns_router
-from negotiation.api.negotiations import router as negotiations_router
 from negotiation.campaign.models import Campaign
 from negotiation.campaign.webhook import router as webhook_router
 from negotiation.campaign.webhook import set_campaign_processor
@@ -43,10 +43,10 @@ from negotiation.domain.types import NegotiationState
 from negotiation.health import register_health_routes
 from negotiation.observability.metrics import ACTIVE_NEGOTIATIONS, DEALS_CLOSED
 from negotiation.resilience.retry import configure_error_notifier
+from negotiation.sheets.monitor import run_sheet_monitor_loop
 from negotiation.slack.app import create_slack_app, start_slack_app
 from negotiation.slack.commands import register_commands
 from negotiation.slack.takeover import ThreadStateManager
-from negotiation.sheets.monitor import run_sheet_monitor_loop
 from negotiation.state.schema import (
     init_gmail_watch_state_table,
     init_negotiation_state_table,
@@ -438,7 +438,9 @@ def build_negotiation_context(
 
     cpm_floor, _cpm_ceiling = derive_cpm_bounds(
         cpm_target=campaign.budget_constraints.cpm_target if campaign.budget_constraints else None,
-        cpm_leniency_pct=campaign.budget_constraints.cpm_leniency_pct if campaign.budget_constraints else None,
+        cpm_leniency_pct=campaign.budget_constraints.cpm_leniency_pct
+        if campaign.budget_constraints
+        else None,
     )
     next_cpm = cpm_floor  # Start at campaign target (or default floor)
     if cpm_tracker is not None:
@@ -528,7 +530,9 @@ async def start_negotiations_for_campaign(
 
     cpm_floor, cpm_ceiling = derive_cpm_bounds(
         cpm_target=campaign.budget_constraints.cpm_target if campaign.budget_constraints else None,
-        cpm_leniency_pct=campaign.budget_constraints.cpm_leniency_pct if campaign.budget_constraints else None,
+        cpm_leniency_pct=campaign.budget_constraints.cpm_leniency_pct
+        if campaign.budget_constraints
+        else None,
     )
     cpm_tracker = CampaignCPMTracker(
         campaign_id=campaign.campaign_id,
@@ -837,9 +841,7 @@ async def process_inbound_email(message_id: str, services: dict[str, Any]) -> No
                 from_email=inbound.from_email,
                 profile=counterparty_profile,
             )
-            context["counterparty_type"] = str(
-                contact_tracker.get_primary_type(inbound.thread_id)
-            )
+            context["counterparty_type"] = str(contact_tracker.get_primary_type(inbound.thread_id))
             context["agency_name"] = contact_tracker.get_agency_name(inbound.thread_id)
         logger.info(
             "Counterparty classified",

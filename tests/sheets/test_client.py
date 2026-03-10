@@ -439,7 +439,7 @@ class TestSpreadsheetKeyOverride:
     """Tests for spreadsheet_key_override parameter on public methods."""
 
     def test_override_opens_different_spreadsheet(self) -> None:
-        """When spreadsheet_key_override is provided, gc.open_by_key is called with the override key."""
+        """Override causes gc.open_by_key to use the override key."""
         gc = MagicMock()
         worksheet = MagicMock()
         worksheet.get_all_records.return_value = [

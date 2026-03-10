@@ -189,9 +189,7 @@ def process_influencer_reply(
 
     lever_ctx = NegotiationLeverContext(
         their_rate=(
-            Decimal(classification.proposed_rate)
-            if classification.proposed_rate
-            else our_base_rate
+            Decimal(classification.proposed_rate) if classification.proposed_rate else our_base_rate
         ),
         our_current_rate=our_base_rate,
         average_views=average_views,
@@ -231,13 +229,10 @@ def process_influencer_reply(
 
     # Use lever-adjusted rate and deliverables
     our_rate = (
-        lever_result.adjusted_rate
-        if lever_result.adjusted_rate is not None
-        else our_base_rate
+        lever_result.adjusted_rate if lever_result.adjusted_rate is not None else our_base_rate
     )
-    deliverables_for_email = (
-        lever_result.deliverables_summary
-        or str(negotiation_context["deliverables_summary"])
+    deliverables_for_email = lever_result.deliverables_summary or str(
+        negotiation_context["deliverables_summary"]
     )
 
     # Step 8.7 - Generate counterparty tone guidance

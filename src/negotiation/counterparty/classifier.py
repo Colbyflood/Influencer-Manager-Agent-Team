@@ -246,16 +246,12 @@ def classify_counterparty(
         all_signals.append(structure_signal)
 
     # Partition signals by indicated type
-    manager_signals = [
-        s for s in all_signals if s.indicates == CounterpartyType.TALENT_MANAGER
-    ]
+    manager_signals = [s for s in all_signals if s.indicates == CounterpartyType.TALENT_MANAGER]
     influencer_signals = [
         s for s in all_signals if s.indicates == CounterpartyType.DIRECT_INFLUENCER
     ]
 
-    counterparty_type, confidence = _compute_confidence(
-        manager_signals, influencer_signals
-    )
+    counterparty_type, confidence = _compute_confidence(manager_signals, influencer_signals)
 
     agency_name = _extract_agency_name(all_signals)
 

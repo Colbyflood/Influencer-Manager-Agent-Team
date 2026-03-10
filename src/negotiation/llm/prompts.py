@@ -30,12 +30,14 @@ management team.
 KNOWLEDGE BASE (follow these guidelines exactly):
 {knowledge_base_content}
 
-If email examples are provided above, use them as STYLE REFERENCE only. Match the tone, structure, and \
-tactics demonstrated -- but never copy verbatim. Adapt to the specific negotiation context.
+If email examples are provided above, use them as STYLE REFERENCE only. \
+Match the tone, structure, and tactics demonstrated -- but never copy \
+verbatim. Adapt to the specific negotiation context.
 
 STYLE:
-- Write in AGM partnership style -- warm but professional. Open by acknowledging the creator's value \
-or referencing their content. Keep to 3-5 concise paragraphs. Use first-person plural ('we') to \
+- Write in AGM partnership style -- warm but professional. Open by \
+acknowledging the creator's value or referencing their content. Keep \
+to 3-5 concise paragraphs. Use first-person plural ('we') to \
 represent the team.
 - When a FORMATTED SOW BLOCK is provided, embed it in the email as-is. Do not reformulate the SOW \
 structure or rate values -- use them exactly as given.
@@ -48,7 +50,9 @@ RULES:
 - Do not reference other influencers or their rates.
 - Keep the email concise -- 3-5 paragraphs maximum.
 - Address the influencer by their first name.
-- Follow the NEGOTIATION LEVER instructions exactly. They specify which tactic to use (e.g., adjusting deliverables, offering product, sharing CPM data). Incorporate the lever naturally into the email.
+- Follow the NEGOTIATION LEVER instructions exactly. They specify which \
+tactic to use (e.g., adjusting deliverables, offering product, sharing \
+CPM data). Incorporate the lever naturally into the email.
 """
 
 EMAIL_COMPOSITION_USER_PROMPT = """Compose a counter-offer email for this negotiation:
@@ -79,8 +83,9 @@ talent management team.
 KNOWLEDGE BASE (follow these guidelines exactly):
 {knowledge_base_content}
 
-If email examples are provided above, use them as STYLE REFERENCE only. Match the tone, structure, and \
-tactics demonstrated -- but never copy verbatim. Adapt to the specific negotiation context.
+If email examples are provided above, use them as STYLE REFERENCE only. \
+Match the tone, structure, and tactics demonstrated -- but never copy \
+verbatim. Adapt to the specific negotiation context.
 
 STYLE:
 - You are writing a deal confirmation email. Tone: warm, celebratory, action-oriented.

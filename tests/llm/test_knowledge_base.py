@@ -135,7 +135,9 @@ class TestListAvailablePlatforms:
         assert platforms == ["instagram", "tiktok", "youtube"]
 
 
-def _create_example(path, scenario, title, stages, tactics=None, platform=None, body="Example body."):
+def _create_example(
+    path, scenario, title, stages, tactics=None, platform=None, body="Example body."
+):
     """Helper to create an example .md file with YAML frontmatter."""
     tactics = tactics or []
     frontmatter_lines = [
@@ -166,7 +168,8 @@ class TestLoadExamplesForStage:
         examples_dir.mkdir()
         _create_example(
             examples_dir / "counter_email.md",
-            "counter", "Counter Offer Email",
+            "counter",
+            "Counter Offer Email",
             stages=["counter_sent", "counter_received"],
             body="This is a counter offer.",
         )
@@ -182,13 +185,15 @@ class TestLoadExamplesForStage:
         examples_dir.mkdir()
         _create_example(
             examples_dir / "close.md",
-            "close", "Close Email",
+            "close",
+            "Close Email",
             stages=["agreed"],
             body="Closing email body.",
         )
         _create_example(
             examples_dir / "counter.md",
-            "counter", "Counter Email",
+            "counter",
+            "Counter Email",
             stages=["counter_sent"],
             body="Counter email body.",
         )
@@ -204,21 +209,24 @@ class TestLoadExamplesForStage:
         examples_dir.mkdir()
         _create_example(
             examples_dir / "generic.md",
-            "generic", "Generic Example",
+            "generic",
+            "Generic Example",
             stages=["counter_sent"],
             platform=None,
             body="Generic body.",
         )
         _create_example(
             examples_dir / "ig_only.md",
-            "ig_only", "Instagram Only",
+            "ig_only",
+            "Instagram Only",
             stages=["counter_sent"],
             platform="instagram",
             body="IG body.",
         )
         _create_example(
             examples_dir / "tt_only.md",
-            "tt_only", "TikTok Only",
+            "tt_only",
+            "TikTok Only",
             stages=["counter_sent"],
             platform="tiktok",
             body="TT body.",
@@ -236,7 +244,8 @@ class TestLoadExamplesForStage:
         examples_dir.mkdir()
         _create_example(
             examples_dir / "close.md",
-            "close", "Close Email",
+            "close",
+            "Close Email",
             stages=["agreed"],
             body="Close body.",
         )

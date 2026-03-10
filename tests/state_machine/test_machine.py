@@ -5,16 +5,15 @@ import pytest
 from negotiation.domain.errors import InvalidTransitionError
 from negotiation.domain.types import NegotiationState
 from negotiation.state_machine.machine import NegotiationStateMachine
-from negotiation.state_machine.transitions import NegotiationEvent
+from negotiation.state_machine.transitions import TERMINAL_STATES as _TERMINAL_STATES
 
 # ---------------------------------------------------------------------------
 # All valid transitions (derived from the transition map)
 # ---------------------------------------------------------------------------
-from negotiation.state_machine.transitions import TRANSITIONS, TERMINAL_STATES as _TERMINAL_STATES
+from negotiation.state_machine.transitions import TRANSITIONS, NegotiationEvent
 
 VALID_TRANSITIONS: list[tuple[NegotiationState, str, NegotiationState]] = [
-    (from_state, event, to_state)
-    for (from_state, event), to_state in TRANSITIONS.items()
+    (from_state, event, to_state) for (from_state, event), to_state in TRANSITIONS.items()
 ]
 
 # ---------------------------------------------------------------------------

@@ -159,6 +159,9 @@ class TestBuildNegotiationContext:
             "product_offered",
             "syndication_proposed",
             "cpm_shared",
+            # Counterparty context
+            "counterparty_type",
+            "agency_name",
         }
         assert set(context.keys()) == expected_keys
         assert context["influencer_name"] == "Jane"

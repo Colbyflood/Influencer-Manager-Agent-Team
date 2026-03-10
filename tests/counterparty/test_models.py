@@ -39,7 +39,7 @@ class TestDetectionSignal:
         )
         try:
             signal.value = "changed"
-            assert False, "Should have raised"
+            raise AssertionError("Should have raised")
         except Exception:
             pass
 
@@ -85,6 +85,6 @@ class TestCounterpartyProfile:
         )
         try:
             profile.confidence = 0.9
-            assert False, "Should have raised"
+            raise AssertionError("Should have raised")
         except Exception:
             pass

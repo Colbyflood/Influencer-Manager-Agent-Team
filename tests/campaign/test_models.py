@@ -92,8 +92,13 @@ class TestUsageRightsDuration:
 
     def test_all_values_exist(self):
         expected = [
-            "not_required", "days_30", "days_60", "days_90",
-            "months_6", "year_1", "perpetual",
+            "not_required",
+            "days_30",
+            "days_60",
+            "days_90",
+            "months_6",
+            "year_1",
+            "perpetual",
         ]
         actual = [d.value for d in UsageRightsDuration]
         assert actual == expected

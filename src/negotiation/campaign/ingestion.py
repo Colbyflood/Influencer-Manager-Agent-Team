@@ -113,10 +113,7 @@ def parse_duration_select(value: Any) -> UsageRightsDuration:
     Handles both string labels and ClickUp select objects
     ``{"name": "90 Days", "id": "..."}``.
     """
-    if isinstance(value, dict):
-        label = value.get("name", "")
-    else:
-        label = str(value)
+    label = value.get("name", "") if isinstance(value, dict) else str(value)
     return _DURATION_LABEL_MAP.get(label, UsageRightsDuration.not_required)
 
 
@@ -137,7 +134,9 @@ def parse_multi_select(value: Any) -> list[str]:
     ClickUp multi-select fields return ``[{"name": "A"}, {"name": "B"}]``.
     """
     if isinstance(value, list):
-        return [str(item.get("name", "")) if isinstance(item, dict) else str(item) for item in value]
+        return [
+            str(item.get("name", "")) if isinstance(item, dict) else str(item) for item in value
+        ]
     return [str(value)]
 
 
@@ -234,10 +233,7 @@ def parse_custom_fields(
         elif config_type == "select":
             # Check if this is a boolean-like select (Yes/No fields)
             select_name = parse_select(value)
-            if select_name.lower() in ("yes", "no"):
-                value = parse_boolean(value)
-            else:
-                value = select_name
+            value = parse_boolean(value) if select_name.lower() in ("yes", "no") else select_name
         elif config_type == "multi_select":
             value = parse_multi_select(value)
         elif config_type == "number":
@@ -252,12 +248,8 @@ def parse_custom_fields(
                 parts = []
                 for ms in (start_ms, end_ms):
                     if ms is not None:
-                        try:
-                            parts.append(
-                                datetime.fromtimestamp(int(ms) / 1000, tz=UTC).isoformat()
-                            )
-                        except (ValueError, OverflowError):
-                            pass
+                        with contextlib.suppress(ValueError, OverflowError):
+                            parts.append(datetime.fromtimestamp(int(ms) / 1000, tz=UTC).isoformat())
                 value = " to ".join(parts) if parts else str(value)
             elif isinstance(value, (int, str)):
                 try:
@@ -398,7 +390,8 @@ def _build_product_leverage(nested: dict[str, Any]) -> ProductLeverage | None:
 
 
 def _build_deliverable_scenarios(
-    nested: dict[str, Any], target_deliverables_str: str,
+    nested: dict[str, Any],
+    target_deliverables_str: str,
 ) -> DeliverableScenarios | None:
     """Build DeliverableScenarios from nested dict."""
     ds_data = nested.get("deliverables")
@@ -490,17 +483,18 @@ def build_campaign(task_id: str, parsed_fields: dict[str, Any]) -> Campaign:
 
     # Determine target_deliverables (may be list from multi_select or string)
     td_raw = nested.get("target_deliverables", "TBD")
-    if isinstance(td_raw, list):
-        target_deliverables_str = ", ".join(td_raw)
-    else:
-        target_deliverables_str = str(td_raw)
+    target_deliverables_str = ", ".join(td_raw) if isinstance(td_raw, list) else str(td_raw)
 
     # Client name may be nested under background or at top level
     client_name = str(nested.get("client_name", "Unknown"))
 
     # Build sub-models (all return None if data insufficient)
     background_data = nested.get("background")
-    background = CampaignBackground(**background_data) if isinstance(background_data, dict) and background_data else None
+    background = (
+        CampaignBackground(**background_data)
+        if isinstance(background_data, dict) and background_data
+        else None
+    )
 
     goals = _build_campaign_goals(nested)
     deliverables = _build_deliverable_scenarios(nested, target_deliverables_str)
@@ -510,13 +504,19 @@ def build_campaign(task_id: str, parsed_fields: dict[str, Any]) -> Campaign:
     requirements = _build_requirements(nested)
 
     distribution_data = nested.get("distribution")
-    distribution = DistributionInfo(**distribution_data) if isinstance(distribution_data, dict) and distribution_data else None
+    distribution = (
+        DistributionInfo(**distribution_data)
+        if isinstance(distribution_data, dict) and distribution_data
+        else None
+    )
 
     # Per-campaign sheet routing fields (empty strings become None)
     raw_tab = nested.get("influencer_sheet_tab")
     influencer_sheet_tab = raw_tab.strip() or None if isinstance(raw_tab, str) else raw_tab
     raw_sheet_id = nested.get("influencer_sheet_id")
-    influencer_sheet_id = raw_sheet_id.strip() or None if isinstance(raw_sheet_id, str) else raw_sheet_id
+    influencer_sheet_id = (
+        raw_sheet_id.strip() or None if isinstance(raw_sheet_id, str) else raw_sheet_id
+    )
 
     return Campaign(
         campaign_id=task_id,

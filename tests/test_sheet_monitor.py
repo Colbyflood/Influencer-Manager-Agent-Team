@@ -13,7 +13,6 @@ from negotiation.sheets.models import InfluencerRow
 from negotiation.sheets.monitor import SheetMonitor
 from negotiation.state.schema import init_processed_influencers_table
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -120,7 +119,7 @@ def test_modified_rows_detected(monitor):
 
     assert diff.new_rows == []
     assert len(diff.modified_rows) == 1
-    modified_row, old_hash = diff.modified_rows[0]
+    modified_row, _old_hash = diff.modified_rows[0]
     assert modified_row.name == "Alice"
     assert modified_row.average_views == 75000
 

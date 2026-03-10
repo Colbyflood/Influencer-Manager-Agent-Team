@@ -85,11 +85,7 @@ class TestSignatureKeywordDetection:
         assert result.confidence >= 0.6
 
     def test_on_behalf_of_phrase(self):
-        body = (
-            "I'm writing on behalf of our client regarding the campaign.\n\n"
-            "Thanks,\n"
-            "Mike Davis"
-        )
+        body = "I'm writing on behalf of our client regarding the campaign.\n\nThanks,\nMike Davis"
         result = classify_counterparty(
             from_email="mike@customagency.com",
             email_body=body,
@@ -98,12 +94,7 @@ class TestSignatureKeywordDetection:
         assert result.confidence >= 0.6
 
     def test_talent_director_title(self):
-        body = (
-            "Let's set up a call to discuss.\n\n"
-            "Warm regards,\n"
-            "Lisa Chen\n"
-            "Talent Director"
-        )
+        body = "Let's set up a call to discuss.\n\nWarm regards,\nLisa Chen\nTalent Director"
         result = classify_counterparty(
             from_email="manager@company.com",
             email_body=body,
@@ -124,11 +115,7 @@ class TestCustomDomainDetection:
         assert result.confidence == 0.5
 
     def test_custom_domain_with_manager_signature(self):
-        body = (
-            "We're interested in your proposal.\n\n"
-            "Best regards,\n"
-            "Sarah - Talent Manager"
-        )
+        body = "We're interested in your proposal.\n\nBest regards,\nSarah - Talent Manager"
         result = classify_counterparty(
             from_email="contact@customdomain.com",
             email_body=body,

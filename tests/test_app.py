@@ -11,7 +11,12 @@ import structlog
 from fastapi import FastAPI
 from pydantic import SecretStr
 
-from negotiation.app import build_negotiation_context, configure_logging, create_app, initialize_services
+from negotiation.app import (
+    build_negotiation_context,
+    configure_logging,
+    create_app,
+    initialize_services,
+)
 from negotiation.campaign.cpm_tracker import CampaignCPMTracker
 from negotiation.campaign.models import (
     BudgetConstraints,

@@ -9,7 +9,7 @@ pipeline to maintain awareness of all thread participants.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from pydantic import BaseModel, ConfigDict
 
@@ -85,7 +85,7 @@ class ThreadContactTracker:
             name=profile.contact_name,
             counterparty_type=profile.counterparty_type,
             title=profile.contact_title,
-            first_seen_at=datetime.now(timezone.utc).isoformat(),
+            first_seen_at=datetime.now(UTC).isoformat(),
             is_primary=is_first and is_new,
         )
 

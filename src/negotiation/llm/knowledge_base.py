@@ -8,6 +8,7 @@ Supports stage-aware example selection via YAML frontmatter filtering.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 try:
     import yaml  # type: ignore[import-untyped]
@@ -20,7 +21,7 @@ except ImportError:
 DEFAULT_KB_DIR = Path(__file__).resolve().parents[3] / "knowledge_base"
 
 
-def _parse_frontmatter(content: str) -> tuple[dict, str]:
+def _parse_frontmatter(content: str) -> tuple[dict[str, Any], str]:
     """Parse YAML frontmatter from markdown content.
 
     Splits on ``---`` delimiters and returns (metadata_dict, body_text).
@@ -38,7 +39,7 @@ def _parse_frontmatter(content: str) -> tuple[dict, str]:
         meta = yaml.safe_load(yaml_block) or {}
     else:
         # Manual parse for simple key-value / list frontmatter
-        meta: dict = {}
+        meta: dict[str, Any] = {}  # type: ignore[no-redef]
         current_key: str | None = None
         for line in yaml_block.splitlines():
             stripped = line.strip()

@@ -8,9 +8,9 @@ from negotiation.counterparty.models import (
 from negotiation.counterparty.tracker import ThreadContact, ThreadContactTracker
 
 __all__ = [
+    "CounterpartyProfile",
     "CounterpartyType",
     "DetectionSignal",
-    "CounterpartyProfile",
     "ThreadContact",
     "ThreadContactTracker",
 ]

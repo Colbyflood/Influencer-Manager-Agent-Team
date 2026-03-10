@@ -83,7 +83,8 @@ def compose_counter_email(
         our_rate=our_rate,
         deliverables_summary=deliverables_summary,
         sow_block=sow_block,
-        lever_instructions=lever_instructions or "No specific lever -- respond naturally to their proposal.",
+        lever_instructions=lever_instructions
+        or "No specific lever -- respond naturally to their proposal.",
         counterparty_context=counterparty_context or "No specific counterparty context.",
         negotiation_history=negotiation_history,
     )

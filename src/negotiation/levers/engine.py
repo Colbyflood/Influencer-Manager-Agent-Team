@@ -17,11 +17,17 @@ Opening high (NEG-08) is handled by build_opening_context(), called by the
 orchestrator before the first negotiation round.
 """
 
+from __future__ import annotations
+
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 from negotiation.campaign.models import Campaign
 from negotiation.levers.models import LeverAction, LeverResult, NegotiationLeverContext
 from negotiation.pricing.engine import calculate_rate, derive_cpm_bounds
+
+if TYPE_CHECKING:
+    from negotiation.campaign.models import UsageRights
 
 
 def select_lever(ctx: NegotiationLeverContext) -> LeverResult:
@@ -41,28 +47,34 @@ def select_lever(ctx: NegotiationLeverContext) -> LeverResult:
     bc = ctx.budget_constraints
 
     # --- 1. Cost floor check (NEG-12) ---
-    if bc and bc.min_cost_per_influencer is not None:
-        if ctx.our_current_rate < bc.min_cost_per_influencer:
-            return LeverResult(
-                action=LeverAction.enforce_floor,
-                adjusted_rate=bc.min_cost_per_influencer,
-                lever_instructions=(
-                    "We are at our absolute minimum for this campaign. "
-                    "Frame this as the best we can offer given the campaign parameters."
-                ),
-            )
+    if (
+        bc
+        and bc.min_cost_per_influencer is not None
+        and ctx.our_current_rate < bc.min_cost_per_influencer
+    ):
+        return LeverResult(
+            action=LeverAction.enforce_floor,
+            adjusted_rate=bc.min_cost_per_influencer,
+            lever_instructions=(
+                "We are at our absolute minimum for this campaign. "
+                "Frame this as the best we can offer given the campaign parameters."
+            ),
+        )
 
     # --- 2. Cost ceiling check (NEG-12) ---
-    if bc and bc.max_cost_without_approval is not None:
-        if ctx.their_rate > bc.max_cost_without_approval:
-            return LeverResult(
-                action=LeverAction.escalate_ceiling,
-                should_escalate=True,
-                lever_instructions=(
-                    "This rate exceeds our approval threshold. "
-                    "Escalate to campaign manager for approval."
-                ),
-            )
+    if (
+        bc
+        and bc.max_cost_without_approval is not None
+        and ctx.their_rate > bc.max_cost_without_approval
+    ):
+        return LeverResult(
+            action=LeverAction.escalate_ceiling,
+            should_escalate=True,
+            lever_instructions=(
+                "This rate exceeds our approval threshold. "
+                "Escalate to campaign manager for approval."
+            ),
+        )
 
     # --- 3. Trade deliverables (NEG-09) ---
     ds = ctx.deliverable_scenarios
@@ -85,19 +97,18 @@ def select_lever(ctx: NegotiationLeverContext) -> LeverResult:
 
     # --- 4. Trade usage rights (NEG-10) ---
     ur = ctx.usage_rights
-    if ctx.current_usage_tier == "target" and ur is not None:
-        if _usage_rights_differ(ur):
-            min_summary = _format_usage_rights_minimum(ur)
-            return LeverResult(
-                action=LeverAction.trade_usage_rights,
-                adjusted_rate=ctx.our_current_rate,
-                usage_rights_summary=min_summary,
-                lever_instructions=(
-                    f"We're reducing usage rights duration to {min_summary}. "
-                    "Position this as a cost-saving adjustment while keeping "
-                    "the content partnership intact."
-                ),
-            )
+    if ctx.current_usage_tier == "target" and ur is not None and _usage_rights_differ(ur):
+        min_summary = _format_usage_rights_minimum(ur)
+        return LeverResult(
+            action=LeverAction.trade_usage_rights,
+            adjusted_rate=ctx.our_current_rate,
+            usage_rights_summary=min_summary,
+            lever_instructions=(
+                f"We're reducing usage rights duration to {min_summary}. "
+                "Position this as a cost-saving adjustment while keeping "
+                "the content partnership intact."
+            ),
+        )
 
     # --- 5. Offer product (NEG-11) ---
     pl = ctx.product_leverage
@@ -211,7 +222,7 @@ def _recalculate_rate_for_scenario(ctx: NegotiationLeverContext) -> Decimal:
     return ctx.our_current_rate
 
 
-def _usage_rights_differ(ur: "UsageRights") -> bool:
+def _usage_rights_differ(ur: UsageRights) -> bool:
     """Check if target and minimum usage rights differ for any right type."""
     for field_name in ("paid_usage", "whitelisting", "organic_owned"):
         target_val = getattr(ur.target, field_name)
@@ -221,7 +232,7 @@ def _usage_rights_differ(ur: "UsageRights") -> bool:
     return False
 
 
-def _format_usage_rights_minimum(ur: "UsageRights") -> str:
+def _format_usage_rights_minimum(ur: UsageRights) -> str:
     """Format minimum usage rights as a readable summary."""
     parts = []
     for field_name, label in [
