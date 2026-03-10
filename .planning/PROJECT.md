@@ -10,9 +10,9 @@ The agent must negotiate influencer rates accurately using CPM-based logic and r
 
 ## Current State
 
-**Shipped:** v1.3 Campaign Dashboard (2026-03-09)
-**Codebase:** ~11,372 LOC Python + 856 LOC TypeScript (source + tests)
-**Tests:** 857 passing + 4 live integration tests
+**Shipped:** v1.4 Per-Campaign Influencer Sheets (2026-03-10)
+**Codebase:** ~11,700 LOC Python + 856 LOC TypeScript (source + tests)
+**Tests:** 870+ passing + 4 live integration tests
 **Tech stack:** Python 3.12+, FastAPI, Anthropic SDK, Gmail API, Google Sheets API, Slack Bolt, SQLite, Pydantic v2, Docker, GitHub Actions, Prometheus, Sentry, structlog, React 19, Vite 6, TypeScript, Tailwind CSS 4
 
 The system can:
@@ -33,6 +33,9 @@ The system can:
 15. Serve a real-time web dashboard at /dashboard with campaign overview, per-influencer negotiation detail, and timeline views
 16. Allow team to pause, resume, or stop negotiations directly from the dashboard
 17. Auto-refresh dashboard data via polling (30s configurable interval)
+18. Read influencer data from per-campaign sheet tabs or separate spreadsheets instead of a single master sheet
+19. Continuously monitor campaign sheets for new influencer rows and auto-start negotiations
+20. Alert the team via Slack when an existing influencer's data is modified mid-negotiation
 
 ## Requirements
 
@@ -114,20 +117,20 @@ The system can:
 - ✓ CTRL-01: User can pause/stop negotiation with a specific influencer from the dashboard -- v1.3
 - ✓ CTRL-02: User can resume a paused negotiation from the dashboard -- v1.3
 - ✓ CTRL-03: User can stop all negotiations associated with a specific talent agent or agency -- v1.3
+- ✓ SHEET-01: Agent supports per-campaign worksheet tab name specified via ClickUp form field -- v1.4
+- ✓ SHEET-02: Agent supports optional per-campaign spreadsheet ID override -- v1.4
+- ✓ SHEET-03: Agent defaults to master spreadsheet when no override is provided -- v1.4
+- ✓ INGEST-01: Campaign model includes `influencer_sheet_tab` field parsed from ClickUp form -- v1.4
+- ✓ INGEST-02: Campaign model includes optional `influencer_sheet_id` field for spreadsheet override -- v1.4
+- ✓ INGEST-03: Ingestion pipeline passes per-campaign tab/sheet to `find_influencer()` instead of hardcoded "Sheet1" -- v1.4
+- ✓ MON-01: Agent polls each active campaign's sheet tab hourly to detect new influencer rows -- v1.4
+- ✓ MON-02: Agent auto-starts negotiations for newly discovered influencers -- v1.4
+- ✓ MON-03: Agent sends Slack alert when an existing influencer's row is modified after negotiation started -- v1.4
+- ✓ MON-04: Agent tracks which influencer rows have been processed to avoid duplicate outreach -- v1.4
 
 ### Active
 
-## Current Milestone: v1.4 Per-Campaign Influencer Sheets
-
-**Goal:** Replace the single global influencer sheet with per-campaign sheet tabs (or separate spreadsheets), monitor for newly added influencers mid-campaign, and auto-start negotiations for them.
-
-**Target features:**
-- Per-campaign worksheet tab name via ClickUp form field (default: tab in master sheet)
-- Optional per-campaign spreadsheet URL override for separate sheets
-- Campaign model and ingestion pipeline updated to use per-campaign tab/sheet
-- Hourly sheet polling to detect newly added influencer rows after initial ingestion
-- Auto-start negotiations for newly discovered influencers
-- Slack alert when an influencer's row is updated after negotiation has already started
+(No active requirements — run `/gsd:new-milestone` to define next milestone)
 
 ### Out of Scope
 
@@ -161,6 +164,7 @@ The system can:
 - v1.1 added 40 more tests (731 total + 4 live), 14/14 production requirements satisfied
 - v1.2 added 100+ tests (832+ total), 26/26 negotiation intelligence requirements satisfied
 - v1.3 added 25+ tests (857 total), 14/14 dashboard requirements satisfied, 856 LOC TypeScript frontend
+- v1.4 added 15+ tests (870+ total), 10/10 sheet routing + monitoring requirements satisfied
 - Deployment target is a single VM with Docker Compose
 
 ## Constraints
@@ -206,6 +210,11 @@ The system can:
 | Polling over WebSocket for dashboard | Simpler architecture; 30s interval sufficient for monitoring | ✓ Good -- usePolling hook with configurable interval |
 | PAUSED is non-terminal, STOPPED is terminal | Pause is reversible (resume restores exact pre-pause state); stop is permanent | ✓ Good -- pre_pause_state storage enables clean resume |
 | app.state for sharing negotiation data with API | FastAPI Request dependency pattern; no global variables | ✓ Good -- consistent across all API endpoints |
+| Non-cached spreadsheet opens for overrides | Different campaigns may use different sheets; caching would mix data | ✓ Good -- isolated per-campaign reads |
+| SHA-256 hash of model_dump_json() for row change detection | Deterministic, leverages Pydantic serialization, detects any field change | ✓ Good -- reliable diff detection |
+| INSERT OR REPLACE upsert for processed_influencers | Simple dedup with hash update on re-processing after modification | ✓ Good -- UNIQUE constraint prevents duplicates |
+| Late import of start_negotiations_for_campaign | Breaks circular import between monitor.py and app.py | ✓ Good -- clean separation |
+| Pre-seed existing negotiations as processed | Prevents duplicate outreach on first monitor run for already-active influencers | ✓ Good -- triple dedup layer |
 
 ---
-*Last updated: 2026-03-09 after v1.4 milestone start*
+*Last updated: 2026-03-10 after v1.4 milestone*

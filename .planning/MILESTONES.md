@@ -102,3 +102,26 @@
 
 ---
 
+
+## v1.4 Per-Campaign Influencer Sheets (Shipped: 2026-03-10)
+
+**Phases completed:** 2 phases, 4 plans, 8 tasks
+**Files modified:** 25 (2,363 insertions, 21 deletions)
+**Timeline:** 1 day (2026-03-09) | **Commits:** 20
+**Requirements:** 10/10 satisfied
+
+**Key accomplishments:**
+- Per-campaign sheet routing via Campaign model fields (`influencer_sheet_tab`, `influencer_sheet_id`) parsed from ClickUp forms
+- SheetsClient extended with `spreadsheet_key_override` for reading from alternate spreadsheets per campaign
+- Ingestion pipeline wired to route `find_influencer()` calls to per-campaign sheet tabs with fallback to master "Sheet1"
+- SQLite-backed SheetMonitor with SHA-256 row hashing for new/modified influencer detection and dedup tracking
+- Async hourly polling loop that auto-starts negotiations for newly discovered influencers and sends Slack alerts for modified rows
+
+**Archive:** [v1.4-ROADMAP.md](milestones/v1.4-ROADMAP.md) | [v1.4-REQUIREMENTS.md](milestones/v1.4-REQUIREMENTS.md) | [v1.4-MILESTONE-AUDIT.md](milestones/v1.4-MILESTONE-AUDIT.md)
+
+**Known tech debt (v1.4 acknowledged):**
+- `init_processed_influencers_table` called in both `monitor.py` and `app.py` (redundant but harmless)
+- Sheet monitor requires live Google Sheets + Slack for full integration testing (no automated integration test)
+
+---
+
