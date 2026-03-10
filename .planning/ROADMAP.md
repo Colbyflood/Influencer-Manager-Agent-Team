@@ -102,11 +102,11 @@ Plans:
   2. Newly discovered influencers automatically enter the negotiation pipeline without manual intervention
   3. When an existing influencer's row is modified after their negotiation has started, the team receives a Slack alert with the change details
   4. An influencer row that has already been processed is never sent through outreach a second time
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 23-01: TBD
-- [ ] 23-02: TBD
+- [ ] 23-01-PLAN.md -- SheetMonitor core: processed-row tracking, diff detection, dedup logic
+- [ ] 23-02-PLAN.md -- Async polling loop, auto-negotiation trigger, modification alerts, app.py wiring
 
 ## Progress
 
@@ -120,4 +120,4 @@ Phases execute in numeric order: 22 → 23
 | 13-17 | v1.2 | 13/13 | Complete | 2026-03-08 |
 | 18-21 | v1.3 | 8/8 | Complete | 2026-03-09 |
 | 22. Per-Campaign Sheet Routing | 2/2 | Complete    | 2026-03-09 | - |
-| 23. Sheet Monitoring and Auto-Negotiation | v1.4 | 0/TBD | Not started | - |
+| 23. Sheet Monitoring and Auto-Negotiation | v1.4 | 0/2 | Not started | - |
