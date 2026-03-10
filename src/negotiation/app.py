@@ -237,10 +237,14 @@ def initialize_services(settings: Settings | None = None) -> dict[str, Any]:
     gmail_client = None
     if settings.gmail_token_path.exists():
         try:
-            from negotiation.auth.credentials import get_gmail_service
+            from negotiation.auth.credentials import get_gmail_credentials, get_gmail_service
             from negotiation.email.client import GmailClient
 
-            service = get_gmail_service()
+            creds = get_gmail_credentials(
+                token_path=settings.gmail_token_path,
+                credentials_path=settings.gmail_credentials_path,
+            )
+            service = get_gmail_service(credentials=creds)
             gmail_client = GmailClient(service, settings.agent_email)
             logger.info("GmailClient initialized")
         except Exception:

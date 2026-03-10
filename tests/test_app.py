@@ -189,8 +189,13 @@ class TestInitializeServices:
 
         mock_service = MagicMock()
         mock_gmail_client = MagicMock()
+        mock_creds = MagicMock()
 
         with (
+            patch(
+                "negotiation.auth.credentials.get_gmail_credentials",
+                return_value=mock_creds,
+            ),
             patch(
                 "negotiation.auth.credentials.get_gmail_service",
                 return_value=mock_service,
