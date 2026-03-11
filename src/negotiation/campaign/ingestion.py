@@ -441,6 +441,21 @@ def _build_requirements(nested: dict[str, Any]) -> CampaignRequirements | None:
     return CampaignRequirements(**converted)
 
 
+def _derive_timeline(nested: dict[str, Any]) -> str:
+    """Derive a timeline string from content delivery/publish date fields."""
+    req = nested.get("requirements", {})
+    if not isinstance(req, dict):
+        return "TBD"
+    parts = []
+    delivery = req.get("content_delivery_date")
+    publish = req.get("content_publish_date")
+    if delivery:
+        parts.append(f"Delivery: {delivery}")
+    if publish:
+        parts.append(f"Publish: {publish}")
+    return "; ".join(parts) if parts else "TBD"
+
+
 def build_campaign(task_id: str, parsed_fields: dict[str, Any]) -> Campaign:
     """Construct a Campaign model from parsed ClickUp custom fields.
 
@@ -462,19 +477,22 @@ def build_campaign(task_id: str, parsed_fields: dict[str, Any]) -> Campaign:
     # Resolve dot-path keys into nested structure
     nested = _resolve_dot_paths(parsed_fields)
 
-    # Parse influencer names from raw text
-    influencers_raw = str(nested.get("influencers_raw", ""))
-    influencer_names = parse_influencer_list(influencers_raw)
+    # Influencers come from Google Sheet, not ClickUp form
+    influencers: list[CampaignInfluencer] = []
 
-    # Determine platform
-    platform_str = str(nested.get("platform", "instagram")).lower()
-    try:
-        platform = Platform(platform_str)
-    except ValueError:
-        platform = Platform.INSTAGRAM
-
-    # Build influencer list with platform
-    influencers = [CampaignInfluencer(name=name, platform=platform) for name in influencer_names]
+    # Derive platform from distribution field (pick highest percentage)
+    platform = Platform.INSTAGRAM  # default
+    dist_str = str(
+        nested.get("distribution", {}).get("platform_distribution", "")
+        if isinstance(nested.get("distribution"), dict)
+        else ""
+    )
+    if dist_str:
+        dist_lower = dist_str.lower()
+        for p in (Platform.YOUTUBE, Platform.TIKTOK, Platform.INSTAGRAM):
+            if p.value in dist_lower:
+                platform = p
+                break
 
     # Convert monetary values to Decimal via string to avoid float rejection
     budget = _decimal_from_field(nested.get("budget"))
@@ -526,7 +544,7 @@ def build_campaign(task_id: str, parsed_fields: dict[str, Any]) -> Campaign:
         influencers=influencers,
         cpm_range=CampaignCPMRange(min_cpm=cpm_min, max_cpm=cpm_max),
         platform=platform,
-        timeline=str(nested.get("timeline", "TBD")),
+        timeline=_derive_timeline(nested),
         created_at=datetime.now(tz=UTC).isoformat(),
         background=background,
         goals=goals,
@@ -600,21 +618,25 @@ async def ingest_campaign(
         sheet_override=bool(spreadsheet_key_override),
     )
 
-    for influencer in campaign.influencers:
-        try:
-            sheet_data = sheets_client.find_influencer(
-                influencer.name,
-                worksheet_name=worksheet_name,
-                spreadsheet_key_override=spreadsheet_key_override,
-            )
+    # Read ALL influencers from the sheet tab (not from ClickUp form)
+    try:
+        all_influencers = sheets_client.get_all_influencers(
+            worksheet_name=worksheet_name,
+            spreadsheet_key_override=spreadsheet_key_override,
+        )
+        for row in all_influencers:
             found_influencers.append(
                 {
-                    "name": influencer.name,
-                    "sheet_data": sheet_data,
+                    "name": row.name,
+                    "sheet_data": row,
                 }
             )
-        except ValueError:
-            missing_influencers.append(influencer.name)
+    except (ValueError, Exception) as exc:
+        logger.error(
+            "Failed to read influencers from sheet",
+            tab=worksheet_name,
+            error=str(exc),
+        )
 
     logger.info(
         "Influencer lookup complete",

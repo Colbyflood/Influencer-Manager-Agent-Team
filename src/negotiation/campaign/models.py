@@ -322,8 +322,8 @@ class Campaign(BaseModel):
     target_deliverables: str
     influencers: list[CampaignInfluencer] = []
     cpm_range: CampaignCPMRange
-    platform: Platform
-    timeline: str
+    platform: Platform = Platform.INSTAGRAM
+    timeline: str = "TBD"
     created_at: str = Field(description="ISO 8601 timestamp")
 
     # Expanded sub-models (all optional for backward compatibility)
@@ -354,7 +354,7 @@ class Campaign(BaseModel):
             raise ValueError("Use Decimal or string, not float, for budget")
         return v
 
-    @field_validator("campaign_id", "client_name", "target_deliverables", "timeline")
+    @field_validator("campaign_id", "client_name", "target_deliverables")
     @classmethod
     def string_fields_must_not_be_empty(cls, v: str) -> str:
         """Ensure required string fields are not empty or whitespace-only."""

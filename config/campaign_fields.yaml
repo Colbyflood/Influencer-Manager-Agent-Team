@@ -65,10 +65,9 @@ field_mapping:
   "Influencer Sheet Tab Name": "influencer_sheet_tab"
   "Influencer Sheet ID": "influencer_sheet_id"
 
-  # Influencer list and campaign basics
-  "Influencer List": "influencers_raw"
-  "Platform": "platform"
-  "Timeline": "timeline"
+  # Note: Influencer list comes from Google Sheet, not ClickUp form
+  # Note: Platform is derived from distribution field
+  # Note: Timeline is derived from content delivery/publish dates
 
 # How the influencer list is formatted in ClickUp
 influencer_list_format: "comma_separated"
