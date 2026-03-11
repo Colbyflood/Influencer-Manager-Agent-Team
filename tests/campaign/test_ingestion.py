@@ -236,11 +236,8 @@ class TestBuildCampaign:
             "client_name": "Acme Corp",
             "budget": 5000,
             "target_deliverables": "2 Instagram reels",
-            "influencers_raw": "Alice, Bob",
             "cpm_min": 10,
             "cpm_max": 25,
-            "platform": "instagram",
-            "timeline": "March 2026",
         }
         campaign = build_campaign("task_123", parsed)
 
@@ -250,10 +247,10 @@ class TestBuildCampaign:
         assert campaign.budget == Decimal("5000")
         assert campaign.cpm_range.min_cpm == Decimal("10")
         assert campaign.cpm_range.max_cpm == Decimal("25")
-        assert len(campaign.influencers) == 2
-        assert campaign.influencers[0].name == "Alice"
-        assert campaign.influencers[0].platform == Platform.INSTAGRAM
-        assert campaign.platform == Platform.INSTAGRAM
+        # Influencers now come from Google Sheet, not ClickUp fields
+        assert len(campaign.influencers) == 0
+        assert campaign.platform == Platform.INSTAGRAM  # default
+        assert campaign.timeline == "TBD"  # default when no date fields
         assert campaign.created_at  # ISO 8601 timestamp present
 
     def test_defaults_for_missing_fields(self) -> None:
@@ -320,7 +317,7 @@ class TestIngestCampaign:
         mock_response.raise_for_status = MagicMock()
 
         sheets_client = MagicMock()
-        sheets_client.find_influencer.return_value = mock_influencer_row
+        sheets_client.get_all_influencers.return_value = [mock_influencer_row]
 
         slack_notifier = MagicMock()
         slack_notifier.post_escalation.return_value = "ts_123"
@@ -347,8 +344,8 @@ class TestIngestCampaign:
         assert slack_notifier.post_escalation.call_count == 1
 
     @pytest.mark.anyio()
-    async def test_some_influencers_missing(self, tmp_path: Path) -> None:
-        """Missing influencers trigger individual Slack alerts."""
+    async def test_some_influencers_found(self, tmp_path: Path) -> None:
+        """get_all_influencers returns only influencers present in the sheet."""
         config_path = _write_config(
             tmp_path,
             (
@@ -356,11 +353,8 @@ class TestIngestCampaign:
                 '  "Client Name": "client_name"\n'
                 '  "Budget": "budget"\n'
                 '  "Target Deliverables": "target_deliverables"\n'
-                '  "Influencer List": "influencers_raw"\n'
                 '  "CPM Min": "cpm_min"\n'
                 '  "CPM Max": "cpm_max"\n'
-                '  "Platform": "platform"\n'
-                '  "Timeline": "timeline"\n'
             ),
         )
 
@@ -371,15 +365,8 @@ class TestIngestCampaign:
                 {"name": "Client Name", "type": "text", "value": "Brand X"},
                 {"name": "Budget", "type": "number", "value": "8000"},
                 {"name": "Target Deliverables", "type": "text", "value": "3 videos"},
-                {
-                    "name": "Influencer List",
-                    "type": "text",
-                    "value": "Alice Johnson, Unknown Person",
-                },
                 {"name": "CPM Min", "type": "number", "value": "15"},
                 {"name": "CPM Max", "type": "number", "value": "30"},
-                {"name": "Platform", "type": "text", "value": "tiktok"},
-                {"name": "Timeline", "type": "text", "value": "May 2026"},
             ],
         }
         mock_response.raise_for_status = MagicMock()
@@ -395,13 +382,7 @@ class TestIngestCampaign:
         )
 
         sheets_client = MagicMock()
-
-        def find_influencer_side_effect(name: str, **kwargs: Any) -> InfluencerRow:
-            if name == "Alice Johnson":
-                return alice_row
-            raise ValueError(f"Influencer '{name}' not found in sheet")
-
-        sheets_client.find_influencer.side_effect = find_influencer_side_effect
+        sheets_client.get_all_influencers.return_value = [alice_row]
 
         slack_notifier = MagicMock()
         slack_notifier.post_escalation.return_value = "ts_456"
@@ -423,15 +404,14 @@ class TestIngestCampaign:
 
         assert len(result["found_influencers"]) == 1
         assert result["found_influencers"][0]["name"] == "Alice Johnson"
-        assert len(result["missing_influencers"]) == 1
-        assert result["missing_influencers"][0] == "Unknown Person"
+        assert len(result["missing_influencers"]) == 0
 
-        # 1 campaign start notification + 1 missing influencer alert = 2
-        assert slack_notifier.post_escalation.call_count == 2
+        # 1 campaign start notification only
+        assert slack_notifier.post_escalation.call_count == 1
 
     @pytest.mark.anyio()
-    async def test_all_influencers_missing(self, tmp_path: Path) -> None:
-        """When all influencers are missing, all trigger alerts."""
+    async def test_no_influencers_in_sheet(self, tmp_path: Path) -> None:
+        """When the sheet returns no influencers, found list is empty."""
         config_path = _write_config(
             tmp_path,
             (
@@ -439,11 +419,8 @@ class TestIngestCampaign:
                 '  "Client Name": "client_name"\n'
                 '  "Budget": "budget"\n'
                 '  "Target Deliverables": "target_deliverables"\n'
-                '  "Influencer List": "influencers_raw"\n'
                 '  "CPM Min": "cpm_min"\n'
                 '  "CPM Max": "cpm_max"\n'
-                '  "Platform": "platform"\n'
-                '  "Timeline": "timeline"\n'
             ),
         )
 
@@ -454,21 +431,14 @@ class TestIngestCampaign:
                 {"name": "Client Name", "type": "text", "value": "Brand Y"},
                 {"name": "Budget", "type": "number", "value": "2000"},
                 {"name": "Target Deliverables", "type": "text", "value": "1 story"},
-                {
-                    "name": "Influencer List",
-                    "type": "text",
-                    "value": "Missing One, Missing Two, Missing Three",
-                },
                 {"name": "CPM Min", "type": "number", "value": "5"},
                 {"name": "CPM Max", "type": "number", "value": "15"},
-                {"name": "Platform", "type": "text", "value": "youtube"},
-                {"name": "Timeline", "type": "text", "value": "June 2026"},
             ],
         }
         mock_response.raise_for_status = MagicMock()
 
         sheets_client = MagicMock()
-        sheets_client.find_influencer.side_effect = ValueError("not found")
+        sheets_client.get_all_influencers.return_value = []
 
         slack_notifier = MagicMock()
         slack_notifier.post_escalation.return_value = "ts_789"
@@ -489,11 +459,11 @@ class TestIngestCampaign:
             )
 
         assert len(result["found_influencers"]) == 0
-        assert len(result["missing_influencers"]) == 3
-        assert result["campaign"].platform == Platform.YOUTUBE
+        assert len(result["missing_influencers"]) == 0
+        assert result["campaign"].platform == Platform.INSTAGRAM  # default
 
-        # 1 campaign start notification + 3 missing influencer alerts = 4
-        assert slack_notifier.post_escalation.call_count == 4
+        # 1 campaign start notification only
+        assert slack_notifier.post_escalation.call_count == 1
 
     @pytest.mark.anyio()
     async def test_ingest_campaign_slack_notifier_none_does_not_crash(
@@ -509,11 +479,8 @@ class TestIngestCampaign:
                 '  "Client Name": "client_name"\n'
                 '  "Budget": "budget"\n'
                 '  "Target Deliverables": "target_deliverables"\n'
-                '  "Influencer List": "influencers_raw"\n'
                 '  "CPM Min": "cpm_min"\n'
                 '  "CPM Max": "cpm_max"\n'
-                '  "Platform": "platform"\n'
-                '  "Timeline": "timeline"\n'
             ),
         )
 
@@ -524,17 +491,14 @@ class TestIngestCampaign:
                 {"name": "Client Name", "type": "text", "value": "No Slack Corp"},
                 {"name": "Budget", "type": "number", "value": "4000"},
                 {"name": "Target Deliverables", "type": "text", "value": "1 reel"},
-                {"name": "Influencer List", "type": "text", "value": "Alice Johnson"},
                 {"name": "CPM Min", "type": "number", "value": "10"},
                 {"name": "CPM Max", "type": "number", "value": "20"},
-                {"name": "Platform", "type": "text", "value": "instagram"},
-                {"name": "Timeline", "type": "text", "value": "July 2026"},
             ],
         }
         mock_response.raise_for_status = MagicMock()
 
         sheets_client = MagicMock()
-        sheets_client.find_influencer.return_value = mock_influencer_row
+        sheets_client.get_all_influencers.return_value = [mock_influencer_row]
 
         with patch("negotiation.campaign.ingestion.httpx.AsyncClient") as mock_httpx:
             mock_client_instance = AsyncMock()
@@ -556,11 +520,11 @@ class TestIngestCampaign:
         assert len(result["missing_influencers"]) == 0
 
     @pytest.mark.anyio()
-    async def test_ingest_campaign_missing_influencers_slack_none(
+    async def test_ingest_campaign_sheet_error_slack_none(
         self,
         tmp_path: Path,
     ) -> None:
-        """Missing influencers with slack_notifier=None does not crash."""
+        """Sheet read error with slack_notifier=None does not crash."""
         config_path = _write_config(
             tmp_path,
             (
@@ -568,11 +532,8 @@ class TestIngestCampaign:
                 '  "Client Name": "client_name"\n'
                 '  "Budget": "budget"\n'
                 '  "Target Deliverables": "target_deliverables"\n'
-                '  "Influencer List": "influencers_raw"\n'
                 '  "CPM Min": "cpm_min"\n'
                 '  "CPM Max": "cpm_max"\n'
-                '  "Platform": "platform"\n'
-                '  "Timeline": "timeline"\n'
             ),
         )
 
@@ -583,15 +544,8 @@ class TestIngestCampaign:
                 {"name": "Client Name", "type": "text", "value": "Brand Z"},
                 {"name": "Budget", "type": "number", "value": "6000"},
                 {"name": "Target Deliverables", "type": "text", "value": "2 posts"},
-                {
-                    "name": "Influencer List",
-                    "type": "text",
-                    "value": "Alice Johnson, Ghost Influencer",
-                },
                 {"name": "CPM Min", "type": "number", "value": "12"},
                 {"name": "CPM Max", "type": "number", "value": "28"},
-                {"name": "Platform", "type": "text", "value": "tiktok"},
-                {"name": "Timeline", "type": "text", "value": "August 2026"},
             ],
         }
         mock_response.raise_for_status = MagicMock()
@@ -607,13 +561,7 @@ class TestIngestCampaign:
         )
 
         sheets_client = MagicMock()
-
-        def find_influencer_side_effect(name: str, **kwargs: Any) -> InfluencerRow:
-            if name == "Alice Johnson":
-                return alice_row
-            raise ValueError(f"Influencer '{name}' not found in sheet")
-
-        sheets_client.find_influencer.side_effect = find_influencer_side_effect
+        sheets_client.get_all_influencers.return_value = [alice_row]
 
         with patch("negotiation.campaign.ingestion.httpx.AsyncClient") as mock_httpx:
             mock_client_instance = AsyncMock()
@@ -633,8 +581,7 @@ class TestIngestCampaign:
         assert isinstance(result["campaign"], Campaign)
         assert len(result["found_influencers"]) == 1
         assert result["found_influencers"][0]["name"] == "Alice Johnson"
-        assert len(result["missing_influencers"]) == 1
-        assert result["missing_influencers"][0] == "Ghost Influencer"
+        assert len(result["missing_influencers"]) == 0
 
 
 # --- Expanded ingestion tests (42-field) ---
@@ -1125,7 +1072,8 @@ class TestBuildCampaignExpanded:
         assert campaign.budget == Decimal("50000")
         assert "TikTok" in campaign.target_deliverables
         assert campaign.cpm_range.min_cpm == Decimal("0")  # not in parsed
-        assert len(campaign.influencers) == 3
+        # Influencers now come from Google Sheet, not ClickUp fields
+        assert len(campaign.influencers) == 0
 
     def test_original_8_fields_only_backward_compat(self) -> None:
         """Build with only original 8 fields -- sub-models should be None."""
@@ -1310,8 +1258,8 @@ class TestPerCampaignSheetRouting:
         assert campaign.influencer_sheet_id is None
 
     @pytest.mark.anyio()
-    async def test_ingest_passes_tab_to_find_influencer(self, tmp_path: Path) -> None:
-        """ingest_campaign passes campaign's sheet tab to find_influencer."""
+    async def test_ingest_passes_tab_to_get_all_influencers(self, tmp_path: Path) -> None:
+        """ingest_campaign passes campaign's sheet tab to get_all_influencers."""
         config_path = _write_config(tmp_path, _minimal_config_yaml())
 
         mock_response = MagicMock()
@@ -1321,11 +1269,8 @@ class TestPerCampaignSheetRouting:
                 {"name": "Client Name", "type": "text", "value": "Tab Corp"},
                 {"name": "Budget", "type": "number", "value": "3000"},
                 {"name": "Target Deliverables", "type": "text", "value": "1 reel"},
-                {"name": "Influencer List", "type": "text", "value": "Alice"},
                 {"name": "CPM Min", "type": "number", "value": "10"},
                 {"name": "CPM Max", "type": "number", "value": "25"},
-                {"name": "Platform", "type": "text", "value": "instagram"},
-                {"name": "Timeline", "type": "text", "value": "Q2 2026"},
                 {"name": "Influencer Sheet Tab", "type": "text", "value": "CampaignX"},
             ],
         }
@@ -1341,7 +1286,7 @@ class TestPerCampaignSheetRouting:
             max_rate=Decimal("1500"),
         )
         sheets_client = MagicMock()
-        sheets_client.find_influencer.return_value = alice_row
+        sheets_client.get_all_influencers.return_value = [alice_row]
 
         with patch("negotiation.campaign.ingestion.httpx.AsyncClient") as mock_httpx:
             mock_client_instance = AsyncMock()
@@ -1358,15 +1303,14 @@ class TestPerCampaignSheetRouting:
                 config_path=config_path,
             )
 
-        sheets_client.find_influencer.assert_called_once_with(
-            "Alice",
+        sheets_client.get_all_influencers.assert_called_once_with(
             worksheet_name="CampaignX",
             spreadsheet_key_override=None,
         )
 
     @pytest.mark.anyio()
-    async def test_ingest_passes_sheet_id_to_find_influencer(self, tmp_path: Path) -> None:
-        """ingest_campaign passes campaign's sheet ID override to find_influencer."""
+    async def test_ingest_passes_sheet_id_to_get_all_influencers(self, tmp_path: Path) -> None:
+        """ingest_campaign passes campaign's sheet ID override to get_all_influencers."""
         config_path = _write_config(tmp_path, _minimal_config_yaml())
 
         mock_response = MagicMock()
@@ -1376,11 +1320,8 @@ class TestPerCampaignSheetRouting:
                 {"name": "Client Name", "type": "text", "value": "Sheet Corp"},
                 {"name": "Budget", "type": "number", "value": "4000"},
                 {"name": "Target Deliverables", "type": "text", "value": "2 posts"},
-                {"name": "Influencer List", "type": "text", "value": "Alice"},
                 {"name": "CPM Min", "type": "number", "value": "15"},
                 {"name": "CPM Max", "type": "number", "value": "30"},
-                {"name": "Platform", "type": "text", "value": "instagram"},
-                {"name": "Timeline", "type": "text", "value": "Q2 2026"},
                 {"name": "Influencer Sheet ID", "type": "text", "value": "alt-key-123"},
             ],
         }
@@ -1396,7 +1337,7 @@ class TestPerCampaignSheetRouting:
             max_rate=Decimal("1500"),
         )
         sheets_client = MagicMock()
-        sheets_client.find_influencer.return_value = alice_row
+        sheets_client.get_all_influencers.return_value = [alice_row]
 
         with patch("negotiation.campaign.ingestion.httpx.AsyncClient") as mock_httpx:
             mock_client_instance = AsyncMock()
@@ -1413,15 +1354,14 @@ class TestPerCampaignSheetRouting:
                 config_path=config_path,
             )
 
-        sheets_client.find_influencer.assert_called_once_with(
-            "Alice",
+        sheets_client.get_all_influencers.assert_called_once_with(
             worksheet_name="Sheet1",
             spreadsheet_key_override="alt-key-123",
         )
 
     @pytest.mark.anyio()
     async def test_ingest_defaults_to_sheet1_when_no_override(self, tmp_path: Path) -> None:
-        """Without sheet tab/id overrides, find_influencer uses Sheet1 and no override."""
+        """Without sheet tab/id overrides, get_all_influencers uses Sheet1 and no override."""
         config_path = _write_config(tmp_path, _minimal_config_yaml())
 
         mock_response = MagicMock()
@@ -1431,11 +1371,8 @@ class TestPerCampaignSheetRouting:
                 {"name": "Client Name", "type": "text", "value": "Default Corp"},
                 {"name": "Budget", "type": "number", "value": "2000"},
                 {"name": "Target Deliverables", "type": "text", "value": "1 post"},
-                {"name": "Influencer List", "type": "text", "value": "Alice"},
                 {"name": "CPM Min", "type": "number", "value": "10"},
                 {"name": "CPM Max", "type": "number", "value": "20"},
-                {"name": "Platform", "type": "text", "value": "instagram"},
-                {"name": "Timeline", "type": "text", "value": "Q3 2026"},
             ],
         }
         mock_response.raise_for_status = MagicMock()
@@ -1450,7 +1387,7 @@ class TestPerCampaignSheetRouting:
             max_rate=Decimal("1500"),
         )
         sheets_client = MagicMock()
-        sheets_client.find_influencer.return_value = alice_row
+        sheets_client.get_all_influencers.return_value = [alice_row]
 
         with patch("negotiation.campaign.ingestion.httpx.AsyncClient") as mock_httpx:
             mock_client_instance = AsyncMock()
@@ -1467,8 +1404,7 @@ class TestPerCampaignSheetRouting:
                 config_path=config_path,
             )
 
-        sheets_client.find_influencer.assert_called_once_with(
-            "Alice",
+        sheets_client.get_all_influencers.assert_called_once_with(
             worksheet_name="Sheet1",
             spreadsheet_key_override=None,
         )

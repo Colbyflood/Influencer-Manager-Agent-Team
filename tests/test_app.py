@@ -46,9 +46,17 @@ def _base_settings(tmp_path: Path, **overrides) -> Settings:
     By default all optional credentials are empty so no external services
     are initialized.  Pass keyword overrides to customise.
     """
-    defaults = {
+    defaults: dict = {
         "audit_db_path": tmp_path / "audit.db",
         "gmail_token_path": tmp_path / "nonexistent-token.json",
+        # Explicitly clear credentials so env vars don't leak into tests
+        "slack_bot_token": SecretStr(""),
+        "slack_app_token": SecretStr(""),
+        "slack_escalation_channel": "",
+        "slack_agreement_channel": "",
+        "google_sheets_key": "",
+        "anthropic_api_key": SecretStr(""),
+        "clickup_api_token": "",
     }
     defaults.update(overrides)
     return Settings(**defaults)  # type: ignore[call-arg]
