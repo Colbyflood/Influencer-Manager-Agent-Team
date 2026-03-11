@@ -1,64 +1,71 @@
-# Maps ALL 42 ClickUp custom field names to Campaign model field paths
-# Organized by ClickUp form section
+# Maps ClickUp custom field names (EXACT) to Campaign model field paths
+# Updated to match actual ClickUp form field names
 
 field_mapping:
-  # Background section (5 fields)
+  # Background section
   "Client Name": "client_name"
   "Client Website": "background.client_website"
   "Campaign Manager": "background.campaign_manager"
-  "Payment Methods": "background.payment_methods"
-  "Payment Terms": "background.payment_terms"
+  "Available Payment Methods for Influencers (select all that apply)": "background.payment_methods"
+  "Payment Terms for Influencers (select one)": "background.payment_terms"
 
-  # Goals section (6 fields)
+  # Goals section
   "Campaign Type / Primary Goal": "goals.primary_goal"
   "Secondary Goal": "goals.secondary_goal"
-  "Business Context": "goals.business_context"
+  "Why do we have these goals? (Business context, etc)": "goals.business_context"
   "Optimize For": "goals.optimize_for"
   "CPM Target": "budget_constraints.cpm_target"
-  "CPM Leniency": "budget_constraints.cpm_leniency_pct"
+  "CPM Target - Numerical value ($20-$50)": "budget_constraints.cpm_target"
+  "CPM Leniency - Numerical value (0-100%)": "budget_constraints.cpm_leniency_pct"
 
-  # Deliverables & Usage Requirements section (15 fields)
-  "Platform Distribution": "distribution.platform_distribution"
-  "Market Distribution": "distribution.market_distribution"
-  "Influencer Size Distribution": "distribution.influencer_size_distribution"
-  "Target Deliverables": "target_deliverables"
-  "Content Syndication": "deliverables.content_syndication"
-  "Minimum Deliverables Scenario 1": "deliverables.scenario_1"
-  "Minimum Deliverables Scenario 2": "deliverables.scenario_2"
-  "Minimum Deliverables Scenario 3": "deliverables.scenario_3"
-  "Usage Rights - Target for: Paid Usage": "usage_rights.target.paid_usage"
-  "Usage Rights - Target for: Whitelisting": "usage_rights.target.whitelisting"
-  "Usage Rights - Target for: Organic/Owned": "usage_rights.target.organic_owned"
-  "Usage Rights - Minimum for: Paid Usage": "usage_rights.minimum.paid_usage"
-  "Usage Rights - Minimum for: Whitelisting": "usage_rights.minimum.whitelisting"
-  "Usage Rights - Minimum for: Organic/Owned": "usage_rights.minimum.organic_owned"
+  # Distribution
+  "Outline the target percentage distribution by platform": "distribution.platform_distribution"
+  "Outline the target percentage distribution by market (Give each market a percentage i.e. USA 100%)": "distribution.market_distribution"
+  "What is the percentage distribution by influencer size.": "distribution.influencer_size_distribution"
 
-  # Budget Considerations section (7 fields)
+  # Deliverables
+  "Target Deliverables per Influencer (select all that apply)": "target_deliverables"
+  "Can content be syndicated across multiple platforms?": "deliverables.content_syndication"
+  "Minimum Deliverables per Influencer -  Scenario 1 (Text field i.e. Instagram Reel and TikTok)": "deliverables.scenario_1"
+  "Minimum Deliverables per Influencer - OR Scenario 2 (Text field i.e. Instagram Reel and UGC Video)": "deliverables.scenario_2"
+  "Minimum Deliverables per Influencer - OR Scenario 3 (Text field i.e. Instagram Reel and IG Story)": "deliverables.scenario_3"
+
+  # Usage Rights
+  "Target for Paid Usage Required (select one)": "usage_rights.target.paid_usage"
+  "Target for Whitelisting Required (select one)": "usage_rights.target.whitelisting"
+  "Target for Organic and Owned Channels Required (select one)": "usage_rights.target.organic_owned"
+  "Minimum for Paid Usage Required (select one)": "usage_rights.minimum.paid_usage"
+  "Minimum for Whitelisting Required (select one)": "usage_rights.minimum.whitelisting"
+  "Minimum for Organic and Owned Channels Required (select one)": "usage_rights.minimum.organic_owned"
+
+  # Budget
   "Campaign Budget": "budget"
   "Target Number of Influencers": "budget_constraints.target_influencer_count"
-  "Target Cost per Influencer range": "budget_constraints.target_cost_range"
-  "Min Cost per Influencer": "budget_constraints.min_cost_per_influencer"
-  "Max Cost without Human Approval": "budget_constraints.max_cost_without_approval"
-  "Product as Lever": "product_leverage.product_available"
-  "Product Description": "product_leverage.product_description"
-  "Product Monetary Value": "product_leverage.product_monetary_value"
+  "Target Cost per Influencer (Range)": "budget_constraints.target_cost_range"
+  "Minimum Cost per Influencer (Do not make an offer lower than this)": "budget_constraints.min_cost_per_influencer"
+  "Maximum Cost per Influencer without Human Approval": "budget_constraints.max_cost_without_approval"
 
-  # Other Campaign Requirements section (10 fields)
+  # Product leverage
+  "Can product be used as a lever for negotiation?": "product_leverage.product_available"
+  "What is the product or upgrade that can be offered?": "product_leverage.product_description"
+  "What is the monetary value of the product or upgrade offered?": "product_leverage.product_monetary_value"
+
+  # Requirements
   "Category Exclusivity Required": "requirements.exclusivity_required"
-  "Exclusivity Term": "requirements.exclusivity_term"
-  "Exclusivity Description": "requirements.exclusivity_description"
-  "Content Posted Organically": "requirements.content_posted_organically"
-  "Content Approval Required": "requirements.content_approval_required"
-  "Revision Rounds": "requirements.revision_rounds"
-  "Raw Footage Required": "requirements.raw_footage_required"
-  "Content Delivery Date": "requirements.content_delivery_date"
-  "Content Publish Date": "requirements.content_publish_date"
+  "Category Exclusivity Term Requirement": "requirements.exclusivity_term"
+  "Category exclusivity description": "requirements.exclusivity_description"
+  "Is content required to be posted organically on the influencer's profile?": "requirements.content_posted_organically"
+  "Is content approval required by the campaign manager prior to posting?": "requirements.content_approval_required"
+  "How many rounds of content revisions must the influencer agree to?": "requirements.revision_rounds"
+  "Is the influencer required to deliver their raw footage in addition to final deliverables?": "requirements.raw_footage_required"
+  "When is the content expected to be delivered for approval?": "requirements.content_delivery_date"
+  "When is the content expected to be published?": "requirements.content_publish_date"
 
-  # Sheet routing (2 fields)
-  "Influencer Sheet Tab": "influencer_sheet_tab"
+  # Sheet routing
+  "Influencer Sheet Tab Name": "influencer_sheet_tab"
   "Influencer Sheet ID": "influencer_sheet_id"
 
-  # Influencer list (kept from original - parsed separately via Google Sheet)
+  # Influencer list and campaign basics
   "Influencer List": "influencers_raw"
   "Platform": "platform"
   "Timeline": "timeline"
@@ -68,8 +75,8 @@ influencer_list_format: "comma_separated"
 
 # ClickUp field type hints for parsing
 field_types:
-  number: ["CPM Target", "CPM Leniency", "Campaign Budget", "Target Number of Influencers", "Min Cost per Influencer", "Max Cost without Human Approval", "Product Monetary Value", "Revision Rounds"]
-  date_range: ["Content Delivery Date", "Content Publish Date"]
-  select: ["Campaign Type / Primary Goal", "Secondary Goal", "Optimize For", "Payment Terms", "Content Syndication", "Exclusivity Term", "Raw Footage Required", "Content Approval Required", "Category Exclusivity Required", "Content Posted Organically", "Product as Lever"]
-  multi_select: ["Payment Methods", "Target Deliverables"]
-  duration_select: ["Usage Rights - Target for: Paid Usage", "Usage Rights - Target for: Whitelisting", "Usage Rights - Target for: Organic/Owned", "Usage Rights - Minimum for: Paid Usage", "Usage Rights - Minimum for: Whitelisting", "Usage Rights - Minimum for: Organic/Owned"]
+  number: ["CPM Target - Numerical value ($20-$50)", "CPM Leniency - Numerical value (0-100%)", "Campaign Budget", "Target Number of Influencers", "Minimum Cost per Influencer (Do not make an offer lower than this)", "Maximum Cost per Influencer without Human Approval", "What is the monetary value of the product or upgrade offered?", "How many rounds of content revisions must the influencer agree to?"]
+  date_range: ["When is the content expected to be delivered for approval?", "When is the content expected to be published?"]
+  select: ["Campaign Type / Primary Goal", "Secondary Goal", "Optimize For", "Payment Terms for Influencers (select one)", "Can content be syndicated across multiple platforms?", "Category Exclusivity Term Requirement", "Is the influencer required to deliver their raw footage in addition to final deliverables?", "Is content approval required by the campaign manager prior to posting?", "Category Exclusivity Required", "Is content required to be posted organically on the influencer's profile?", "Can product be used as a lever for negotiation?"]
+  multi_select: ["Available Payment Methods for Influencers (select all that apply)", "Target Deliverables per Influencer (select all that apply)"]
+  duration_select: ["Target for Paid Usage Required (select one)", "Target for Whitelisting Required (select one)", "Target for Organic and Owned Channels Required (select one)", "Minimum for Paid Usage Required (select one)", "Minimum for Whitelisting Required (select one)", "Minimum for Organic and Owned Channels Required (select one)"]
