@@ -10,18 +10,25 @@ from __future__ import annotations
 
 import json
 from decimal import Decimal
+from enum import Enum
 from typing import TYPE_CHECKING, Any
+
+from pydantic import BaseModel
 
 if TYPE_CHECKING:
     from negotiation.campaign.cpm_tracker import CampaignCPMTracker
 
 
 class _DecimalEncoder(json.JSONEncoder):
-    """JSON encoder that converts Decimal values to strings."""
+    """JSON encoder that converts Decimal values, Pydantic models, and enums."""
 
     def default(self, o: object) -> Any:
         if isinstance(o, Decimal):
             return str(o)
+        if isinstance(o, BaseModel):
+            return o.model_dump(mode="json")
+        if isinstance(o, Enum):
+            return o.value
         return super().default(o)
 
 
