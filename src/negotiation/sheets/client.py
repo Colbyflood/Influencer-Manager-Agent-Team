@@ -84,7 +84,18 @@ class SheetsClient:
             ValueError: If the worksheet is empty or has no records.
         """
         spreadsheet = self._get_spreadsheet_for(spreadsheet_key_override)
-        worksheet = spreadsheet.worksheet(worksheet_name)
+        # Case-insensitive tab lookup to avoid mismatches from ClickUp input
+        target = worksheet_name.strip().lower()
+        worksheet = None
+        for ws in spreadsheet.worksheets():
+            if ws.title.strip().lower() == target:
+                worksheet = ws
+                break
+        if worksheet is None:
+            raise ValueError(
+                f"Worksheet '{worksheet_name}' not found (available: "
+                f"{[ws.title for ws in spreadsheet.worksheets()]})"
+            )
         records = worksheet.get_all_records()
 
         if not records:

@@ -60,9 +60,11 @@ def mock_gc(sample_sheet_records: list[dict[str, object]]) -> MagicMock:
     gc = MagicMock()
     worksheet = MagicMock()
     worksheet.get_all_records.return_value = sample_sheet_records
+    worksheet.title = "Sheet1"
 
     spreadsheet = MagicMock()
     spreadsheet.worksheet.return_value = worksheet
+    spreadsheet.worksheets.return_value = [worksheet]
 
     gc.open_by_key.return_value = spreadsheet
     return gc
@@ -144,8 +146,10 @@ class TestGetAllInfluencers:
                 "Max Rate": 3000.0,
             },
         ]
+        worksheet.title = "Sheet1"
         spreadsheet = MagicMock()
         spreadsheet.worksheet.return_value = worksheet
+        spreadsheet.worksheets.return_value = [worksheet]
         mock_gc.open_by_key.return_value = spreadsheet
 
         client = SheetsClient(gc=mock_gc, spreadsheet_key="key")
@@ -177,8 +181,10 @@ class TestGetAllInfluencers:
                 "Max Rate": 1500.0,
             },
         ]
+        worksheet.title = "Sheet1"
         spreadsheet = MagicMock()
         spreadsheet.worksheet.return_value = worksheet
+        spreadsheet.worksheets.return_value = [worksheet]
         mock_gc.open_by_key.return_value = spreadsheet
 
         client = SheetsClient(gc=mock_gc, spreadsheet_key="key")
@@ -190,8 +196,10 @@ class TestGetAllInfluencers:
         """Raises ValueError when worksheet has no records."""
         worksheet = MagicMock()
         worksheet.get_all_records.return_value = []
+        worksheet.title = "Sheet1"
         spreadsheet = MagicMock()
         spreadsheet.worksheet.return_value = worksheet
+        spreadsheet.worksheets.return_value = [worksheet]
         mock_gc.open_by_key.return_value = spreadsheet
 
         client = SheetsClient(gc=mock_gc, spreadsheet_key="key")
@@ -213,8 +221,10 @@ class TestGetAllInfluencers:
                 "Engagement Rate": 4.5,
             },
         ]
+        worksheet.title = "Sheet1"
         spreadsheet = MagicMock()
         spreadsheet.worksheet.return_value = worksheet
+        spreadsheet.worksheets.return_value = [worksheet]
         mock_gc.open_by_key.return_value = spreadsheet
 
         client = SheetsClient(gc=mock_gc, spreadsheet_key="key")
@@ -235,8 +245,10 @@ class TestGetAllInfluencers:
                 "Max Rate": 1500.0,
             },
         ]
+        worksheet.title = "Sheet1"
         spreadsheet = MagicMock()
         spreadsheet.worksheet.return_value = worksheet
+        spreadsheet.worksheets.return_value = [worksheet]
         mock_gc.open_by_key.return_value = spreadsheet
 
         client = SheetsClient(gc=mock_gc, spreadsheet_key="key")
@@ -244,7 +256,7 @@ class TestGetAllInfluencers:
         assert rows[0].engagement_rate is None
 
     def test_custom_worksheet_name(self, mock_gc: MagicMock) -> None:
-        """Passes worksheet_name to spreadsheet.worksheet()."""
+        """Passes worksheet_name and matches by title (case-insensitive)."""
         worksheet = MagicMock()
         worksheet.get_all_records.return_value = [
             {
@@ -257,13 +269,15 @@ class TestGetAllInfluencers:
                 "Max Rate": 1500.0,
             },
         ]
+        worksheet.title = "Influencers"
         spreadsheet = MagicMock()
         spreadsheet.worksheet.return_value = worksheet
+        spreadsheet.worksheets.return_value = [worksheet]
         mock_gc.open_by_key.return_value = spreadsheet
 
         client = SheetsClient(gc=mock_gc, spreadsheet_key="key")
-        client.get_all_influencers(worksheet_name="Influencers")
-        spreadsheet.worksheet.assert_called_with("Influencers")
+        rows = client.get_all_influencers(worksheet_name="Influencers")
+        assert len(rows) == 1
 
 
 # ---------------------------------------------------------------------------
@@ -453,8 +467,10 @@ class TestSpreadsheetKeyOverride:
                 "Max Rate": 1500.0,
             },
         ]
+        worksheet.title = "Sheet1"
         override_spreadsheet = MagicMock()
         override_spreadsheet.worksheet.return_value = worksheet
+        override_spreadsheet.worksheets.return_value = [worksheet]
         gc.open_by_key.return_value = override_spreadsheet
 
         client = SheetsClient(gc=gc, spreadsheet_key="default-key")
@@ -477,8 +493,10 @@ class TestSpreadsheetKeyOverride:
                 "Max Rate": 1500.0,
             },
         ]
+        worksheet.title = "Sheet1"
         default_spreadsheet = MagicMock()
         default_spreadsheet.worksheet.return_value = worksheet
+        default_spreadsheet.worksheets.return_value = [worksheet]
         gc.open_by_key.return_value = default_spreadsheet
 
         client = SheetsClient(gc=gc, spreadsheet_key="default-key")
@@ -501,8 +519,10 @@ class TestSpreadsheetKeyOverride:
                 "Max Rate": 1500.0,
             },
         ]
+        worksheet.title = "Sheet1"
         spreadsheet_mock = MagicMock()
         spreadsheet_mock.worksheet.return_value = worksheet
+        spreadsheet_mock.worksheets.return_value = [worksheet]
         gc.open_by_key.return_value = spreadsheet_mock
 
         client = SheetsClient(gc=gc, spreadsheet_key="default-key")
