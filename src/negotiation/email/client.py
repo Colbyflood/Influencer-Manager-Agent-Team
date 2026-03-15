@@ -9,6 +9,8 @@ messages from history, and decoding raw messages into domain models.
 from __future__ import annotations
 
 import base64
+import ssl
+import time
 from datetime import UTC, datetime
 from email.message import EmailMessage
 from typing import Any
@@ -16,6 +18,21 @@ from typing import Any
 from negotiation.email.models import EmailThreadContext, InboundEmail, OutboundEmail
 from negotiation.email.parser import extract_latest_reply, parse_mime_message
 from negotiation.email.threading import build_reply_headers, get_thread_context
+
+_MAX_RETRIES = 3
+_RETRY_DELAY = 1.0  # seconds
+
+
+def _retry_on_ssl(fn: Any, *args: Any, **kwargs: Any) -> Any:
+    """Retry a callable up to _MAX_RETRIES times on transient SSL errors."""
+    for attempt in range(_MAX_RETRIES):
+        try:
+            return fn(*args, **kwargs)
+        except (ssl.SSLError, OSError) as exc:
+            if attempt == _MAX_RETRIES - 1:
+                raise
+            time.sleep(_RETRY_DELAY * (attempt + 1))
+    raise RuntimeError("unreachable")
 
 
 class GmailClient:
@@ -68,8 +85,8 @@ class GmailClient:
         if outbound.thread_id:
             payload["threadId"] = outbound.thread_id
 
-        result: dict[str, Any] = (
-            self._service.users().messages().send(userId="me", body=payload).execute()
+        result: dict[str, Any] = _retry_on_ssl(
+            self._service.users().messages().send(userId="me", body=payload).execute
         )
         return result
 
@@ -115,7 +132,7 @@ class GmailClient:
             The Gmail API response dict containing ``historyId`` and
             ``expiration``.
         """
-        result: dict[str, Any] = (
+        result: dict[str, Any] = _retry_on_ssl(
             self._service.users()
             .watch(
                 userId="me",
@@ -125,7 +142,7 @@ class GmailClient:
                     "labelFilterBehavior": "INCLUDE",
                 },
             )
-            .execute()
+            .execute
         )
         return result
 
@@ -144,7 +161,7 @@ class GmailClient:
             If no new messages exist, returns an empty list with the
             original history ID.
         """
-        response: dict[str, Any] = (
+        response: dict[str, Any] = _retry_on_ssl(
             self._service.users()
             .history()
             .list(
@@ -152,7 +169,7 @@ class GmailClient:
                 startHistoryId=history_id,
                 historyTypes=["messageAdded"],
             )
-            .execute()
+            .execute
         )
 
         new_message_ids: list[str] = []
@@ -177,8 +194,8 @@ class GmailClient:
             An ``InboundEmail`` with parsed body text, headers, and
             timestamp.
         """
-        msg: dict[str, Any] = (
-            self._service.users().messages().get(userId="me", id=message_id, format="raw").execute()
+        msg: dict[str, Any] = _retry_on_ssl(
+            self._service.users().messages().get(userId="me", id=message_id, format="raw").execute
         )
 
         raw_bytes = base64.urlsafe_b64decode(msg["raw"])
@@ -186,7 +203,7 @@ class GmailClient:
         reply_text = extract_latest_reply(full_body)
 
         # Fetch metadata for headers
-        meta: dict[str, Any] = (
+        meta: dict[str, Any] = _retry_on_ssl(
             self._service.users()
             .messages()
             .get(
@@ -195,7 +212,7 @@ class GmailClient:
                 format="metadata",
                 metadataHeaders=["Message-ID", "From", "Subject"],
             )
-            .execute()
+            .execute
         )
 
         headers = {h["name"]: h["value"] for h in meta["payload"]["headers"]}
