@@ -654,8 +654,15 @@ async def start_negotiations_for_campaign(
                 campaign=campaign.client_name,
             )
 
-        except Exception:
-            logger.exception("Failed to start negotiation for influencer", influencer=name)
+        except Exception as exc:
+            import traceback
+
+            logger.error(
+                "Failed to start negotiation for influencer",
+                influencer=name,
+                error=str(exc),
+                traceback=traceback.format_exc(),
+            )
 
 
 @asynccontextmanager
