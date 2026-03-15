@@ -1058,11 +1058,15 @@ async def run_slack_bot(services: dict[str, Any]) -> None:
         logger.warning("SLACK_APP_TOKEN not set, skipping Socket Mode")
         return
 
-    logger.info("Starting Slack Bolt Socket Mode handler")
-    try:
-        await asyncio.to_thread(start_slack_app, bolt_app, app_token)
-    except Exception:
-        logger.exception("Slack Bolt Socket Mode handler failed")
+    while True:
+        logger.info("Starting Slack Bolt Socket Mode handler")
+        try:
+            await asyncio.to_thread(start_slack_app, bolt_app, app_token)
+            # start_slack_app should block forever; if it returns, reconnect
+            logger.warning("Slack Socket Mode handler exited, reconnecting in 5s")
+        except Exception:
+            logger.exception("Slack Bolt Socket Mode handler failed, retrying in 5s")
+        await asyncio.sleep(5)
 
 
 async def main() -> None:
@@ -1104,7 +1108,11 @@ async def main() -> None:
         sheets_client = services.get("sheets_client")
         if sheets_client:
             tasks_to_run.append(run_sheet_monitor_loop(services))
-        await asyncio.gather(*tasks_to_run)
+        results = await asyncio.gather(*tasks_to_run, return_exceptions=True)
+        # Log any exceptions from background tasks
+        for i, result in enumerate(results):
+            if isinstance(result, Exception):
+                logger.error("Background task %d failed: %s", i, result)
     finally:
         audit_conn = services.get("audit_conn")
         if audit_conn is not None:
