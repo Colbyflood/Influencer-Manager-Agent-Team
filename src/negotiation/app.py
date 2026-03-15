@@ -812,6 +812,19 @@ async def process_inbound_email(message_id: str, services: dict[str, Any]) -> No
             from_email=inbound.from_email,
         )
 
+        # Skip agent's own sent emails (Gmail notifications include outgoing messages)
+        import email.utils as _email_utils
+
+        _, from_addr = _email_utils.parseaddr(inbound.from_email)
+        _, agent_addr = _email_utils.parseaddr(gmail_client._from_email)
+        if from_addr.lower() == agent_addr.lower():
+            logger.info(
+                "Skipping agent's own sent email",
+                message_id=message_id,
+                thread_id=inbound.thread_id,
+            )
+            return
+
         # Step 2: Look up existing negotiation state by thread_id
         thread_state = negotiation_states.get(inbound.thread_id)
         if thread_state is None:

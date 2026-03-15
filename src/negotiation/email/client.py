@@ -215,7 +215,8 @@ class GmailClient:
             .execute
         )
 
-        headers = {h["name"]: h["value"] for h in meta["payload"]["headers"]}
+        payload = meta.get("payload", {})
+        headers = {h["name"]: h["value"] for h in payload.get("headers", [])}
 
         # Convert internalDate (ms since epoch) to ISO 8601
         internal_date_ms = int(msg.get("internalDate", "0"))
