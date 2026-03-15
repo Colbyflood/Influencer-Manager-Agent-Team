@@ -6,11 +6,15 @@ spreadsheet with case-insensitive lookup, caching, and error handling.
 
 from __future__ import annotations
 
+import logging
+
 import gspread
 
 from negotiation.auth.credentials import get_sheets_client
 from negotiation.domain.models import PayRange
 from negotiation.sheets.models import InfluencerRow
+
+logger = logging.getLogger(__name__)
 
 
 class SheetsClient:
@@ -108,18 +112,36 @@ class SheetsClient:
             if not str(name_value).strip():
                 continue
 
-            rows.append(
-                InfluencerRow(
-                    name=str(record["Name"]),
-                    email=str(record["Email"]),
-                    platform=str(record["Platform"]),
-                    handle=str(record["Handle"]),
-                    average_views=int(record["Average Views"]),
-                    min_rate=record["Min Rate"],
-                    max_rate=record["Max Rate"],
-                    engagement_rate=record.get("Engagement Rate"),
+            try:
+                # Coerce average_views: empty/None → skip row
+                avg_views_raw = record.get("Average Views", 0)
+                if avg_views_raw is None or str(avg_views_raw).strip() == "":
+                    avg_views_raw = 0
+                avg_views = int(float(str(avg_views_raw)))  # handle "50000.0"
+
+                # Coerce rates: empty → 0
+                min_rate_raw = record.get("Min Rate", 0)
+                max_rate_raw = record.get("Max Rate", 0)
+                if min_rate_raw is None or str(min_rate_raw).strip() == "":
+                    min_rate_raw = 0
+                if max_rate_raw is None or str(max_rate_raw).strip() == "":
+                    max_rate_raw = 0
+
+                rows.append(
+                    InfluencerRow(
+                        name=str(record["Name"]),
+                        email=str(record.get("Email", "")),
+                        platform=str(record.get("Platform", "")),
+                        handle=str(record.get("Handle", "")),
+                        average_views=avg_views,
+                        min_rate=min_rate_raw,
+                        max_rate=max_rate_raw,
+                        engagement_rate=record.get("Engagement Rate"),
+                    )
                 )
-            )
+            except (ValueError, KeyError, TypeError) as exc:
+                logger.warning("Skipping invalid row '%s': %s", name_value, exc)
+                continue
 
         return rows
 

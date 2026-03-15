@@ -43,9 +43,23 @@ class InfluencerRow(BaseModel):
     @field_validator("engagement_rate", mode="before")
     @classmethod
     def coerce_empty_engagement_rate(cls, v: object) -> object:
-        """Coerce empty strings to None for optional engagement_rate."""
-        if isinstance(v, str) and not v.strip():
-            return None
+        """Coerce empty/non-numeric strings to None for optional engagement_rate."""
+        if isinstance(v, str):
+            cleaned = v.strip().rstrip("%")
+            if not cleaned:
+                return None
+            try:
+                return float(cleaned)
+            except ValueError:
+                return None
+        return v
+
+    @field_validator("average_views", mode="before")
+    @classmethod
+    def coerce_average_views(cls, v: object) -> object:
+        """Coerce empty/None average_views to 0 (caught by positive validator)."""
+        if v is None or (isinstance(v, str) and not v.strip()):
+            return 0
         return v
 
     @field_validator("min_rate", "max_rate", mode="before")

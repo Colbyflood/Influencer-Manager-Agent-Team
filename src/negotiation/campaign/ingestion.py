@@ -334,7 +334,10 @@ def _decimal_from_field(value: Any, default: str = "0") -> Decimal:
     cleaned = _clean_numeric_string(str(value))
     if not cleaned:
         return Decimal(default)
-    return Decimal(cleaned)
+    try:
+        return Decimal(cleaned)
+    except Exception:
+        return Decimal(default)
 
 
 def _build_usage_rights(nested: dict[str, Any]) -> UsageRights | None:
@@ -372,17 +375,21 @@ def _build_budget_constraints(nested: dict[str, Any]) -> BudgetConstraints | Non
     converted = dict(bc_data)
     for field_name in decimal_fields:
         if field_name in converted and converted[field_name] is not None:
-            cleaned = _clean_numeric_string(str(converted[field_name]))
-            converted[field_name] = Decimal(cleaned) if cleaned else None
+            converted[field_name] = _decimal_from_field(converted[field_name])
 
     # Convert target_influencer_count to int
     if "target_influencer_count" in converted and converted["target_influencer_count"] is not None:
-        converted["target_influencer_count"] = int(converted["target_influencer_count"])
+        try:
+            converted["target_influencer_count"] = int(
+                float(str(converted["target_influencer_count"]))
+            )
+        except (ValueError, TypeError):
+            converted["target_influencer_count"] = None
 
     # campaign_budget is required; use top-level budget as fallback
     if "campaign_budget" not in converted:
         top_budget = nested.get("budget", "0")
-        converted["campaign_budget"] = Decimal(_clean_numeric_string(str(top_budget)))
+        converted["campaign_budget"] = _decimal_from_field(top_budget)
 
     return BudgetConstraints(**converted)
 
@@ -394,7 +401,9 @@ def _build_product_leverage(nested: dict[str, Any]) -> ProductLeverage | None:
         return None
     converted = dict(pl_data)
     if "product_monetary_value" in converted and converted["product_monetary_value"] is not None:
-        converted["product_monetary_value"] = Decimal(str(converted["product_monetary_value"]))
+        converted["product_monetary_value"] = _decimal_from_field(
+            converted["product_monetary_value"]
+        )
     return ProductLeverage(**converted)
 
 
