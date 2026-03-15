@@ -29,7 +29,13 @@
       "Bash(PYTHONPATH=src python:*)",
       "Bash(npx tsc:*)",
       "Bash(curl:*)",
-      "Skill(gsd:execute-phase)"
+      "Skill(gsd:execute-phase)",
+      "Bash(gh run:*)",
+      "Bash(brew list:*)",
+      "Bash(brew install:*)",
+      "Bash(uv run:*)",
+      "Bash(ssh:*)",
+      "Bash(ls:*)"
     ]
   }
 }
