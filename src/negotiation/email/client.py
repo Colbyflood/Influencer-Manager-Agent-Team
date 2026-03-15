@@ -28,7 +28,7 @@ def _retry_on_ssl(fn: Any, *args: Any, **kwargs: Any) -> Any:
     for attempt in range(_MAX_RETRIES):
         try:
             return fn(*args, **kwargs)
-        except (ssl.SSLError, OSError) as exc:
+        except (ssl.SSLError, OSError):
             if attempt == _MAX_RETRIES - 1:
                 raise
             time.sleep(_RETRY_DELAY * (attempt + 1))
