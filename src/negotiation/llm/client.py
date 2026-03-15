@@ -3,8 +3,8 @@
 from anthropic import Anthropic
 
 # Model selection: Haiku for fast/cheap classification, Sonnet for nuanced composition
-INTENT_MODEL = "claude-haiku-4-5-latest"
-COMPOSE_MODEL = "claude-sonnet-4-5-latest"
+INTENT_MODEL = "claude-haiku-4-5-20251001"
+COMPOSE_MODEL = "claude-sonnet-4-5-20250929"
 
 # Configuration constants
 DEFAULT_CONFIDENCE_THRESHOLD = 0.70
