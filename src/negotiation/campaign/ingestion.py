@@ -322,11 +322,19 @@ def parse_influencer_list(
     return [name.strip() for name in names if name.strip()]
 
 
+def _clean_numeric_string(value: str) -> str:
+    """Strip currency symbols, commas, and percent signs from numeric strings."""
+    return value.replace("$", "").replace(",", "").replace("%", "").strip()
+
+
 def _decimal_from_field(value: Any, default: str = "0") -> Decimal:
     """Convert a parsed field value to Decimal via string to avoid float rejection."""
     if value is None:
         return Decimal(default)
-    return Decimal(str(value))
+    cleaned = _clean_numeric_string(str(value))
+    if not cleaned:
+        return Decimal(default)
+    return Decimal(cleaned)
 
 
 def _build_usage_rights(nested: dict[str, Any]) -> UsageRights | None:
@@ -364,7 +372,8 @@ def _build_budget_constraints(nested: dict[str, Any]) -> BudgetConstraints | Non
     converted = dict(bc_data)
     for field_name in decimal_fields:
         if field_name in converted and converted[field_name] is not None:
-            converted[field_name] = Decimal(str(converted[field_name]))
+            cleaned = _clean_numeric_string(str(converted[field_name]))
+            converted[field_name] = Decimal(cleaned) if cleaned else None
 
     # Convert target_influencer_count to int
     if "target_influencer_count" in converted and converted["target_influencer_count"] is not None:
@@ -373,7 +382,7 @@ def _build_budget_constraints(nested: dict[str, Any]) -> BudgetConstraints | Non
     # campaign_budget is required; use top-level budget as fallback
     if "campaign_budget" not in converted:
         top_budget = nested.get("budget", "0")
-        converted["campaign_budget"] = Decimal(str(top_budget))
+        converted["campaign_budget"] = Decimal(_clean_numeric_string(str(top_budget)))
 
     return BudgetConstraints(**converted)
 
