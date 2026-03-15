@@ -65,14 +65,11 @@ ENV PATH="/app/.venv/bin:$PATH"
 
 WORKDIR /app
 
-# HEALTHCHECK with self-kill pattern for auto-restart
-# Uses Python urllib (no curl in slim image). The || kill 1 sends SIGTERM
-# to PID 1 if health check fails 3 consecutive times, causing container exit.
-# Combined with restart: unless-stopped in docker-compose.yml, this achieves
-# auto-restart on health failure.
-HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" \
-    || kill 1
+# HEALTHCHECK -- reports container health to Docker
+# The || kill 1 was removed because it killed the process mid-operation
+# (e.g. while sending emails). Docker's restart policy handles restarts.
+HEALTHCHECK --interval=30s --timeout=10s --start-period=45s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
 
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["python", "-m", "negotiation.app"]
