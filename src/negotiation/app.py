@@ -770,12 +770,10 @@ def create_app(services: dict[str, Any]) -> FastAPI:
             )
             svc["history_id"] = new_history_id
 
-        # Process each new message in background tasks
-        bg_tasks = svc.get("background_tasks", set())
+        # Process messages sequentially to avoid httplib2 thread-safety
+        # issues (SSL errors when concurrent requests share connections)
         for msg_id in new_ids:
-            task = asyncio.ensure_future(process_inbound_email(msg_id, svc))
-            bg_tasks.add(task)
-            task.add_done_callback(bg_tasks.discard)
+            await process_inbound_email(msg_id, svc)
 
         logger.info("Gmail notification processed", new_messages=len(new_ids))
         return {"status": "ok"}
