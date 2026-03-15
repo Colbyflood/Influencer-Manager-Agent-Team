@@ -977,8 +977,15 @@ async def process_inbound_email(message_id: str, services: dict[str, Any]) -> No
                 thread_id=inbound.thread_id,
             )
 
-    except Exception:
-        logger.exception("Failed to process inbound email", message_id=message_id)
+    except Exception as exc:
+        import traceback as _tb
+
+        logger.error(
+            "Failed to process inbound email",
+            message_id=message_id,
+            error=str(exc),
+            traceback=_tb.format_exc(),
+        )
 
 
 async def renew_gmail_watch_periodically(services: dict[str, Any]) -> None:

@@ -47,9 +47,16 @@ def detect_human_reply(
         .execute()
     )
 
-    known_senders = {agent_email.lower(), influencer_email.lower()}
+    # Parse agent/influencer emails to extract bare addresses (handles
+    # both "Name <email>" and plain "email" formats consistently).
+    _, agent_addr = email.utils.parseaddr(agent_email)
+    _, influencer_addr = email.utils.parseaddr(influencer_email)
+    known_senders = {agent_addr.lower(), influencer_addr.lower()}
+    known_senders.discard("")  # drop empty if parseaddr returned ""
     if known_contacts is not None:
-        known_senders.update(e.lower() for e in known_contacts)
+        for e in known_contacts:
+            _, addr = email.utils.parseaddr(e)
+            known_senders.add((addr or e).lower())
 
     for message in thread.get("messages", []):
         headers = message.get("payload", {}).get("headers", [])
