@@ -32,6 +32,22 @@ class InfluencerRow(BaseModel):
     max_rate: Decimal
     engagement_rate: float | None = None
 
+    @field_validator("platform", mode="before")
+    @classmethod
+    def normalize_platform(cls, v: object) -> object:
+        """Normalize platform to lowercase for enum matching."""
+        if isinstance(v, str):
+            return v.strip().lower()
+        return v
+
+    @field_validator("engagement_rate", mode="before")
+    @classmethod
+    def coerce_empty_engagement_rate(cls, v: object) -> object:
+        """Coerce empty strings to None for optional engagement_rate."""
+        if isinstance(v, str) and not v.strip():
+            return None
+        return v
+
     @field_validator("min_rate", "max_rate", mode="before")
     @classmethod
     def coerce_from_sheet_float(cls, v: object) -> object:
