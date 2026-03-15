@@ -17,8 +17,19 @@ try:
 except ImportError:
     _HAS_YAML = False
 
-# Resolve from src/negotiation/llm/ up 3 levels to project root, then into knowledge_base/
-DEFAULT_KB_DIR = Path(__file__).resolve().parents[3] / "knowledge_base"
+# Resolve knowledge_base directory:
+# 1. Check KB_DIR env var (for Docker/production)
+# 2. Check /app/knowledge_base (Docker convention)
+# 3. Fall back to relative path from source (local dev)
+import os as _os
+
+_env_kb = _os.environ.get("KB_DIR")
+if _env_kb:
+    DEFAULT_KB_DIR = Path(_env_kb)
+elif Path("/app/knowledge_base").is_dir():
+    DEFAULT_KB_DIR = Path("/app/knowledge_base")
+else:
+    DEFAULT_KB_DIR = Path(__file__).resolve().parents[3] / "knowledge_base"
 
 
 def _parse_frontmatter(content: str) -> tuple[dict[str, Any], str]:
