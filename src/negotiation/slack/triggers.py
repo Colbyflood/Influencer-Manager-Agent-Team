@@ -11,6 +11,7 @@ catching emails that should be escalated before any autonomous response.
 from __future__ import annotations
 
 import logging
+import os as _os
 from enum import StrEnum
 from pathlib import Path
 
@@ -101,7 +102,14 @@ class TriggerClassification(BaseModel):
     )
 
 
-DEFAULT_TRIGGERS_PATH = Path(__file__).resolve().parents[3] / "config" / "escalation_triggers.yaml"
+_env_config = _os.environ.get("CONFIG_DIR")
+if _env_config:
+    DEFAULT_TRIGGERS_PATH = Path(_env_config) / "escalation_triggers.yaml"
+elif Path("/app/config/escalation_triggers.yaml").is_file():
+    DEFAULT_TRIGGERS_PATH = Path("/app/config/escalation_triggers.yaml")
+else:
+    _src_config = Path(__file__).resolve().parents[3] / "config"
+    DEFAULT_TRIGGERS_PATH = _src_config / "escalation_triggers.yaml"
 
 _TRIGGER_CLASSIFICATION_SYSTEM_PROMPT = """\
 Analyze this influencer email for three escalation triggers:
