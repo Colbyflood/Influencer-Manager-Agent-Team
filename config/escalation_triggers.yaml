@@ -9,7 +9,7 @@
 # The CPM (cost per thousand views) is calculated from the proposed rate
 # and average views using the pricing engine.
 cpm_over_threshold:
-  enabled: true
+  enabled: false
   cpm_threshold: 30.0  # dollars per thousand views
 
 # Fires when intent classification confidence is below the threshold.
